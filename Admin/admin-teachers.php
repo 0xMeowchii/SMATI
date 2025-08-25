@@ -29,12 +29,12 @@
                 </a>
             </li>
             <li class="nav-item">
-                <a class="nav-link active" href="admin-students.php">
+                <a class="nav-link" href="admin-students.php">
                     <i class="fas fa-user"></i>Students
                 </a>
             </li>
             <li class="nav-item">
-                <a class="nav-link" href="admin-teachers.php">
+                <a class="nav-link active" href="admin-teachers.php">
                     <i class="fas fa-users"></i>Teachers
                 </a>
             </li>
@@ -58,10 +58,10 @@
     
     <main class="main-content">
         <div class="page-header">
-            <h4><i class="fas fa-user me-2"></i>Students Management</h4>
+            <h4><i class="fas fa-users me-2"></i>Teachers Management</h4>
             <div class="action-buttons">
-                <button class="btn btn-primary" id="add-student-btn" data-bs-toggle="modal" data-bs-target="#add-students-modal">
-                    <i class="fas fa-plus me-1"></i>Add Student
+                <button class="btn btn-primary" id="add-teachers-btn" data-bs-toggle="modal" data-bs-target="#add-teachers-modal">
+                    <i class="fas fa-plus me-1"></i>Add Teacher
                 </button>
             </div>
         </div>
@@ -71,11 +71,11 @@
             <div class="table-header">
                 <div class="row align-items-center">
                     <div class="col-md-6">
-                        <h5>All Students</h5>
+                        <h5>All Teachers</h5>
                     </div>
                     <div class="col-md-6">
                         <div class="input-group mb-3">
-                            <input type="text" class="form-control" placeholder="Search Students...">
+                            <input type="text" class="form-control" placeholder="Search Teachers...">
                             <span class="input-group-text bg-primary"><i class="fas fa-search text-white"></i></span>
                         </div>
                     </div>
@@ -84,9 +84,9 @@
             <table class="table table-hover">
                 <thead>
                     <tr>
-                        <th>StudentID</th>
+                        <th>TeacherID</th>
                         <th>Name</th>
-                        <th>Course</th>
+                        <th>Department</th>
                         <th>Email</th>
                         <th>Action</th>
                     </tr>
@@ -94,7 +94,7 @@
                         <tr>
                             <td>123</td>
                             <td>John Doe</td>
-                            <td>Computer Science</td>
+                            <td>IT Department</td>
                             <td>@exmaple.com</td>
                         </tr>
                     </tbody>
@@ -102,19 +102,19 @@
             </table>
          </div>
 
-         <!-- Add Student Modal -->
-        <div class="modal fade" id="add-students-modal" tabindex="-1" aria-hidden="true">
+         <!-- Add Teacher Modal -->
+        <div class="modal fade" id="add-teachers-modal" tabindex="-1" aria-hidden="true">
             <div class="modal-dialog modal-lg">
                 <div class="modal-content">
                     <div class="modal-header bg-primary text-white">
-                        <h5 class="modal-title" id="studentModalTitle">Add New Student</h5>
+                        <h5 class="modal-title" id="teacherModalTitle">Add New Teacher</h5>
                         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
-                        <form id="student-form">
+                        <form id="teacher-form">
                             <input type="hidden" id="student-id">
                             <div class="row g-3">
-                                <h4 class="pb-2 border-bottom">Student Information</h4>
+                                <h4 class="pb-2 border-bottom">Teacher Information</h4>
                                 <div class="col-md-6">
                                     <label for="student-name" class="form-label">First Name</label>
                                     <input type="text" class="form-control" id="student-name" required>
@@ -127,8 +127,8 @@
                                     <label for="student-id-number" class="form-label">Email</label>
                                     <input type="text" class="form-control" id="student-id-number" required>
                                 </div>
-                                <div class="col-md-6 mb-3">
-                                    <label for="student-course" class="form-label">Course</label>
+                                <div class="col-md-6">
+                                    <label for="student-course" class="form-label">Department</label>
                                     <select class="form-select" id="student-course" required>
                                         <option value="">Select Course</option>
                                         <option value="Computer Science">Computer Science</option>
@@ -137,7 +137,7 @@
                                         <option value="Business Administration">Business Administration</option>
                                     </select>
                                 </div>
-                               <h4 class="pb-2 border-bottom">User Account</h4>
+                                <h4 class="pb-2 border-bottom">User Account</h4>
                                <div class="col-md-6">
                                 <div class="input-group">
                                     <span class="input-group-text"><i class="fas fa-user"></i></span>
@@ -156,7 +156,7 @@
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <button type="button" class="btn btn-primary" id="save-student-btn">Save Student</button>
+                        <button type="button" class="btn btn-primary" id="save-teacher-btn">Save Teacher</button>
                     </div>
                 </div>
             </div>
