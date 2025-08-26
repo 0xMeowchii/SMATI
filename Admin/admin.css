@@ -88,6 +88,8 @@
 
         .table {
             border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+            transition: transform 0.3s, box-shadow 0.3s;
             overflow: hidden;
         }
         
@@ -96,6 +98,15 @@
             color: white;
             border: none;
             padding: 1rem;
+        }
+
+         .table tbody tr {
+            transition: all 0.2s;
+        }
+        
+        .table tbody tr:hover {
+            background-color: rgba(67, 97, 238, 0.05);
+            transform: translateX(2px);
         }
 
         @media (max-width: 992px) {
