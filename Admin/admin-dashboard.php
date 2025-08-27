@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -20,7 +21,7 @@
     <div class="sidebar">
         <div class="sidebar-brand flex-column text-center">
             <img class="mb-3" src="../images/smatilogo.png" alt="logo" width="80px" height="80px">
-             <p class="mb-0">Admin</p>
+            <p class="mb-0">Admin</p>
         </div>
         <ul class="nav flex-column mt-3">
             <li class="nav-item">
@@ -55,9 +56,10 @@
             </li>
         </ul>
     </div>
-    
+
     <main class="main-content">
 
     </main>
 </body>
+
 </html>

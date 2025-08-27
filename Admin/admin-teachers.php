@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -20,7 +21,7 @@
     <div class="sidebar">
         <div class="sidebar-brand flex-column text-center">
             <img class="mb-3" src="../images/smatilogo.png" alt="logo" width="80px" height="80px">
-             <p class="mb-0">Admin</p>
+            <p class="mb-0">Admin</p>
         </div>
         <ul class="nav flex-column mt-3">
             <li class="nav-item">
@@ -55,7 +56,7 @@
             </li>
         </ul>
     </div>
-    
+
     <main class="main-content">
         <div class="page-header">
             <h4><i class="fas fa-users me-2"></i>Teachers Management</h4>
@@ -67,7 +68,7 @@
         </div>
 
         <!-- Student Table -->
-         <div class="container">
+        <div class="container">
             <div class="table-header">
                 <div class="row align-items-center">
                     <div class="col-md-6">
@@ -90,19 +91,19 @@
                         <th>Email</th>
                         <th>Action</th>
                     </tr>
-                    <tbody>
-                        <tr>
-                            <td>123</td>
-                            <td>John Doe</td>
-                            <td>IT Department</td>
-                            <td>@exmaple.com</td>
-                        </tr>
-                    </tbody>
+                <tbody>
+                    <tr>
+                        <td>123</td>
+                        <td>John Doe</td>
+                        <td>IT Department</td>
+                        <td>@exmaple.com</td>
+                    </tr>
+                </tbody>
                 </thead>
             </table>
-         </div>
+        </div>
 
-         <!-- Add Teacher Modal -->
+        <!-- Add Teacher Modal -->
         <div class="modal fade" id="add-teachers-modal" tabindex="-1" aria-hidden="true">
             <div class="modal-dialog modal-lg">
                 <div class="modal-content">
@@ -138,19 +139,19 @@
                                     </select>
                                 </div>
                                 <h4 class="pb-2 border-bottom">User Account</h4>
-                               <div class="col-md-6">
-                                <div class="input-group">
-                                    <span class="input-group-text"><i class="fas fa-user"></i></span>
-                                    <input type="text" class="form-control" placeholder="Enter username">
+                                <div class="col-md-6">
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-user"></i></span>
+                                        <input type="text" class="form-control" placeholder="Enter username">
+                                    </div>
                                 </div>
-                               </div>
-                               <div class="col-md-6 mb-3">
-                                <div class="input-group">
-                                    <span class="input-group-text"><i class="fas fa-lock"></i></span>
-                                    <input type="text" class="form-control" placeholder="Enter password">
-                                    <button class="input-group-text"><i class="fas fa-eye"></i></button>
+                                <div class="col-md-6 mb-3">
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-lock"></i></span>
+                                        <input type="text" class="form-control" placeholder="Enter password">
+                                        <button class="input-group-text"><i class="fas fa-eye"></i></button>
+                                    </div>
                                 </div>
-                               </div>
                             </div>
                         </form>
                     </div>
@@ -162,7 +163,8 @@
             </div>
         </div>
     </main>
-     <!-- Bootstrap JS Bundle with Popper -->
+    <!-- Bootstrap JS Bundle with Popper -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
+
 </html>

@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -20,7 +21,7 @@
     <div class="sidebar">
         <div class="sidebar-brand flex-column text-center">
             <img class="mb-3" src="../images/smatilogo.png" alt="logo" width="80px" height="80px">
-             <p class="mb-0">Admin</p>
+            <p class="mb-0">Admin</p>
         </div>
         <ul class="nav flex-column mt-3">
             <li class="nav-item">
@@ -55,7 +56,7 @@
             </li>
         </ul>
     </div>
-    
+
     <main class="main-content">
         <div class="page-header">
             <h4><i class="fas fa-chart-bar me-2"></i>Academics Management</h4>
@@ -67,7 +68,7 @@
         </div>
 
         <!-- Student Table -->
-         <div class="container">
+        <div class="container">
             <div class="table-header">
                 <div class="row align-items-center">
                     <div class="col-md-6">
@@ -90,19 +91,19 @@
                         <th>School Year & Semester</th>
                         <th>Action</th>
                     </tr>
-                    <tbody>
-                        <tr>
-                            <td>Mathemathics</td>
-                            <td>JOhn Doe</td>
-                            <td>Computer Science</td>
-                            <td>2025-2026, 1st sem</td>
-                        </tr>
-                    </tbody>
+                <tbody>
+                    <tr>
+                        <td>Mathemathics</td>
+                        <td>JOhn Doe</td>
+                        <td>Computer Science</td>
+                        <td>2025-2026, 1st sem</td>
+                    </tr>
+                </tbody>
                 </thead>
             </table>
-         </div>
+        </div>
 
-         <!-- Add Student Modal -->
+        <!-- Add Student Modal -->
         <div class="modal fade" id="add-subjects-modal" tabindex="-1" aria-hidden="true">
             <div class="modal-dialog modal-lg">
                 <div class="modal-content">
@@ -128,7 +129,7 @@
                                         <option value="Business Administration">Business Administration</option>
                                     </select>
                                 </div>
-                                 <div>
+                                <div>
                                     <label for="student-course" class="form-label">Assign a Teacher</label>
                                     <select class="form-select" id="student-course" required>
                                         <option value="">Select Teacher</option>
@@ -147,7 +148,7 @@
                                         <label class="btn btn-outline-success" for="4th-outlined">4th Year</label>
                                     </div>
                                 </div>
-                                 <div>
+                                <div>
                                     <label for="student-course" class="form-label">School Year & Semester</label>
                                     <select class="form-select" id="student-course" required>
                                         <option value="">Select School Year & Semester</option>
@@ -164,7 +165,8 @@
             </div>
         </div>
     </main>
-     <!-- Bootstrap JS Bundle with Popper -->
+    <!-- Bootstrap JS Bundle with Popper -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
+
 </html>
