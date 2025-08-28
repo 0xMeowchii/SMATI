@@ -227,7 +227,7 @@ include '../database.php';
                     </div>
                     <div class="col-md-6">
                         <div class="input-group mb-3">
-                            <input type="text" class="form-control" id="searchInput" placeholder="Search Students..." onkeyup="">
+                            <input type="text" class="form-control" id="searchInput" placeholder="Search Students...">
                             <span class="input-group-text bg-primary"><i class="fas fa-search text-white"></i></span>
                         </div>
                     </div>
