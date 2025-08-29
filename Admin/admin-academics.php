@@ -1,3 +1,4 @@
+<?php include('../database.php'); ?>
 <!DOCTYPE html>
 <html lang="en">
 
@@ -18,44 +19,7 @@
 
 <body>
     <!-- Sidebar -->
-    <div class="sidebar">
-        <div class="sidebar-brand flex-column text-center">
-            <img class="mb-3" src="../images/smatilogo.png" alt="logo" width="80px" height="80px">
-            <p class="mb-0">Admin</p>
-        </div>
-        <ul class="nav flex-column mt-3">
-            <li class="nav-item">
-                <a class="nav-link" href="admin-dashboard.php">
-                    <i class="fas fa-tachometer-alt"></i>Dashboard
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="admin-students.php">
-                    <i class="fas fa-user"></i>Students
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="admin-teachers.php">
-                    <i class="fas fa-users"></i>Teachers
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link active" href="admin-academics.php">
-                    <i class="fas fa-chart-bar"></i>Academics
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="admin-settings.php">
-                    <i class="fas fa-cog"></i>Settings
-                </a>
-            </li>
-            <li class="nav-item mt-3">
-                <a class="nav-link text-danger" href="#" id="logout-link">
-                    <i class="fas fa-sign-out-alt"></i>Logout
-                </a>
-            </li>
-        </ul>
-    </div>
+    <?php include('sidebar.php'); ?>
 
     <main class="main-content">
         <div class="page-header">
@@ -66,6 +30,53 @@
                 </button>
             </div>
         </div>
+
+        <?php
+
+        //INSERT QUERY
+        if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnAdd'])) {
+            $conn = connectToDB();
+            $subjectname = $_POST['subjectname'];
+            $course = $_POST['course'];
+            $teacher_id = $_POST['teacher'];
+            $yearlevel = $_POST['yearlevel'];
+            $schoolyear_id = $_POST['schoolyear'];
+
+            if ($conn) {
+                $stmt = $conn->prepare("INSERT INTO subjects (subject, course, teacher_id, yearlevel, schoolyear_id) 
+                                            VALUES (?, ?, ?, ?, ?)");
+                $stmt->bind_param("ssisi", $subjectname, $course, $teacher_id, $yearlevel, $schoolyear_id);
+
+                if ($stmt->execute()) {
+                    echo "<script>
+                            document.addEventListener('DOMContentLoaded', function() {
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Success!',
+                                    text: 'Subject Created Successfully!',
+                                    timer: 2000,
+                                    showConfirmButton: false
+                                });
+                            });
+                        </script>";
+                } else {
+                    echo "<script>
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Error!',
+                                text: '" . addslashes($stmt->error) . "',
+                                confirmButtonColor: '#d33'
+                            });
+                        </script>";
+                }
+
+                $stmt->close();
+                $conn->close();
+            } else {
+                echo "<script>alert('Database connection failed');</script>";
+            }
+        }
+        ?>
 
         <!-- Student Table -->
         <div class="container">
@@ -88,22 +99,63 @@
                         <th>Name</th>
                         <th>Teacher</th>
                         <th>Course</th>
+                        <th>Year Level</th>
                         <th>School Year & Semester</th>
                         <th>Action</th>
                     </tr>
                 <tbody>
-                    <tr>
-                        <td>Mathemathics</td>
-                        <td>JOhn Doe</td>
-                        <td>Computer Science</td>
-                        <td>2025-2026, 1st sem</td>
-                    </tr>
+                    <?php
+                    $conn = connectToDB();
+                    $sql = "SELECT * 
+                                FROM teachers t
+                                INNER JOIN subjects s
+                                INNER JOIN schoolyear
+                                ON t.teacher_id = s.subject_id";
+                    $result = $conn->query($sql);
+
+                    if ($result && $result->num_rows > 0) {
+                        // output data of each row
+                        while ($row = $result->fetch_assoc()) {
+                            echo "<tr>";
+                            echo "<td>" . $row["subject"] . "</td>";
+                            echo "<td>" . $row["lastname"] . ", " . $row["firstname"] . "</td>";
+                            echo "<td>" . $row["course"] . "</td>";
+                            echo "<td>" . $row["yearlevel"] . "</td>";
+                            echo "<td>" . $row["schoolyear"] . ", " . $row["semester"] . " Semester" . "</td>";
+                            echo "<td>
+                                <a class='btn btn-sm btn-outline-primary me-1 view-student-btn'
+                                
+                                data-bs-toggle='modal' 
+                                data-bs-target='#viewStudentModal'>
+                                    <i class='fas fa-eye'></i>
+                                </a>
+
+                                <a class='btn btn-sm btn-outline-secondary me-1 edit-student-btn'
+                                
+                                data-bs-toggle='modal' 
+                                data-bs-target='#editStudentModal'>
+                                    <i class='fas fa-edit'></i>
+                                </a>
+
+                                <a class='btn btn-sm btn-outline-danger me-1 drop-student-btn'
+                                
+                                data-bs-toggle='modal' 
+                                 data-bs-target='#dropStudentModal'>
+                                    <i class='fas fa-trash'></i>
+                                </a>
+                                </td>";
+                            echo "</tr>";
+                        }
+                    } else {
+                        echo "0 results";
+                    }
+                    ?>
                 </tbody>
                 </thead>
             </table>
         </div>
 
-        <!-- Add Student Modal -->
+        <!-- Add Subject Modal -->
         <div class="modal fade" id="add-subjects-modal" tabindex="-1" aria-hidden="true">
             <div class="modal-dialog modal-lg">
                 <div class="modal-content">
@@ -112,61 +164,90 @@
                         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
-                        <form id="student-form">
-                            <input type="hidden" id="student-id">
+                        <form method="post" action="<?php htmlspecialchars($_SERVER['PHP_SELF']) ?>">
                             <div class="row g-3">
                                 <div class="col-md-6">
-                                    <label for="student-name" class="form-label">Subject Name</label>
-                                    <input type="text" class="form-control" id="student-name" required>
+                                    <label class="form-label">Subject Name</label>
+                                    <input type="text" class="form-control" id="subjectname" name="subjectname" required>
                                 </div>
                                 <div class="col-md-6">
-                                    <label for="student-course" class="form-label">Course</label>
-                                    <select class="form-select" id="student-course" required>
+                                    <label class="form-label">Course</label>
+                                    <select class="form-select" id="course" name="course" required>
                                         <option value="">Select Course</option>
-                                        <option value="Computer Science">Computer Science</option>
-                                        <option value="Electrical Engineering">Electrical Engineering</option>
-                                        <option value="Mechanical Engineering">Mechanical Engineering</option>
-                                        <option value="Business Administration">Business Administration</option>
+                                        <option value="BSIT">BSIT</option>
+                                        <option value="BSHM">BSHM</option>
                                     </select>
                                 </div>
                                 <div>
-                                    <label for="student-course" class="form-label">Assign a Teacher</label>
-                                    <select class="form-select" id="student-course" required>
+                                    <label class="form-label">Assign a Teacher</label>
+                                    <select class="form-select" id="teacher" name="teacher" required>
                                         <option value="">Select Teacher</option>
+                                        <?php
+                                        $conn = connectToDB();
+                                        $sql = "SELECT * FROM teachers WHERE status = '1'";
+                                        $result = $conn->query($sql);
+
+                                        if ($result && $result->num_rows > 0) {
+                                            // output data of each row
+                                            while ($row = $result->fetch_assoc()) {
+                                                $fullname = $row['lastname'] . ", " . $row['firstname'];
+                                                echo "<option value='" . $row['teacher_id'] . "'>" . $fullname . "</option>";
+                                            }
+                                        } else {
+                                            echo "0 results";
+                                        }
+                                        ?>
                                     </select>
                                 </div>
                                 <div>
-                                    <label for="student-course" class="form-label">Year Level</label>
+                                    <label class="form-label">Year Level</label>
                                     <div class="d-flex gap-3">
-                                        <input type="radio" class="btn-check" name="year-level" id="1st-outlined">
+                                        <input type="radio" class="btn-check" name="yearlevel" id="1st-outlined" value="1st">
                                         <label class="btn btn-outline-success" for="1st-outlined">1st Year</label>
-                                        <input type="radio" class="btn-check" name="year-level" id="2nd-outlined">
+                                        <input type="radio" class="btn-check" name="yearlevel" id="2nd-outlined" value="2nd">
                                         <label class="btn btn-outline-success" for="2nd-outlined">2nd Year</label>
-                                        <input type="radio" class="btn-check" name="year-level" id="3rd-outlined">
+                                        <input type="radio" class="btn-check" name="yearlevel" id="3rd-outlined" value="3rd">
                                         <label class="btn btn-outline-success" for="3rd-outlined">3rd Year</label>
-                                        <input type="radio" class="btn-check" name="year-level" id="4th-outlined">
+                                        <input type="radio" class="btn-check" name="yearlevel" id="4th-outlined" value="4th">
                                         <label class="btn btn-outline-success" for="4th-outlined">4th Year</label>
                                     </div>
                                 </div>
                                 <div>
                                     <label for="student-course" class="form-label">School Year & Semester</label>
-                                    <select class="form-select" id="student-course" required>
+                                    <select class="form-select" id="schoolyear" name="schoolyear" required>
                                         <option value="">Select School Year & Semester</option>
+                                        <?php
+                                        $conn = connectToDB();
+                                        $sql = "SELECT * FROM schoolyear";
+                                        $result = $conn->query($sql);
+
+                                        if ($result && $result->num_rows > 0) {
+                                            // output data of each row
+                                            while ($row = $result->fetch_assoc()) {
+                                                $schoolyear = $row['schoolyear'] . ", " . $row['semester'] . ' Semester';
+                                                echo "<option value='" . $row['schoolyear_id'] . "'>" . $schoolyear . "</option>";
+                                            }
+                                        } else {
+                                            echo "0 results";
+                                        }
+                                        ?>
                                     </select>
                                 </div>
                             </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                <button type="submit" class="btn btn-primary" name="btnAdd">Save Subject</button>
+                            </div>
                         </form>
                     </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <button type="button" class="btn btn-primary" id="save-subject-btn">Save Subject</button>
-                    </div>
+
                 </div>
             </div>
         </div>
     </main>
     <!-- Bootstrap JS Bundle with Popper -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </body>
 
 </html>

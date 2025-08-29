@@ -1,3 +1,4 @@
+<?php include('../database.php'); ?>
 <!DOCTYPE html>
 <html lang="en">
 
@@ -38,49 +39,170 @@
 
 <body>
     <!-- Sidebar -->
-    <div class="sidebar">
-        <div class="sidebar-brand flex-column text-center">
-            <img class="mb-3" src="../images/smatilogo.png" alt="logo" width="80px" height="80px">
-            <p class="mb-0">Admin</p>
-        </div>
-        <ul class="nav flex-column mt-3">
-            <li class="nav-item">
-                <a class="nav-link" href="admin-dashboard.php">
-                    <i class="fas fa-tachometer-alt"></i>Dashboard
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="admin-students.php">
-                    <i class="fas fa-user"></i>Students
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="admin-teachers.php">
-                    <i class="fas fa-users"></i>Teachers
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="admin-academics.php">
-                    <i class="fas fa-chart-bar"></i>Academics
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link active" href="admin-settings.php">
-                    <i class="fas fa-cog"></i>Settings
-                </a>
-            </li>
-            <li class="nav-item mt-3">
-                <a class="nav-link text-danger" href="#" id="logout-link">
-                    <i class="fas fa-sign-out-alt"></i>Logout
-                </a>
-            </li>
-        </ul>
-    </div>
+    <?php include('sidebar.php'); ?>
 
     <main class="main-content">
         <div class="page-header">
             <h4><i class="fas fa-cog me-2"></i>System Settings</h4>
         </div>
+
+        <!--- query -->
+        <?php
+
+        //INSERT QUERY
+        if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnAdd'])) {
+            $conn = connectToDB();
+            $schoolyear = $_POST['schoolyear'];
+            $semester = $_POST['semester'];
+
+            if ($conn) {
+                $stmt = $conn->prepare("INSERT INTO schoolyear (schoolyear, semester) VALUES (?, ?)");
+                $stmt->bind_param("ss", $schoolyear, $semester);
+
+                if ($stmt->execute()) {
+                    echo "<script>
+                            document.addEventListener('DOMContentLoaded', function() {
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Success!',
+                                    text: 'S.Y. Added Successfully!',
+                                    timer: 2000,
+                                    showConfirmButton: false
+                                });
+                            });
+                        </script>";
+                } else {
+                    echo "<script>
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Error!',
+                                text: '" . addslashes($stmt->error) . "',
+                                confirmButtonColor: '#d33'
+                            });
+                        </script>";
+                }
+
+                $stmt->close();
+                $conn->close();
+            } else {
+                echo "<script>alert('Database connection failed');</script>";
+            }
+        }
+        //DELETE QUERY
+        if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnDelete'])) {
+            $conn = connectToDB();
+            $schoolyear_id = $_POST['id'];
+
+            if ($conn) {
+                $stmt = $conn->prepare("DELETE FROM schoolyear WHERE id=?");
+                $stmt->bind_param("i", $schoolyear_id);
+
+                if ($stmt->execute()) {
+                    echo "<script>
+                            document.addEventListener('DOMContentLoaded', function() {
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Success!',
+                                    text: 'S.Y. Deleted Successfully!',
+                                    timer: 2000,
+                                    showConfirmButton: false
+                                });
+                            });
+                        </script>";
+                } else {
+                    echo "<script>
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Error!',
+                                text: '" . addslashes($stmt->error) . "',
+                                confirmButtonColor: '#d33'
+                            });
+                        </script>";
+                }
+
+                $stmt->close();
+                $conn->close();
+            } else {
+                echo "<script>alert('Database connection failed');</script>";
+            }
+        }
+
+        //RESTORE STUDENT QUERY
+        if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnRestore'])) {
+            $conn = connectToDB();
+            $student_id = $_POST['studentId'];
+
+            if ($conn) {
+                $stmt = $conn->prepare("UPDATE students SET status = '1' WHERE student_id=?");
+                $stmt->bind_param("i", $student_id);
+
+                if ($stmt->execute()) {
+                    echo "<script>
+                            document.addEventListener('DOMContentLoaded', function() {
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Success!',
+                                    text: 'Student Restored Successfully!',
+                                    timer: 2000,
+                                    showConfirmButton: false
+                                });
+                            });
+                        </script>";
+                } else {
+                    echo "<script>
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Error!',
+                                text: '" . addslashes($stmt->error) . "',
+                                confirmButtonColor: '#d33'
+                            });
+                        </script>";
+                }
+                $stmt->close();
+                $conn->close();
+            } else {
+                echo "<script>alert('Database connection failed');</script>";
+            }
+        }
+
+        //RESTORE TEACHER QUERY
+        if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnRestore1'])) {
+            $conn = connectToDB();
+            $teacher_id = $_POST['teacherId'];
+
+            if ($conn) {
+                $stmt = $conn->prepare("UPDATE teachers SET status = '1' WHERE teacher_id=?");
+                $stmt->bind_param("i", $teacher_id);
+
+                if ($stmt->execute()) {
+                    echo "<script>
+                            document.addEventListener('DOMContentLoaded', function() {
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Success!',
+                                    text: 'Teacher Restored Successfully!',
+                                    timer: 2000,
+                                    showConfirmButton: false
+                                });
+                            });
+                        </script>";
+                } else {
+                    echo "<script>
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Error!',
+                                text: '" . addslashes($stmt->error) . "',
+                                confirmButtonColor: '#d33'
+                            });
+                        </script>";
+                }
+                $stmt->close();
+                $conn->close();
+            } else {
+                echo "<script>alert('Database connection failed');</script>";
+            }
+        }
+        ?>
 
         <div class="row">
             <div class="col-md-6">
@@ -132,9 +254,298 @@
                 </div>
             </div>
         </div>
+
+        <div class="col">
+            <div class="card border-0 custom-card mb-4">
+                <div class="card-header px-4 py-3 bg-secondary text-white">
+                    <h5 class="card-title mb-0">Archives</h5>
+                </div>
+                <div class="card-body p-4">
+                    <!-- Nav tabs -->
+                    <ul class="nav nav-tabs mb-4" id="myTab" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active text-black" id="students-tab" data-bs-toggle="tab" data-bs-target="#students" type="button" role="tab" aria-controls="employees" aria-selected="true">
+                                <i class="bi bi-people me-1"></i>Students
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link text-black" id="teachers-tab" data-bs-toggle="tab" data-bs-target="#teachers" type="button" role="tab" aria-controls="products" aria-selected="false">
+                                <i class="bi bi-box me-1"></i>Teachers
+                            </button>
+                        </li>
+                    </ul>
+
+                    <div class="tab-content" id="myTabContent">
+                        <div class="tab-pane fade show active" id="students" role="tabpanel" aria-labelledby="students-tab">
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th scope="col">StudentID</th>
+                                            <th scope="col">Name</th>
+                                            <th scope="col">Course</th>
+                                            <th scope="col">Email</th>
+                                            <th scope="col">Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <?php
+                                        $conn = connectToDB();
+                                        $sql = "SELECT * FROM students WHERE status = '0'";
+                                        $result = $conn->query($sql);
+
+                                        if ($result && $result->num_rows > 0) {
+                                            // output data of each row
+                                            while ($row = $result->fetch_assoc()) {
+                                                echo "<tr>";
+                                                echo "<td>" . $row["student_id"] . "</td>";
+                                                echo "<td>" . $row["lastname"] . ", " . $row["firstname"] . "</td>";
+                                                echo "<td>" . $row["course"] . "</td>";
+                                                echo "<td>" . $row["email"] . "</td>";
+                                                echo "<td>
+                                                <a class='btn btn-sm btn-outline-success me-1 restore-student-btn'
+                                                data-id='" . $row["student_id"] . "'
+                                                data-bs-toggle='modal' 
+                                                data-bs-target='#restoreStudentModal'>
+                                                    <i class='fa fa-refresh'></i>
+                                                </a>
+                                                  </td>";
+                                                echo "</tr>";
+                                            }
+                                        } else {
+                                            echo "0 results";
+                                        }
+                                        ?>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div class="tab-pane fade" id="teachers" role="tabpanel" aria-labelledby="teachers-tab">
+                            <div class="table-responsive">
+                                <table class="table table-striped table-hover">
+                                    <thead class="table-dark">
+                                        <tr>
+                                            <th scope="col">TeacherID</th>
+                                            <th scope="col">Name</th>
+                                            <th scope="col">Department</th>
+                                            <th scope="col">Email</th>
+                                            <th scope="col">Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <?php
+                                        $conn = connectToDB();
+                                        $sql = "SELECT * FROM teachers WHERE status = '0'";
+                                        $result = $conn->query($sql);
+
+                                        if ($result && $result->num_rows > 0) {
+                                            // output data of each row
+                                            while ($row = $result->fetch_assoc()) {
+                                                echo "<tr>";
+                                                echo "<td>" . $row["teacher_id"] . "</td>";
+                                                echo "<td>" . $row["lastname"] . ", " . $row["firstname"] . "</td>";
+                                                echo "<td>" . $row["department"] . "</td>";
+                                                echo "<td>" . $row["email"] . "</td>";
+                                                echo "<td>
+                                                <a class='btn btn-sm btn-outline-success me-1 restore-teacher-btn'
+                                                data-id='" . $row["teacher_id"] . "'
+                                                data-bs-toggle='modal' 
+                                                data-bs-target='#restoreTeacherModal'>
+                                                    <i class='fa fa-refresh'></i>
+                                                </a>
+                                                  </td>";
+                                                echo "</tr>";
+                                            }
+                                        } else {
+                                            echo "0 results";
+                                        }
+                                        ?>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col mt-3">
+            <div class="page-header">
+                <h4><i class="fas fa-cog me-2"></i>School Year & Semester</h4>
+                <div class="action-buttons">
+                    <button class="btn btn-primary" id="add-schoolyear-btn" data-bs-toggle="modal" data-bs-target="#add-schoolyear-modal">
+                        <i class="fas fa-plus me-1"></i>Add S.Y. & Sem
+                    </button>
+                </div>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>School Year</th>
+                            <th>Semester</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php
+                        $conn = connectToDB();
+                        $sql = "SELECT * FROM schoolyear";
+                        $result = $conn->query($sql);
+
+                        if ($result && $result->num_rows > 0) {
+                            // output data of each row
+                            while ($row = $result->fetch_assoc()) {
+                                echo "<tr>";
+                                echo "<td>" . $row["schoolyear"] . "</td>";
+                                echo "<td>" . $row["semester"] . "</td>";
+                                echo "<td>
+                                                <a class='btn btn-sm btn-outline-danger me-1 delete-schoolyear-btn'
+                                                data-id='" . $row["schoolyear_id"] . "'
+                                                data-bs-toggle='modal' 
+                                                data-bs-target='#deleteSchoolyearModal'>
+                                                    <i class='fa fa-trash'></i>
+                                                </a>
+                                                  </td>";
+                                echo "</tr>";
+                            }
+                        } else {
+                            echo "0 results";
+                        }
+                        ?>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Add SchoolYear Modal -->
+        <div class="modal fade" id="add-schoolyear-modal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header bg-primary text-white">
+                        <h5 class="modal-title">Add School Year</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form action="<?php htmlspecialchars($_SERVER['PHP_SELF']) ?>" method="POST">
+                            <div class="row g-3">
+                                <h4 class="pb-2 border-bottom">School Year</h4>
+                                <div class="col-md-6 mb-3">
+                                    <label for="course" class="form-label">School Year</label>
+                                    <select class="form-select" name="schoolyear" id="schoolyear" required>
+                                        <option value="">Select School Year</option>
+                                        <option value="2025-2026">2025-2026</option>
+                                        <option value="2026-2027">2026-2027</option>
+                                        <option value="2027-2028">2027-2028</option>
+                                        <option value="2028-2029">2028-2029</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="course" class="form-label">Semester</label>
+                                    <select class="form-select" name="semester" id="semester" required>
+                                        <option value="">Select Semester</option>
+                                        <option value="1st">1st</option>
+                                        <option value="2nd">2nd</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                <button type="submit" class="btn btn-primary" name="btnAdd">Save</button>
+                            </div>
+                        </form>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- Delete Schoolyear Modal -->
+        <div class="modal fade" id="deleteSchoolyearModal" tabindex="-1" role="dialog" aria-labelledby="deleteSchoolyearModal" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="deleteSchoolyearModal">Confirm Delete</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        Are you sure you want to delete this SchoolYear?
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">No</button>
+                        <form action="<?php htmlspecialchars($_SERVER['PHP_SELF']) ?>" method="post">
+                            <input type="hidden" name="id" id="id">
+                            <button type="submit" class="btn btn-danger" name="btnDelete">Yes</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Restore Student Modal -->
+        <div class="modal fade" id="restoreStudentModal" tabindex="-1" role="dialog" aria-labelledby="restoreStudentModal" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="restoreStudentModal">Confirm Restore</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        Restore this Student?
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">No</button>
+                        <form action="<?php htmlspecialchars($_SERVER['PHP_SELF']) ?>" method="post">
+                            <input type="hidden" name="studentId" id="studentId">
+                            <button type="submit" class="btn btn-success" name="btnRestore">Yes</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Restore Teacher Modal -->
+        <div class="modal fade" id="restoreTeacherModal" tabindex="-1" role="dialog" aria-labelledby="restoreTeacherModal" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="restoreTeacherModal">Confirm Restore</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        Restore this Teacher?
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">No</button>
+                        <form action="<?php htmlspecialchars($_SERVER['PHP_SELF']) ?>" method="post">
+                            <input type="hidden" name="teacherId" id="teacherId">
+                            <button type="submit" class="btn btn-success" name="btnRestore1">Yes</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
     </main>
     <!-- Bootstrap JS Bundle with Popper -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        document.querySelectorAll('.restore-student-btn').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                document.getElementById('studentId').value = btn.getAttribute('data-id');
+            });
+        });
+        document.querySelectorAll('.restore-teacher-btn').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                document.getElementById('teacherId').value = btn.getAttribute('data-id');
+            });
+        });
+        document.querySelectorAll('.delete-schoolyear-btn').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                document.getElementById('id').value = btn.getAttribute('data-id');
+            });
+        });
+    </script>
 </body>
 
 </html>
