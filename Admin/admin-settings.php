@@ -202,6 +202,44 @@
                 echo "<script>alert('Database connection failed');</script>";
             }
         }
+
+        //RESTORE SUBJECT QUERY
+        if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnRestore2'])) {
+            $conn = connectToDB();
+            $subject_id = $_POST['subjectId'];
+
+            if ($conn) {
+                $stmt = $conn->prepare("UPDATE subjects SET status = '1' WHERE subject_id=?");
+                $stmt->bind_param("i", $subject_id);
+
+                if ($stmt->execute()) {
+                    echo "<script>
+                            document.addEventListener('DOMContentLoaded', function() {
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Success!',
+                                    text: 'Subject Restored Successfully!',
+                                    timer: 2000,
+                                    showConfirmButton: false
+                                });
+                            });
+                        </script>";
+                } else {
+                    echo "<script>
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Error!',
+                                text: '" . addslashes($stmt->error) . "',
+                                confirmButtonColor: '#d33'
+                            });
+                        </script>";
+                }
+                $stmt->close();
+                $conn->close();
+            } else {
+                echo "<script>alert('Database connection failed');</script>";
+            }
+        }
         ?>
 
         <div class="row">
@@ -264,13 +302,18 @@
                     <!-- Nav tabs -->
                     <ul class="nav nav-tabs mb-4" id="myTab" role="tablist">
                         <li class="nav-item" role="presentation">
-                            <button class="nav-link active text-black" id="students-tab" data-bs-toggle="tab" data-bs-target="#students" type="button" role="tab" aria-controls="employees" aria-selected="true">
+                            <button class="nav-link active text-black" id="students-tab" data-bs-toggle="tab" data-bs-target="#students" type="button" role="tab" aria-selected="true">
                                 <i class="bi bi-people me-1"></i>Students
                             </button>
                         </li>
                         <li class="nav-item" role="presentation">
-                            <button class="nav-link text-black" id="teachers-tab" data-bs-toggle="tab" data-bs-target="#teachers" type="button" role="tab" aria-controls="products" aria-selected="false">
+                            <button class="nav-link text-black" id="teachers-tab" data-bs-toggle="tab" data-bs-target="#teachers" type="button" role="tab" aria-selected="false">
                                 <i class="bi bi-box me-1"></i>Teachers
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link text-black" id="subjects-tab" data-bs-toggle="tab" data-bs-target="#subjects" type="button" role="tab" aria-selected="false">
+                                <i class="bi bi-box me-1"></i>Subjects
                             </button>
                         </li>
                     </ul>
@@ -352,6 +395,57 @@
                                                 data-id='" . $row["teacher_id"] . "'
                                                 data-bs-toggle='modal' 
                                                 data-bs-target='#restoreTeacherModal'>
+                                                    <i class='fa fa-refresh'></i>
+                                                </a>
+                                                  </td>";
+                                                echo "</tr>";
+                                            }
+                                        } else {
+                                            echo "0 results";
+                                        }
+                                        ?>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div class="tab-pane fade" id="subjects" role="tabpanel" aria-labelledby="subjects-tab">
+                            <div class="table-responsive">
+                                <table class="table table-striped table-hover">
+                                    <thead class="table-dark">
+                                        <tr>
+                                            <th scope="col">Subject Name</th>
+                                            <th scope="col">Teachers</th>
+                                            <th scope="col">Course</th>
+                                            <th scope="col">Year Level</th>
+                                            <th scope="col">School Year & Semester</th>
+                                            <th scope="col">Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <?php
+                                        $conn = connectToDB();
+                                        $sql = "SELECT * 
+                                                FROM subjects s
+                                                INNER JOIN teachers t ON s.teacher_id = t.teacher_id
+                                                INNER JOIN schoolyear sy ON sy.schoolyear_id = s.schoolyear_id
+                                                WHERE s.status='0'";
+                                        $result = $conn->query($sql);
+
+                                        if ($result && $result->num_rows > 0) {
+                                            // output data of each row
+                                            while ($row = $result->fetch_assoc()) {
+                                                echo "<tr>";
+                                                echo "<td>" . $row["subject"] . "</td>";
+                                                echo "<td>" . $row["lastname"] . ", " . $row["firstname"] . "</td>";
+                                                echo "<td>" . $row["course"] . "</td>";
+                                                echo "<td>" . $row["yearlevel"] . "</td>";
+                                                echo "<td>" . $row["schoolyear"] . ", " . $row["semester"] . " Semester" . "</td>";
+                                                echo "<td>
+                                                <a class='btn btn-sm btn-outline-success me-1 restore-subject-btn'
+                                                data-id='" . $row["subject_id"] . "'
+                                                data-bs-toggle='modal' 
+                                                data-bs-target='#restoreSubjectModal'>
                                                     <i class='fa fa-refresh'></i>
                                                 </a>
                                                   </td>";
@@ -525,6 +619,28 @@
                 </div>
             </div>
         </div>
+
+         <!-- Restore Subject Modal -->
+        <div class="modal fade" id="restoreSubjectModal" tabindex="-1" role="dialog" aria-labelledby="restoreSubjectModal" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="restoreSubjectModal">Confirm Restore</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        Restore this Subject?
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">No</button>
+                        <form action="<?php htmlspecialchars($_SERVER['PHP_SELF']) ?>" method="post">
+                            <input type="hidden" name="subjectId" id="subjectId">
+                            <button type="submit" class="btn btn-success" name="btnRestore2">Yes</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
     </main>
     <!-- Bootstrap JS Bundle with Popper -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
@@ -538,6 +654,11 @@
         document.querySelectorAll('.restore-teacher-btn').forEach(function(btn) {
             btn.addEventListener('click', function() {
                 document.getElementById('teacherId').value = btn.getAttribute('data-id');
+            });
+        });
+        document.querySelectorAll('.restore-subject-btn').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                document.getElementById('subjectId').value = btn.getAttribute('data-id');
             });
         });
         document.querySelectorAll('.delete-schoolyear-btn').forEach(function(btn) {
