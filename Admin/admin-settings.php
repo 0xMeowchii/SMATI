@@ -264,13 +264,6 @@
                                 <i class="fas fa-upload me-2"></i>Restore Backup
                             </button>
                         </div>
-                        <div class="mb-3">
-                            <label class="form-label">Reset System</label>
-                            <p class="text-muted small mb-2">Warning: This will delete all data</p>
-                            <button class="btn btn-outline-danger w-100" id="reset-btn">
-                                <i class="fas fa-trash-alt me-2"></i>Reset All Data
-                            </button>
-                        </div>
                     </div>
                 </div>
             </div>

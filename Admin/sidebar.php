@@ -1,4 +1,10 @@
 <?php
+session_start();
+if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
+    header("Location: admin-login.php");
+    exit();
+}
+
 $current_page = basename($_SERVER['PHP_SELF']);
 ?>
 
@@ -39,9 +45,45 @@ $current_page = basename($_SERVER['PHP_SELF']);
             </a>
         </li>
         <li class="nav-item mt-3">
-            <a class="nav-link text-danger" href="#" id="logout-link">
+            <a class="nav-link text-danger" id="logoutBtn">
                 <i class="fas fa-sign-out-alt"></i>Logout
             </a>
         </li>
     </ul>
 </div>
+
+<!-- SweetAlert2 Script for Logout Confirmation -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.3/dist/sweetalert2.all.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const logoutBtn = document.getElementById('logoutBtn');
+    
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            Swal.fire({
+                title: 'Are you sure?',
+                text: "You will be logged out of the system.",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Yes, logout!',
+                cancelButtonText: 'Cancel',
+                reverseButtons: true,
+                customClass: {
+                    confirmButton: 'btn btn-danger mx-2',
+                    cancelButton: 'btn btn-secondary mx-2'
+                },
+                buttonsStyling: false
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Redirect to logout.php
+                    window.location.href = 'logout.php';
+                }
+            });
+        });
+    }
+});
+</script>
