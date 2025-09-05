@@ -1,3 +1,4 @@
+<?php include('../database.php'); ?>
 <!DOCTYPE html>
 <html lang="en">
 
@@ -25,6 +26,60 @@
             <h4><i class="fas fa-user me-2"></i>My Subjects</h4>
         </div>
 
+        <div class="container">
+            <div class="table-header">
+                <div class="row align-items-center">
+                    <div class="col-md-6">
+                        <h5>All Subjects</h5>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="input-group mb-3">
+                            <input type="text" class="form-control" id="searchInput" placeholder="Search Subjects...">
+                            <span class="input-group-text bg-primary"><i class="fas fa-search text-white"></i></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <th>Subject Name</th>
+                        <th>Course</th>
+                        <th>Year Level</th>
+                        <th>School Year & Semester</th>
+                        <th>Action</th>
+                    </thead>
+                    <tbody>
+                        <?php
+                            $conn = connectToDB();
+                            $sql = "SELECT * 
+                                    FROM subjects s
+                                    INNER JOIN teachers t ON s.teacher_id = t.teacher_id
+                                    INNER JOIN schoolyear sy ON sy.schoolyear_id = s.schoolyear_id
+                                    WHERE s.teacher_id = ?";
+                            $stmt = $conn->prepare($sql);
+                            $stmt->bind_param("i", $_SESSION['id']);
+                            $stmt->execute();
+                            $result = $stmt->get_result();
+
+                            while ($row = $result->fetch_assoc()) {
+                                echo "<tr>";
+                                echo "<td>" .$row['subject']."</td>";
+                                echo "<td>" .$row['course']."</td>";
+                                echo "<td>" .$row['yearlevel']."</td>";
+                                echo "<td>" . $row["schoolyear"] . ", " . $row["semester"] . " Semester" . "</td>";
+                                echo "<td>
+                                      <a class='btn btn-sm btn-outline-primary'>
+                                          <i class='fas fa-eye me-2'></i>View
+                                      </a>
+                                    </td>";
+                            }
+                        ?>
+                    </tbody>
+                </table>
+            </div>
+        </div>
 
 
     </main>
