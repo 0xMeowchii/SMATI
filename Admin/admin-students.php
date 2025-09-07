@@ -43,7 +43,7 @@ include '../database.php';
             $firstname = $_POST['firstname'];
             $lastname = $_POST['lastname'];
             $email = $_POST['email'];
-            $course = $_POST['course'];
+            $course = $_POST['set'];
             $username = $_POST['username'];
             $password = $_POST['password'];
             $status = '1';
@@ -194,7 +194,7 @@ include '../database.php';
                         <tr>
                             <th>StudentID</th>
                             <th>Name</th>
-                            <th>Course</th>
+                            <th>Set</th>
                             <th>Email</th>
                             <th>Action</th>
                         </tr>
@@ -283,11 +283,11 @@ include '../database.php';
                                     <input type="email" class="form-control" name="email" id="email" required>
                                 </div>
                                 <div class="col-md-6 mb-3">
-                                    <label for="course" class="form-label">Course</label>
-                                    <select class="form-select" name="course" id="course" required>
-                                        <option value="">Select Course</option>
-                                        <option value="BSIT">BSIT</option>
-                                        <option value="BSHM">BSHM</option>
+                                    <label for="course" class="form-label">Set</label>
+                                    <select class="form-select" name="set" id="set" required>
+                                        <option value="">Select Set</option>
+                                        <option value="A">A</option>
+                                        <option value="B">B</option>
                                     </select>
                                 </div>
                                 <h4 class="pb-2 border-bottom">User Account</h4>
@@ -346,11 +346,11 @@ include '../database.php';
                                     <input type="email" class="form-control" name="editEmail" id="editEmail" required>
                                 </div>
                                 <div class="col-md-6 mb-3">
-                                    <label for="course" class="form-label">Course</label>
+                                    <label for="course" class="form-label">Set</label>
                                     <select class="form-select" name="editCourse" id="editCourse" required>
-                                        <option value="">Select Course</option>
-                                        <option value="BSIT">BSIT</option>
-                                        <option value="BSHM">BSHM</option>
+                                        <option value="">Select Set</option>
+                                        <option value="A">A</option>
+                                        <option value="B">B</option>
                                     </select>
                                 </div>
                                 <h4 class="pb-2 border-bottom">User Account</h4>
@@ -394,7 +394,7 @@ include '../database.php';
                         <?php
                         echo "<p><strong>Student ID: </strong><span id='modalStudentId'></span></p>
                               <p><strong>Name: </strong><span id='modalStudentName'></span></p>
-                              <p><strong>Course: </strong><span id='modalStudentCourse'></span></p>
+                              <p><strong>Set: </strong><span id='modalStudentCourse'></span></p>
                               <p><strong>Email: </strong><span id='modalStudentEmail'></span></p>";
                         echo "<h3 class='pb-3 pt-3 border-bottom'>User Acccount</h3>
                               <p><strong>Username: </strong><span id='modalStudentUsername'></span></p>

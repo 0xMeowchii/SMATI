@@ -70,7 +70,8 @@
                                 echo "<td>" .$row['yearlevel']."</td>";
                                 echo "<td>" . $row["schoolyear"] . ", " . $row["semester"] . " Semester" . "</td>";
                                 echo "<td>
-                                      <a class='btn btn-sm btn-outline-primary'>
+                                      <a class='btn btn-sm btn-outline-primary' 
+                                      href='teacher-student-list.php?subject_id=" . urlencode($row['subject_id']) . "'>
                                           <i class='fas fa-eye me-2'></i>View
                                       </a>
                                     </td>";
