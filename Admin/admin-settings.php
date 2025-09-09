@@ -349,7 +349,11 @@
                                                 echo "</tr>";
                                             }
                                         } else {
-                                            echo "0 results";
+                                            echo "<td colspan='5' class='text-center py-4' style='color: #6c757d;'>";
+                                            echo "<i class='fas fa-search mb-2' style='font-size: 2em; opacity: 0.5;'></i>";
+                                            echo "<br>";
+                                            echo "No students found matching your search";
+                                            echo "</td>";
                                         }
                                         ?>
                                     </tbody>
@@ -394,7 +398,11 @@
                                                 echo "</tr>";
                                             }
                                         } else {
-                                            echo "0 results";
+                                            echo "<td colspan='5' class='text-center py-4' style='color: #6c757d;'>";
+                                            echo "<i class='fas fa-search mb-2' style='font-size: 2em; opacity: 0.5;'></i>";
+                                            echo "<br>";
+                                            echo "No Teacher found matching your search";
+                                            echo "</td>";
                                         }
                                         ?>
                                     </tbody>
@@ -445,7 +453,11 @@
                                                 echo "</tr>";
                                             }
                                         } else {
-                                            echo "0 results";
+                                            echo "<td colspan='5' class='text-center py-4' style='color: #6c757d;'>";
+                                            echo "<i class='fas fa-search mb-2' style='font-size: 2em; opacity: 0.5;'></i>";
+                                            echo "<br>";
+                                            echo "No subject found matching your search";
+                                            echo "</td>";
                                         }
                                         ?>
                                     </tbody>
@@ -613,7 +625,7 @@
             </div>
         </div>
 
-         <!-- Restore Subject Modal -->
+        <!-- Restore Subject Modal -->
         <div class="modal fade" id="restoreSubjectModal" tabindex="-1" role="dialog" aria-labelledby="restoreSubjectModal" aria-hidden="true">
             <div class="modal-dialog">
                 <div class="modal-content">

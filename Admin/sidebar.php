@@ -35,8 +35,13 @@ $current_page = basename($_SERVER['PHP_SELF']);
             </a>
         </li>
         <li class="nav-item">
-            <a class="nav-link" href="">
+            <a class="nav-link <?php echo ($current_page == 'admin-grades.php') ? 'active' : ''; ?>" href="admin-grades.php">
                 <i class="fa fa-file"></i>Grades
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link <?php echo ($current_page == 'admin-announcements.php') ? 'active' : ''; ?>" href="admin-announcements.php">
+                <i class="fa fa-calendar"></i>Announcements
             </a>
         </li>
         <li class="nav-item">

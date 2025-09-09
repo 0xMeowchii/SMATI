@@ -329,30 +329,15 @@ if (isset($_GET['student_set']) && isset($_GET['subject_id'])) {
                 let remarks = 'Failed';
 
                 if (average >= 90) {
-                    equivalent = '1.00';
-                    remarks = 'Excellent';
-                } else if (average >= 85) {
-                    equivalent = '1.25';
-                    remarks = 'Very Good';
-                } else if (average >= 80) {
                     equivalent = '1.50';
-                    remarks = 'Good';
-                } else if (average >= 75) {
-                    equivalent = '1.75';
-                    remarks = 'Satisfactory';
-                } else if (average >= 70) {
-                    equivalent = '2.00';
-                    remarks = 'Fair';
-                } else if (average >= 65) {
-                    equivalent = '2.25';
                     remarks = 'Passed';
-                } else if (average >= 60) {
+                } else if (average >= 85) {
+                    equivalent = '2.00';
+                    remarks = 'Passed';
+                } else if (average >= 80) {
                     equivalent = '2.50';
                     remarks = 'Passed';
-                } else if (average >= 55) {
-                    equivalent = '2.75';
-                    remarks = 'Passed';
-                } else if (average >= 50) {
+                } else if (average >= 75) {
                     equivalent = '3.00';
                     remarks = 'Passed';
                 }
