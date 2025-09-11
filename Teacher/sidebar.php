@@ -1,4 +1,5 @@
 <?php
+session_name('TEACHER');
 session_start();
 if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
     header("Location: teacher-login.php");
@@ -23,11 +24,6 @@ $current_page = basename($_SERVER['PHP_SELF']);
                 <i class="fa fa-book"></i>My Subjects
             </a>
         </li> 
-        <li class="nav-item">
-            <a class="nav-link <?php echo ($current_page == 'teacher-grades.php') ? 'active' : ''; ?>" href="teacher-grades.php">
-                <i class="fa fa-file"></i>Grades
-            </a>
-        </li>
         <li class="nav-item mt-3">
             <a class="nav-link text-danger" id="logoutBtn">
                 <i class="fas fa-sign-out-alt"></i>Logout

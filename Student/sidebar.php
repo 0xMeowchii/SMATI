@@ -1,11 +1,17 @@
 <?php
+session_name('STUDENT');
+session_start();
+if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
+    header("Location: student-login.php");
+    exit();
+}
 $current_page = basename($_SERVER['PHP_SELF']);
 ?>
 
 <div class="sidebar">
     <div class="sidebar-brand flex-column text-center">
         <img class="mb-3" src="../images/smatilogo.png" alt="logo" width="80px" height="80px">
-        <p class="mb-0"></p>
+        <p class="mb-0"><?php echo $_SESSION['fullname']; ?></p>
     </div>
     <ul class="nav flex-column mt-3">
         <li class="nav-item">

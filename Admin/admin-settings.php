@@ -94,7 +94,7 @@
             $schoolyear_id = $_POST['id'];
 
             if ($conn) {
-                $stmt = $conn->prepare("DELETE FROM schoolyear WHERE id=?");
+                $stmt = $conn->prepare("DELETE FROM schoolyear WHERE schoolyear_id=?");
                 $stmt->bind_param("i", $schoolyear_id);
 
                 if ($stmt->execute()) {

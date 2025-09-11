@@ -34,7 +34,7 @@
                     </div>
                     <div class="col-md-6">
                         <div class="input-group mb-3">
-                            <input type="text" class="form-control" id="searchInput" placeholder="Search S.Y. & Semester...">
+                            <input type="text" class="form-control" id="searchInput" placeholder="Search Subjects...">
                             <span class="input-group-text bg-primary"><i class="fas fa-search text-white"></i></span>
                         </div>
                     </div>
@@ -44,31 +44,44 @@
             <div class="table-responsive">
                 <table class="table table-hover">
                     <thead>
-                        <th>School Year & Semester</th>
-                        <th>Action</th>
+                        <th>Subject</th>
+                        <th>Teacher</th>
+                        <th>Prelim</th>
+                        <th>Midterm</th>
+                        <th>Pre-finals</th>
+                        <th>Finals</th>
+                        <th>Average</th>
+                        <th>Equivalent</th>
+                        <th>Remarks</th>
+                        <th>Comment</th>
                     </thead>
                     <tbody>
-                        <?php
-                        $conn = connectToDB();
-                        $sql = "SELECT * FROM schoolyear";
-                        $result = $conn->query($sql);
+                          <?php
+                            $conn = connectToDB();
+                            $sql = "SELECT * 
+                                    FROM grades g
+                                    INNER JOIN teachers t ON g.teacher_id = t.teacher_id
+                                    INNER JOIN subjects s ON g.subject_id = s.subject_id
+                                    WHERE g.student_id = ? AND g.schoolyear_id = ?";
+                            $stmt = $conn->prepare($sql);
+                            $stmt->bind_param("ii", $_SESSION['id'],$_GET['sy']);
+                            $stmt->execute();
+                            $result = $stmt->get_result();
 
-                        if ($result && $result->num_rows > 0) {
-                            // output data of each row
                             while ($row = $result->fetch_assoc()) {
                                 echo "<tr>";
-                                echo "<td>" .$row['schoolyear']. ", ".$row['semester']. " Semester"."</td>";
-                                echo "<td>
-                                        <a class='btn btn-sm btn-outline-primary'
-                                         href='student-grades-list.php?sy=".$row['schoolyear_id']."'>
-                                        <i class='fas fa-eye me-2'></i>View
-                                        </a>
-                                        </td>";
+                                echo "<td>" .$row['subject']."</td>";
+                                echo "<td>" .$row["lastname"] . ", " . $row["firstname"] . "</td>";
+                                echo "<td>" .$row['prelim']."</td>";
+                                echo "<td>" .$row['midterm']."</td>";
+                                echo "<td>" .$row['prefinals']."</td>";
+                                echo "<td>" .$row['finals']."</td>";
+                                echo "<td>" .$row['average']."</td>";
+                                echo "<td>" .$row['equivalent']."</td>";
+                                echo "<td>" .$row['remarks']."</td>";
+                                echo "<td>" .$row['comment']."</td>";
                                 echo "</tr>";
                             }
-                        } else {
-                            echo "0 results";
-                        }
                         ?>
                     </tbody>
                 </table>

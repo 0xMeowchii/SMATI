@@ -3,5 +3,5 @@
     session_start();
     session_unset();
     session_destroy();
-    header('location:/SMATI/Teacher/teacher-login.php')
+    header('location:/SMATI/Student/student-login.php')
 ?>

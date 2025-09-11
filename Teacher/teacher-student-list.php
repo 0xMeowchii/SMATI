@@ -111,7 +111,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnDelete'])) {
             <h4><i class="fas fa-user me-2"></i>My Subjects</h4>
             <div class="action-buttons">
                 <button class="btn btn-primary" id="add-student-list-btn" data-bs-toggle="modal" data-bs-target="#add-student-list-modal">
-                    <i class="fas fa-plus me-1"></i>Create Student List
+                    <i class="fas fa-plus me-1"></i>Create Class
                 </button>
             </div>
         </div>
@@ -120,7 +120,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnDelete'])) {
             <div class="table-header">
                 <div class="row align-items-center">
                     <div class="col-md-6">
-                        <h5>All Subjects > Student List</h5>
+                        <h5>All Subjects > Class List</h5>
                     </div>
                     <div class="col-md-6">
                         <div class="input-group mb-3">
@@ -142,6 +142,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnDelete'])) {
                         <?php
                         $conn = connectToDB();
                         $subject = $_GET['subject_id'];
+                        $sy = $_GET['sy'];
                         $sql = "SELECT * 
                                  FROM student_list
                                  WHERE subject_id = ?
@@ -154,13 +155,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnDelete'])) {
                         if ($result && $result->num_rows > 0) {
                             // output data of each row
                             while ($row = $result->fetch_assoc()) {
-                                $_SESSION['list_id'] = $row['list_id'];
                                 echo "<tr>";
                                 echo "<td>" . $row["student_set"] . "</td>";
                                 echo "<td>" . $row["total"] . "</td>";
                                 echo "<td>
                                       <a class='btn btn-sm btn-outline-primary' 
-                                      href='teacher-input-grades.php?student_set=" . $row['student_set'] . "&subject_id=" . $subject . "'>
+                                      href='teacher-input-grades.php?student_set=" . $row['student_set'] . "&subject_id=" . $subject . 
+                                      "&sy=".$sy."'>
                                           <i class='fas fa-eye me-2'></i>View
                                       </a>
                                       
@@ -225,7 +226,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnDelete'])) {
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
-                        Are you sure you want to delete this Class?
+                        Are you sure you want to drop this Class?
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">No</button>

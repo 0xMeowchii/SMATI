@@ -1,4 +1,5 @@
 <?php
+session_name('ADMIN');
 session_start();
 include('../database.php');
 

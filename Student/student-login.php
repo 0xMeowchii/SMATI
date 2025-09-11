@@ -1,5 +1,5 @@
 <?php
-session_name('TEACHER');
+session_name('STUDENT');
 session_start();
 include('../database.php');
 
@@ -23,7 +23,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnLogin'])) {
     if (empty($errors)) {
         $conn = connectToDB();
 
-        $stmt = $conn->prepare("SELECT * FROM teachers WHERE username = ?");
+        $stmt = $conn->prepare("SELECT * FROM students WHERE username = ?");
         $stmt->bind_param("s", $username);
         $stmt->execute();
         $result = $stmt->get_result();
@@ -33,7 +33,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnLogin'])) {
             if ($user['status'] == '0') {
                 $errors[] = "This account has been deactivated.";
             } elseif ($password === $user['password']) {
-                $_SESSION['id'] = $user['teacher_id'];
+                $_SESSION['id'] = $user['student_id'];
                 $_SESSION['fullname'] = $user['lastname'] . ", " . $user['firstname'];
                 $_SESSION['logged_in'] = true;
                 $showSuccess = true;
@@ -61,16 +61,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnLogin'])) {
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.3/dist/sweetalert2.min.css">
     <style>
         :root {
-            --brand-green: #10b981;
-            --brand-green-light: #34d399;
-            --brand-green-dark: #047857;
-            --brand-green-100: #d1fae5;
-            --brand-green-600: #059669;
-            --brand-green-800: #065f46;
+            --brand-gold: #fbbf24;
+            /* base gold */
+            --brand-gold-light: #fcd34d;
+            /* lighter gold */
+            --brand-gold-dark: #b45309;
+            /* deep golden brown */
+            --brand-gold-100: #fef3c7;
+            /* pale golden background */
+            --brand-gold-600: #d97706;
+            /* strong accent gold */
+            --brand-gold-800: #78350f;
+            /* rich dark gold/brown */
         }
 
         body {
-            background: linear-gradient(135deg, var(--brand-green-light) 0%, var(--brand-green) 100%);
+            background: linear-gradient(135deg, var(--brand-gold-light) 0%, var(--brand-gold) 100%);
             min-height: 100vh;
             display: flex;
             flex-direction: column;
@@ -89,22 +95,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnLogin'])) {
         }
 
         .brand-bg {
-            background-color: var(--brand-green);
+            background-color: var(--brand-gold);
         }
 
         .brand-text {
-            color: var(--brand-green);
+            color: var(--brand-gold);
         }
 
         .btn-brand {
-            background-color: var(--brand-green);
+            background-color: var(--brand-gold);
             color: white;
             border: none;
             transition: all 0.3s ease;
         }
 
         .btn-brand:hover {
-            background-color: var(--brand-green-dark);
+            background-color: var(--brand-gold-dark);
             color: white;
             transform: translateY(-2px);
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
@@ -118,7 +124,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnLogin'])) {
         }
 
         .card-header {
-            background: linear-gradient(135deg, var(--brand-green) 0%, var(--brand-green-dark) 100%);
+            background: linear-gradient(135deg, var(--brand-gold) 0%, var(--brand-gold-dark) 100%);
             color: white;
             text-align: center;
             padding: 25px;
@@ -146,7 +152,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnLogin'])) {
         }
 
         .form-control:focus {
-            border-color: var(--brand-green);
+            border-color: var(--brand-gold);
             box-shadow: 0 0 0 0.25rem rgba(25, 135, 84, 0.25);
         }
 
@@ -197,7 +203,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnLogin'])) {
         <div class="card">
             <div class="card-header">
                 <div class="logo-text">
-                    <i class="bi bi-egg-fried"></i> TEACHER PORTAL
+                    <i class="bi bi-egg-fried"></i> STUDENT PORTAL
                 </div>
                 <p class="mb-0 mt-2">St. Michael Arcangel Technological Institute, Inc.</p>
             </div>
@@ -275,11 +281,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnLogin'])) {
                 Swal.fire({
                     icon: 'success',
                     title: 'Login Successful!',
-                    text: 'Welcome back, Teacher!',
+                    text: 'Welcome back, Student!',
                     showConfirmButton: false,
                     timer: 1500,
                     willClose: () => {
-                        window.location.href = 'teacher-dashboard.php';
+                        window.location.href = 'student-dashboard.php';
                     }
                 });
 

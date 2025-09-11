@@ -66,6 +66,7 @@ if (isset($_GET['student_set']) && isset($_GET['subject_id'])) {
             //array student grades
             $set = $_GET['student_set'];
             $subject = $_GET['subject_id'];
+            $sy = $_GET['sy'];
             $conn = connectToDB();
             $sql = "SELECT s.*, g.prelim, g.midterm, g.prefinals, g.finals, g.comment, g.average, g.equivalent, g.remarks
                     FROM students s
@@ -86,7 +87,8 @@ if (isset($_GET['student_set']) && isset($_GET['subject_id'])) {
             if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnSaveGrades'])) {
                 if (isset($_POST['grades']) && is_array($_POST['grades'])) {
                     $conn = connectToDB();
-                    $subject_id = $_POST['subject_id'] ?? '';
+                    $subject_id = $_POST['subject_id'];
+                    $schoolyear_id = $_POST['sy_id'];
                     $success = true;
                     $error_message = '';
 
@@ -105,9 +107,9 @@ if (isset($_GET['student_set']) && isset($_GET['subject_id'])) {
                         $comment = $conn->real_escape_string($gradeData['comment'] ?? '');
 
                         $sql = "INSERT INTO grades 
-                                (subject_id, teacher_id, student_id, prelim, midterm, prefinals, finals, average, equivalent, remarks, comment) 
-                                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                                ON DUPLICATE KEY UPDATE 
+                                (subject_id, teacher_id, student_id, schoolyear_id, prelim, midterm, prefinals, finals, average, equivalent, remarks, comment) 
+                                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                                ON DUPLICATE KEY UPDATE
                                 prelim = VALUES(prelim), 
                                 midterm = VALUES(midterm), 
                                 prefinals = VALUES(prefinals), 
@@ -118,7 +120,7 @@ if (isset($_GET['student_set']) && isset($_GET['subject_id'])) {
                                 comment = VALUES(comment)";
 
                         $stmt = $conn->prepare($sql);
-                        $stmt->bind_param("iiiddddddss", $subject_id, $teacher_id, $student_id, $prelim, $midterm, $prefinals, $finals, $average, $equivalent, $remarks, $comment);
+                        $stmt->bind_param("iiiiddddddss", $subject_id, $teacher_id, $student_id, $schoolyear_id, $prelim, $midterm, $prefinals, $finals, $average, $equivalent, $remarks, $comment);
 
                         if (!$stmt->execute()) {
                             $success = false;
@@ -147,7 +149,7 @@ if (isset($_GET['student_set']) && isset($_GET['subject_id'])) {
                                 allowOutsideClick: false,
                                 didOpen: () => {
                                     Swal.showLoading();
-                                    setTimeout(() => window.location.href = 'teacher-student-list.php?subject_id=" . urlencode($subject_id) . "', 1000);
+                                    setTimeout(() => window.location.href = 'teacher-student-list.php?subject_id=" . urlencode($subject_id) . "&sy=".urlencode($sy)."', 1000);
                                 }
                             });
                         }
@@ -175,6 +177,7 @@ if (isset($_GET['student_set']) && isset($_GET['subject_id'])) {
             <div class="table-responsive">
                 <form id="gradesForm" action="<?php htmlspecialchars($_SERVER['PHP_SELF']) ?>" method="post">
                     <input type="hidden" name="subject_id" value="<?php echo htmlspecialchars($subject); ?>">
+                    <input type="hidden" name="sy_id" value="<?php echo htmlspecialchars($sy); ?>">
                     <table class="table table-hover">
                         <thead>
                             <th>Student Name</th>
