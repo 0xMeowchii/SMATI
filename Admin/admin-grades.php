@@ -65,7 +65,8 @@
                                 echo "<td>" . $row["course"] . "</td>";
                                 echo "<td>" . $row["email"] . "</td>";
                                 echo "<td>
-                                        <a class='btn btn-sm btn-outline-primary'>
+                                        <a class='btn btn-sm btn-outline-primary'
+                                        href='admin-grades-view.php?id=".$row['student_id']."'>
                                          <i class='fas fa-eye me-1'></i>View
                                         </a>
                                     </td>";

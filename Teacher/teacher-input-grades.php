@@ -19,6 +19,23 @@ if (isset($_GET['student_set']) && isset($_GET['subject_id'])) {
         }
     }
 }
+
+$conn = connectToDB();
+$sql = "SELECT * 
+        FROM subjects s
+        INNER JOIN schoolyear sy ON sy.schoolyear_id = s.schoolyear_id
+        WHERE s.subject_id = ? AND s.schoolyear_id = ?";
+$stmt = $conn->prepare($sql);
+$stmt->bind_param("ii", $_GET['subject_id'], $_GET['sy']);
+$stmt->execute();
+$result = $stmt->get_result();
+$details = array();
+if ($result->num_rows > 0) {
+    while ($row = $result->fetch_assoc()) {
+        $details[] = $row;
+    }
+}
+
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -50,9 +67,11 @@ if (isset($_GET['student_set']) && isset($_GET['subject_id'])) {
         <div class="container">
             <div class="table-header">
                 <div class="row align-items-center">
+                    <?php foreach($details as $detail): ?>
                     <div class="col-md-6">
-                        <h5>All Students</h5>
+                        <h5>All Students > <?php echo $detail['subject']." - " . $detail['schoolyear'] . ", " . $detail['semester'] . " Semester"; ?></h5>
                     </div>
+                    <?php endforeach; ?>
                     <div class="col-md-6">
                         <div class="input-group mb-3">
                             <input type="text" class="form-control" id="searchInput" placeholder="Search Students...">
@@ -149,7 +168,7 @@ if (isset($_GET['student_set']) && isset($_GET['subject_id'])) {
                                 allowOutsideClick: false,
                                 didOpen: () => {
                                     Swal.showLoading();
-                                    setTimeout(() => window.location.href = 'teacher-student-list.php?subject_id=" . urlencode($subject_id) . "&sy=".urlencode($sy)."', 1000);
+                                    setTimeout(() => window.location.href = 'teacher-student-list.php?subject_id=" . urlencode($subject_id) . "&sy=" . urlencode($sy) . "', 1000);
                                 }
                             });
                         }

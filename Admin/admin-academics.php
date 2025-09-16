@@ -262,17 +262,9 @@
                     <div class="modal-body">
                         <form method="post" action="<?php htmlspecialchars($_SERVER['PHP_SELF']) ?>">
                             <div class="row g-3">
-                                <div class="col-md-6">
+                                <div class="col">
                                     <label class="form-label">Subject Name</label>
                                     <input type="text" class="form-control" id="subjectname" name="subjectname" required>
-                                </div>
-                                <div class="col-md-6">
-                                    <label class="form-label">Course</label>
-                                    <select class="form-select" id="course" name="course" required>
-                                        <option value="">Select Course</option>
-                                        <option value="BSIT">BSIT</option>
-                                        <option value="BSHM">BSHM</option>
-                                    </select>
                                 </div>
                                 <div>
                                     <label class="form-label">Assign a Teacher</label>

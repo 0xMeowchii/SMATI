@@ -1,5 +1,5 @@
 <?php
-    session_name('STUDENT');
+    session_name('TEACHER');
     session_start();
     session_unset();
     session_destroy();
