@@ -14,7 +14,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- SweetAlert2 -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
-    <link rel="stylesheet" href="../Student/student.css">
+    <link rel="stylesheet" href="./student.css">
 </head>
 
 <body>
@@ -23,7 +23,14 @@
 
     <main class="main-content">
         <div class="page-header">
-            <h4><i class="fas fa-user me-2"></i>My Grades</h4>
+            <div class="col-md">
+                <h4><i class="fas fa-user me-2"></i>My Grades</h4>
+            </div>
+            <div class="col-md-2">
+                <a class="link-underline link-underline-opacity-0" href="student-concern-form.php?id=<?php echo $_SESSION['id'] ?>">
+                    <i class="fas fa-edit me-1"></i>Submit Concern
+                </a>
+            </div>
         </div>
 
         <div class="container">
@@ -57,10 +64,10 @@
                             // output data of each row
                             while ($row = $result->fetch_assoc()) {
                                 echo "<tr>";
-                                echo "<td>" .$row['schoolyear']. ", ".$row['semester']. " Semester"."</td>";
+                                echo "<td>" . $row['schoolyear'] . ", " . $row['semester'] . " Semester" . "</td>";
                                 echo "<td>
                                         <a class='btn btn-sm btn-outline-primary'
-                                         href='student-grades-list.php?sy=".$row['schoolyear_id']."'>
+                                         href='student-grades-list.php?sy=" . $row['schoolyear_id'] . "'>
                                         <i class='fas fa-eye me-2'></i>View
                                         </a>
                                         </td>";

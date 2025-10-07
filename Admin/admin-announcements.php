@@ -34,24 +34,18 @@ include '../database.php';
             </div>
         </div>
 
-        <!-- query -->
         <?php
 
         //INSERT QUERY
         if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnAdd'])) {
             $conn = connectToDB();
-            $firstname = $_POST['firstname'];
-            $lastname = $_POST['lastname'];
-            $email = $_POST['email'];
-            $course = $_POST['set'];
-            $username = $_POST['username'];
-            $password = $_POST['password'];
-            $status = '1';
+            $title = $_POST['title'];
+            $details = $_POST['details'];
 
             if ($conn) {
-                $stmt = $conn->prepare("INSERT INTO students (firstname, lastname, email, course, username, password, status) 
-                                            VALUES (?, ?, ?, ?, ?, ?,?)");
-                $stmt->bind_param("sssssss", $firstname, $lastname, $email, $course, $username, $password, $status);
+                $stmt = $conn->prepare("INSERT INTO announcements (title, details) 
+                                            VALUES (?, ?)");
+                $stmt->bind_param("ss", $title, $details);
 
                 if ($stmt->execute()) {
                     echo "<script>
@@ -59,7 +53,7 @@ include '../database.php';
                                 Swal.fire({
                                     icon: 'success',
                                     title: 'Success!',
-                                    text: 'Student Added Successfully!',
+                                    text: 'Announcement Created Successfully!',
                                     timer: 2000,
                                     showConfirmButton: false
                                 });
@@ -83,27 +77,19 @@ include '../database.php';
             }
         }
 
-        //UPDATE QUERY
+         //UPDATE QUERY
         if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnEdit'])) {
             $conn = connectToDB();
-            $student_id = $_POST['editId'];
-            $firstname = $_POST['editFname'];
-            $lastname = $_POST['editLname'];
-            $email = $_POST['editEmail'];
-            $course = $_POST['editCourse'];
-            $username = $_POST['editUsername'];
-            $password = $_POST['editPassword'];
+            $announcement_id = $_POST['editId'];
+            $title = $_POST['editTitle'];
+            $details = $_POST['editDetails'];
 
             if ($conn) {
-                $stmt = $conn->prepare("UPDATE students 
-                                        SET firstname=?,
-                                            lastname=?,
-                                            email=?,
-                                            course=?,
-                                            username=?,
-                                            password=?
-                                        WHERE student_id=?");
-                $stmt->bind_param("ssssssi", $firstname, $lastname, $email, $course, $username, $password, $student_id);
+                $stmt = $conn->prepare("UPDATE announcements 
+                                        SET title=?,
+                                            details=?
+                                        WHERE announcement_id=?");
+                $stmt->bind_param("ssi", $title, $details, $announcement_id);
 
                 if ($stmt->execute()) {
                     echo "<script>
@@ -111,7 +97,7 @@ include '../database.php';
                                 Swal.fire({
                                     icon: 'success',
                                     title: 'Success!',
-                                    text: 'Student Updated Successfully!',
+                                    text: 'Announcement Updated Successfully!',
                                     timer: 2000,
                                     showConfirmButton: false
                                 });
@@ -132,14 +118,14 @@ include '../database.php';
             }
         }
 
-        //DROP QUERY
-        if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnDrop'])) {
+         //DELETE QUERY
+        if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnDelete'])) {
             $conn = connectToDB();
-            $student_id = $_POST['studentId'];
+            $announcement_id = $_POST['id'];
 
             if ($conn) {
-                $stmt = $conn->prepare("UPDATE students SET status = '0' WHERE student_id=?");
-                $stmt->bind_param("i", $student_id);
+                $stmt = $conn->prepare("DELETE FROM announcements WHERE announcement_id=?");
+                $stmt->bind_param("i", $announcement_id);
 
                 if ($stmt->execute()) {
                     echo "<script>
@@ -147,7 +133,7 @@ include '../database.php';
                                 Swal.fire({
                                     icon: 'success',
                                     title: 'Success!',
-                                    text: 'Student Drop Successfully!',
+                                    text: 'Announcement Deleted Successfully!',
                                     timer: 2000,
                                     showConfirmButton: false
                                 });
@@ -163,15 +149,14 @@ include '../database.php';
                             });
                         </script>";
                 }
+
                 $stmt->close();
                 $conn->close();
             } else {
                 echo "<script>alert('Database connection failed');</script>";
             }
         }
-
         ?>
-
         <!-- Student Table -->
         <div class="container">
             <div class="table-header">
@@ -192,12 +177,55 @@ include '../database.php';
                 <table class="table table-hover">
                     <thead>
                         <tr>
+                            <th>Title</th>
                             <th>Details</th>
                             <th>Action</th>
                         </tr>
                     </thead>
                     <tbody>
+                        <?php
+                        $conn = connectToDB();
+                        $sql = "SELECT * FROM announcements";
+                        $result = $conn->query($sql);
 
+                        if ($result && $result->num_rows > 0) {
+                            // output data of each row
+                            while ($row = $result->fetch_assoc()) {
+                                echo "<tr>";
+                                echo "<td>" . $row["title"] . "</td>";
+                                echo "<td>" . $row["details"] . "</td>";
+                                echo "<td>
+                                                <a class='btn btn-sm btn-outline-primary me-1 view-announcement-btn'
+                                                data-id='" . $row["announcement_id"] . "'
+                                                data-title='" . $row["title"] . "'
+                                                data-details='" . $row["details"] . "'
+                                                data-bs-toggle='modal' 
+                                                data-bs-target='#view-announcement-modal'>
+                                                    <i class='fas fa-eye'></i>
+                                                </a>
+
+                                                <a class='btn btn-sm btn-outline-secondary me-1 edit-announcement-btn'
+                                                data-id='" . $row["announcement_id"] . "'
+                                                data-title='" . $row["title"] . "'
+                                                data-details='" . $row["details"] . "'
+                                                data-bs-toggle='modal' 
+                                                data-bs-target='#edit-announcement-modal'>
+                                                    <i class='fas fa-edit'></i>
+                                                </a>
+
+                                                <a class='btn btn-sm btn-outline-danger me-1 drop-announcement-btn'
+                                                data-id='" . $row["announcement_id"] . "'
+                                                data-bs-toggle='modal' 
+                                                data-bs-target='#drop-announcement-modal'>
+                                                    <i class='fas fa-trash'></i>
+                                                </a>
+                                              </td>";
+                                echo "</tr>";
+                            }
+                        } else {
+                            echo "0 results";
+                        }
+                        ?>
                     </tbody>
                 </table>
             </div>
@@ -216,7 +244,11 @@ include '../database.php';
                             <div class="row g-3">
                                 <h4 class="pb-2 border-bottom">Announcement Details</h4>
                                 <div class="form-floating">
-                                    <textarea class="form-control" placeholder="Details" id="floatingTextarea2" style="height: 120px"></textarea>
+                                    <input class="form-control" placeholder="Title" id="floatingTextarea1" name="title"></input>
+                                    <label for="floatingTextarea1">Title</label>
+                                </div>
+                                <div class="form-floating">
+                                    <textarea class="form-control" placeholder="Details" id="floatingTextarea2" style="height: 120px" name="details"></textarea>
                                     <label for="floatingTextarea2">Details</label>
                                 </div>
                             </div>
@@ -229,66 +261,107 @@ include '../database.php';
                 </div>
             </div>
         </div>
+
+        <!-- View Announcement Modal -->
+        <div class="modal fade" id="view-announcement-modal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header bg-primary text-white">
+                        <h5 class="modal-title" id="studentModalTitle">View Announcement</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                            <div class="row g-3">
+                                <h4 class="pb-2 border-bottom">Announcement Details</h4>
+                               <?php
+                                echo "<p><strong>Title: </strong><span id='viewAnnouncementTitle'></span></p>
+                                    <p><strong>Details: </strong><span id='viewAnnouncementDetails'></span></p>";
+                                ?>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                            </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Edit Announcement Modal -->
+        <div class="modal fade" id="edit-announcement-modal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header bg-primary text-white">
+                        <h5 class="modal-title" id="studentModalTitle">Edit Announcement</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form action="<?php htmlspecialchars($_SERVER['PHP_SELF']) ?>" method="POST">
+                            <input type="hidden" name="editId" id="editId">
+                            <div class="row g-3">
+                                <h4 class="pb-2 border-bottom">Announcement Details</h4>
+                                <div class="form-floating">
+                                    <input class="form-control" placeholder="Title" id="editTitle" name="editTitle"></input>
+                                    <label for="editTitle">Title</label>
+                                </div>
+                                <div class="form-floating">
+                                    <textarea class="form-control" placeholder="Details" id="editDetails" style="height: 120px" name="editDetails"></textarea>
+                                    <label for="editDetails">Details</label>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                <button type="submit" class="btn btn-primary" name="btnEdit">Update</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Delete Announcement Modal -->
+        <div class="modal fade" id="drop-announcement-modal" tabindex="-1" role="dialog" aria-labelledby="drop-announcement-modal" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="drop-announcement-modal">Confirm Delete</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        Are you sure you want to delete this Announcement?
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">No</button>
+                        <form action="<?php htmlspecialchars($_SERVER['PHP_SELF']) ?>" method="post">
+                            <input type="hidden" name="id" id="id">
+                            <button type="submit" class="btn btn-danger" name="btnDelete">Yes</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
     </main>
-    
+
     <!-- Bootstrap JS Bundle with Popper -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
-        document.querySelectorAll('.view-student-btn').forEach(function(btn) {
+        document.querySelectorAll('.view-announcement-btn').forEach(function(btn) {
             btn.addEventListener('click', function() {
-                document.getElementById('modalStudentId').textContent = btn.getAttribute('data-id');
-                document.getElementById('modalStudentName').textContent = btn.getAttribute('data-name');
-                document.getElementById('modalStudentCourse').textContent = btn.getAttribute('data-course');
-                document.getElementById('modalStudentEmail').textContent = btn.getAttribute('data-email');
-                document.getElementById('modalStudentUsername').textContent = btn.getAttribute('data-username');
-                document.getElementById('createdAt').textContent = btn.getAttribute('data-createdAt');
+                document.getElementById('viewAnnouncementTitle').textContent = btn.getAttribute('data-title');
+                document.getElementById('viewAnnouncementDetails').textContent = btn.getAttribute('data-details');
             });
         });
-        document.querySelectorAll('.edit-student-btn').forEach(function(btn) {
+        document.querySelectorAll('.edit-announcement-btn').forEach(function(btn) {
             btn.addEventListener('click', function() {
                 document.getElementById('editId').value = btn.getAttribute('data-id');
-                document.getElementById('editFname').value = btn.getAttribute('data-fname');
-                document.getElementById('editLname').value = btn.getAttribute('data-lname');
-                document.getElementById('editEmail').value = btn.getAttribute('data-email');
-                document.getElementById('editCourse').value = btn.getAttribute('data-course');
-                document.getElementById('editUsername').value = btn.getAttribute('data-username');
-                document.getElementById('editPassword').value = btn.getAttribute('data-password');
+                document.getElementById('editTitle').value = btn.getAttribute('data-title');
+                document.getElementById('editDetails').value = btn.getAttribute('data-details');
             });
         });
 
-        document.querySelectorAll('.drop-student-btn').forEach(function(btn) {
+        document.querySelectorAll('.drop-announcement-btn').forEach(function(btn) {
             btn.addEventListener('click', function() {
-                document.getElementById('studentId').value = btn.getAttribute('data-id');
-            });
-        });
-
-        document.addEventListener('DOMContentLoaded', function() {
-            const passwordToggle = document.getElementById('password-toggle');
-            const passwordInput = document.getElementById('editPassword');
-
-            // Touch support for mobile devices
-            passwordToggle.addEventListener('touchstart', function(e) {
-                e.preventDefault();
-                passwordInput.type = 'text';
-            });
-
-            passwordToggle.addEventListener('touchend', function(e) {
-                e.preventDefault();
-                passwordInput.type = 'password';
-            });
-
-            // Change icon when revealing password
-            passwordToggle.addEventListener('mousedown', function() {
-                this.innerHTML = '<i class="fas fa-eye-slash"></i>';
-            });
-
-            passwordToggle.addEventListener('mouseup', function() {
-                this.innerHTML = '<i class="fas fa-eye"></i>';
-            });
-
-            passwordToggle.addEventListener('mouseleave', function() {
-                this.innerHTML = '<i class="fas fa-eye"></i>';
+                document.getElementById('id').value = btn.getAttribute('data-id');
             });
         });
 
@@ -338,7 +411,7 @@ include '../database.php';
                 <td colspan="5" class="text-center py-4" style="color: #6c757d;">
                     <i class="fas fa-search mb-2" style="font-size: 2em; opacity: 0.5;"></i>
                     <br>
-                    No students found matching your search
+                    No Announcement found matching your search
                 </td>
             `;
                     tableBody.appendChild(noResultsRow);

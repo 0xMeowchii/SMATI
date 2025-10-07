@@ -21,7 +21,34 @@
     <?php include('sidebar.php'); ?>
 
     <main class="main-content">
+        <div class="page-header">
+            <h1 class="page-title"><i class="fas fa-tachometer-alt me-2"></i>Dashboard Overview</h1>
+        </div>
 
+        <div class="card shadow">
+            <div class="card-header d-flex justify-content-between align-items-center fw-bold bg-primary text-white">
+                <h5 class="mb-0"><i class="fas fa-list me-2"></i>All Concerns</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Reference #</th>
+                                <th>Name</th>
+                                <th>Section</th>
+                                <th>Type</th>
+                                <th>Status</th>
+                                <th>Date</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
     </main>
 </body>
 

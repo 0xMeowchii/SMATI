@@ -135,7 +135,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnDelete'])) {
                 <table class="table table-hover">
                     <thead>
                         <th>Set</th>
-                        <th>Total Student</th>
                         <th>Action</th>
                     </thead>
                     <tbody>
@@ -157,7 +156,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnDelete'])) {
                             while ($row = $result->fetch_assoc()) {
                                 echo "<tr>";
                                 echo "<td>" . $row["student_set"] . "</td>";
-                                echo "<td>" . $row["total"] . "</td>";
                                 echo "<td>
                                       <a class='btn btn-sm btn-outline-primary' 
                                       href='teacher-input-grades.php?student_set=" . $row['student_set'] . "&subject_id=" . $subject . 

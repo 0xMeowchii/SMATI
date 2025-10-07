@@ -23,7 +23,7 @@ $current_page = basename($_SERVER['PHP_SELF']);
             <a class="nav-link <?php echo ($current_page == 'student-grades.php') ? 'active' : ''; ?>" href="student-grades.php">
                 <i class="fa fa-book"></i>My Grades
             </a>
-        </li> 
+        </li>
         <li class="nav-item mt-3">
             <a class="nav-link text-danger" id="logoutBtn">
                 <i class="fas fa-sign-out-alt"></i>Logout
