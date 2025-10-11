@@ -6,7 +6,7 @@ function getTodaySubmissionsCount($student_id) {
     $today = date('Y-m-d');
 
     $sql = "SELECT COUNT(*) as count FROM concern 
-            WHERE student_id = ? AND DATE(createdAt) = ?";
+            WHERE student_id = ? AND DATE(concern_date) = ?";
     $stmt = $conn->prepare($sql);
     $stmt->bind_param("is", $student_id, $today);
     $stmt->execute();

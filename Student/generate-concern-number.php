@@ -11,7 +11,7 @@ if (isset($_GET['student_id'])) {
         $year = date('Y');
         
         // Count total concerns for this year to generate sequential number
-        $sql = "SELECT COUNT(*) as count FROM concern WHERE YEAR(createdAt) = ?";
+        $sql = "SELECT COUNT(*) as count FROM concern WHERE YEAR(concern_date) = ?";
         $stmt = $conn->prepare($sql);
         $stmt->bind_param("s", $year);
         $stmt->execute();

@@ -22,7 +22,7 @@ function getTodaySubmissionsCount($student_id)
     $today = date('Y-m-d');
 
     $sql = "SELECT COUNT(*) as count FROM concern 
-            WHERE student_id = ? AND DATE(createdAt) = ?";
+            WHERE student_id = ? AND DATE(concern_date) = ?";
     $stmt = $conn->prepare($sql);
     $stmt->bind_param("is", $student_id, $today);
     $stmt->execute();
@@ -410,13 +410,14 @@ function getTodaySubmissionsCount($student_id)
         $teacher_id = $_POST['teacher'];
         $concernType = $_POST['concernType'];
         $details = $_POST['concernDetails'];
+        $status = "Pending";
         $concernNumber = $_POST['concernNumber'];
 
         if ($conn) {
             // Insert with created_at
-            $stmt = $conn->prepare("INSERT INTO concern (student_id, section, email, teacher_id, type, details, reference_num, createdAt) 
-                                VALUES (?, ?, ?, ?, ?, ?, ?, NOW())");
-            $stmt->bind_param("ississs", $student_id, $section, $email, $teacher_id, $concernType, $details, $concernNumber);
+            $stmt = $conn->prepare("INSERT INTO concern (student_id, section, email, teacher_id, type, details, reference_num, concern_status, concern_date) 
+                                VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())");
+            $stmt->bind_param("ississss", $student_id, $section, $email, $teacher_id, $concernType, $details, $concernNumber, $status);
 
             if ($stmt->execute()) {
                 // Success handling...
@@ -583,58 +584,6 @@ function getTodaySubmissionsCount($student_id)
                                 Limit: 2 concerns per day
                             </div>
                         </form>
-
-                        <!-- PDF Ticket Preview (initially hidden) -->
-                        <div class="ticket-preview mt-4" id="ticketPreview">
-                            <div class="ticket-header">
-                                <h4 class="text-primary mb-2">SMATI Concern Ticket</h4>
-                                <p class="text-muted">Your concern has been registered successfully</p>
-                            </div>
-
-                            <div class="ticket-body">
-                                <div class="ticket-field">
-                                    <div class="ticket-label">Reference Number</div>
-                                    <div class="ticket-value fw-bold" id="ticketRef">SMATI2025-01</div>
-                                </div>
-
-                                <div class="ticket-field">
-                                    <div class="ticket-label">Date Submitted</div>
-                                    <div class="ticket-value" id="ticketDate">May 15, 2023</div>
-                                </div>
-
-                                <div class="ticket-field">
-                                    <div class="ticket-label">Name</div>
-                                    <div class="ticket-value" id="ticketName">John Doe</div>
-                                </div>
-
-                                <div class="ticket-field">
-                                    <div class="ticket-label">Section</div>
-                                    <div class="ticket-value" id="ticketSection">BSIT-3A</div>
-                                </div>
-
-                                <div class="ticket-field">
-                                    <div class="ticket-label">Email</div>
-                                    <div class="ticket-value" id="ticketEmail">john.doe@example.com</div>
-                                </div>
-
-                                <div class="ticket-field">
-                                    <div class="ticket-label">Concern Type</div>
-                                    <div class="ticket-value" id="ticketType">Grades</div>
-                                </div>
-
-                                <div class="ticket-field" style="grid-column: span 2;">
-                                    <div class="ticket-label">Concern Details</div>
-                                    <div class="ticket-value" id="ticketDetails">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam auctor, nisl eu ultricies lacinia, nunc nisl aliquam nisl, eu aliquam nisl nunc eu nisl.</div>
-                                </div>
-                            </div>
-
-                            <div class="ticket-footer">
-                                <p>Thank you for submitting your concern. We will address it shortly.</p>
-                                <button class="btn btn-primary download-btn" id="downloadTicket">
-                                    <i class="fas fa-download me-1"></i> Download Ticket as PDF
-                                </button>
-                            </div>
-                        </div>
                     </div>
                 </div>
 
