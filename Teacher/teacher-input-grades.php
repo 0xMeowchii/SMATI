@@ -61,7 +61,7 @@ if ($result->num_rows > 0) {
 
     <main class="main-content">
         <div class="page-header">
-            <h4><i class="fas fa-user me-2"></i>My Subjects</h4>
+            <h4><i class="fa fa-book me-2"></i>My Subjects</h4>
         </div>
 
         <div class="container">

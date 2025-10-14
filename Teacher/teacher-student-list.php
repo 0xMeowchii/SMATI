@@ -108,7 +108,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnDelete'])) {
 
     <main class="main-content">
         <div class="page-header">
-            <h4><i class="fas fa-user me-2"></i>My Subjects</h4>
+            <h4><i class="fa fa-book me-2"></i>My Subjects</h4>
             <div class="action-buttons">
                 <button class="btn btn-primary" id="add-student-list-btn" data-bs-toggle="modal" data-bs-target="#add-student-list-modal">
                     <i class="fas fa-plus me-1"></i>Create Class
