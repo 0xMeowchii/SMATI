@@ -2,6 +2,8 @@
 session_name('ADMIN');
 session_start();
 include('../database.php');
+include '../includes/activity_logger.php';
+date_default_timezone_set('Asia/Manila');
 
 $errors = [];
 $showSuccess = false;
@@ -32,9 +34,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnLogin'])) {
         if ($user) {
             if ($password === $user['password']) {
 
-                $_SESSION['id'] = $user['id'];
+                $_SESSION['id'] = $user['admin_id'];
                 $_SESSION['username'] = $user['username'];
-                $_SESSION['logged_in'] = true;
+                $_SESSION['user_type'] = 'admin';
+
+                $date = new DateTime();
+                $_SESSION['last_login'] = $date->format('m-d-Y h:i A');
+
+                logActivity($conn, $user['admin_id'], 'admin', 'LOGIN', "logged in to the system.");
 
                 $showSuccess = true;
             } else {
@@ -294,7 +301,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnLogin'])) {
                 });
             <?php endif; ?>
         });
-        
     </script>
 </body>
 

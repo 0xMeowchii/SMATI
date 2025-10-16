@@ -23,7 +23,7 @@
 
     <main class="main-content">
         <div class="page-header">
-            <h4><i class="fas fa-user me-2"></i>Student Grades</h4>
+            <h4><i class="fa fa-file me-2"></i>Student Grades</h4>
         </div>
 
         <div class="container">

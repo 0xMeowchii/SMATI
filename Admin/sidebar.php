@@ -1,7 +1,7 @@
 <?php
 session_name('ADMIN');
 session_start();
-if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
+if (!isset($_SESSION['user_type']) || $_SESSION['user_type'] !== 'admin') {
     header("Location: admin-login.php");
     exit();
 }

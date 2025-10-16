@@ -1,5 +1,6 @@
 <?php
 include '../database.php';
+include '../includes/activity_logger.php';
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -54,6 +55,8 @@ include '../database.php';
                 $stmt->bind_param("sssssss", $firstname, $lastname, $email, $department, $username, $password, $status);
 
                 if ($stmt->execute()) {
+                    $teachername = $lastname . ', ' . $firstname;
+                    logActivity($conn, $_SESSION['id'], $_SESSION['user_type'], 'CREATE_TEACHER', "Created teacher account: $teachername (Department: $department)");
                     echo "<script>
                             document.addEventListener('DOMContentLoaded', function() {
                                 Swal.fire({
@@ -86,7 +89,7 @@ include '../database.php';
         //UPDATE QUERY
         if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnEdit'])) {
             $conn = connectToDB();
-            $student_id = $_POST['editId'];
+            $teacher_id = $_POST['editId'];
             $firstname = $_POST['editFname'];
             $lastname = $_POST['editLname'];
             $email = $_POST['editEmail'];
@@ -103,9 +106,12 @@ include '../database.php';
                                             username=?,
                                             password=?
                                         WHERE teacher_id=?");
-                $stmt->bind_param("ssssssi", $firstname, $lastname, $email, $department, $username, $password, $student_id);
+                $stmt->bind_param("ssssssi", $firstname, $lastname, $email, $department, $username, $password, $teacher_id);
 
                 if ($stmt->execute()) {
+
+                    logActivity($conn, $_SESSION['id'], $_SESSION['user_type'], 'UPDATE_TEACHER', "Updated teacher account: Teacher ID = $teacher_id");
+
                     echo "<script>
                             document.addEventListener('DOMContentLoaded', function() {
                                 Swal.fire({
@@ -142,6 +148,9 @@ include '../database.php';
                 $stmt->bind_param("i", $teacher_id);
 
                 if ($stmt->execute()) {
+
+                    logActivity($conn, $_SESSION['id'], $_SESSION['user_type'], 'DROP_TEACHER', "Drop teacher account: Teacher ID = $teacher_id");
+
                     echo "<script>
                             document.addEventListener('DOMContentLoaded', function() {
                                 Swal.fire({

@@ -35,7 +35,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnLogin'])) {
             } elseif ($password === $user['password']) {
                 $_SESSION['id'] = $user['teacher_id'];
                 $_SESSION['fullname'] = $user['lastname'] . ", " . $user['firstname'];
-                $_SESSION['logged_in'] = true;
+                $_SESSION['user_type'] = 'teacher';
                 $showSuccess = true;
             } else {
                 $errors[] = "Invalid username or password.";

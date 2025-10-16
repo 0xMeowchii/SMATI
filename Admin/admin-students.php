@@ -1,5 +1,6 @@
 <?php
 include '../database.php';
+include '../includes/activity_logger.php';
 ?>
 
 <!DOCTYPE html>
@@ -22,7 +23,9 @@ include '../database.php';
 
 <body>
     <!-- Sidebar -->
-    <?php include('sidebar.php'); ?>
+    <?php
+    include('sidebar.php');
+    ?>
 
     <main class="main-content">
         <div class="page-header">
@@ -54,6 +57,10 @@ include '../database.php';
                 $stmt->bind_param("sssssss", $firstname, $lastname, $email, $course, $username, $password, $status);
 
                 if ($stmt->execute()) {
+
+                    $studentName = $lastname . ', ' . $firstname;
+                    logActivity($conn, $_SESSION['id'], $_SESSION['user_type'], 'CREATE_STUDENT', "Created student account: $studentName (Set: $course)");
+
                     echo "<script>
                             document.addEventListener('DOMContentLoaded', function() {
                                 Swal.fire({
@@ -106,6 +113,9 @@ include '../database.php';
                 $stmt->bind_param("ssssssi", $firstname, $lastname, $email, $course, $username, $password, $student_id);
 
                 if ($stmt->execute()) {
+
+                    logActivity($conn, $_SESSION['id'], $_SESSION['user_type'], 'UPDATE_STUDENT', "Updated student account: Student ID = $student_id");
+
                     echo "<script>
                             document.addEventListener('DOMContentLoaded', function() {
                                 Swal.fire({
@@ -142,6 +152,9 @@ include '../database.php';
                 $stmt->bind_param("i", $student_id);
 
                 if ($stmt->execute()) {
+
+                    logActivity($conn, $_SESSION['id'], $_SESSION['user_type'], 'DROP_STUDENT', "Drop Student Account: Student ID = $student_id");
+
                     echo "<script>
                             document.addEventListener('DOMContentLoaded', function() {
                                 Swal.fire({
@@ -491,7 +504,7 @@ include '../database.php';
                 this.innerHTML = '<i class="fas fa-eye"></i>';
             });
         });
-        
+
         // Real-time search functionality for students table
         document.addEventListener('DOMContentLoaded', function() {
             const searchInput = document.getElementById('searchInput');

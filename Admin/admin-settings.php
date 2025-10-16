@@ -1,4 +1,7 @@
-<?php include('../database.php'); ?>
+<?php
+include('../database.php');
+include '../includes/activity_logger.php';
+?>
 <!DOCTYPE html>
 <html lang="en">
 
@@ -60,6 +63,9 @@
                 $stmt->bind_param("ss", $schoolyear, $semester);
 
                 if ($stmt->execute()) {
+
+                    logActivity($conn, $_SESSION['id'], $_SESSION['user_type'], 'CREATE_SCHOOLYEAR', "created new Schoolyear & Semester: $schoolyear, $semester Semester");
+
                     echo "<script>
                             document.addEventListener('DOMContentLoaded', function() {
                                 Swal.fire({
@@ -98,6 +104,9 @@
                 $stmt->bind_param("i", $schoolyear_id);
 
                 if ($stmt->execute()) {
+
+                    logActivity($conn, $_SESSION['id'], $_SESSION['user_type'], 'DELETE_SCHOOLYEAR', "deleted schoolyear & semester.");
+
                     echo "<script>
                             document.addEventListener('DOMContentLoaded', function() {
                                 Swal.fire({
@@ -137,6 +146,9 @@
                 $stmt->bind_param("i", $student_id);
 
                 if ($stmt->execute()) {
+
+                    logActivity($conn, $_SESSION['id'], $_SESSION['user_type'], 'RETRIEVE_ACCOUNT', "retrieved student account: Student ID = $student_id");
+
                     echo "<script>
                             document.addEventListener('DOMContentLoaded', function() {
                                 Swal.fire({
@@ -175,6 +187,9 @@
                 $stmt->bind_param("i", $teacher_id);
 
                 if ($stmt->execute()) {
+
+                    logActivity($conn, $_SESSION['id'], $_SESSION['user_type'], 'RETRIEVE_ACCOUNT', "retrieved teacher account: Teacher ID = $teacher_id");
+
                     echo "<script>
                             document.addEventListener('DOMContentLoaded', function() {
                                 Swal.fire({
@@ -213,6 +228,9 @@
                 $stmt->bind_param("i", $subject_id);
 
                 if ($stmt->execute()) {
+
+                    logActivity($conn, $_SESSION['id'], $_SESSION['user_type'], 'RETRIEVE_SUBJECT', "retrieved subject from the archive.");
+
                     echo "<script>
                             document.addEventListener('DOMContentLoaded', function() {
                                 Swal.fire({

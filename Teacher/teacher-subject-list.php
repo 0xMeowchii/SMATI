@@ -1,4 +1,7 @@
-<?php include('../database.php'); ?>
+<?php
+include('../database.php');
+include '../includes/activity_logger.php';
+?>
 <!DOCTYPE html>
 <html lang="en">
 
@@ -87,6 +90,7 @@
                 $stmt->bind_param("sisis", $subjectname, $teacher_id, $yearlevel, $schoolyear_id, $status);
 
                 if ($stmt->execute()) {
+                    logActivity($conn, $teacher_id, $_SESSION['user_type'], 'CREATE_SUBJECT', "Created subject: $subjectname");
                     echo "<script>
                     Swal.fire({
                         icon: 'success',
@@ -120,6 +124,7 @@
         if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnEdit'])) {
             $conn = connectToDB();
             $subject_id = $_POST['editId'];
+            $teacher_id = $_SESSION['id'];
             $subjectname = $_POST['editSubjectname'];
             $yearlevel = $_POST['editYearlevel'];
 
@@ -130,6 +135,9 @@
                 $stmt->bind_param("ssi", $subjectname, $yearlevel, $subject_id);
 
                 if ($stmt->execute()) {
+
+                    logActivity($conn, $teacher_id, $_SESSION['user_type'], 'UPDATE_SUBJECT', "Updated subject details: $subjectname");
+
                     echo "<script>
                     Swal.fire({
                         icon: 'success',
@@ -162,6 +170,7 @@
         //DROP QUERY
         if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnDrop'])) {
             $conn = connectToDB();
+            $teacher_id = $_SESSION['id'];
             $subject_id = $_POST['subjectId'];
 
             if ($conn) {
@@ -169,6 +178,9 @@
                 $stmt->bind_param("i", $subject_id);
 
                 if ($stmt->execute()) {
+
+                    logActivity($conn, $teacher_id, $_SESSION['user_type'], 'DROP_SUBJECT', "Drop a subject.");
+
                     echo "<script>
                     Swal.fire({
                         icon: 'success',

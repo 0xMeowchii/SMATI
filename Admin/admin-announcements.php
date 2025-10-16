@@ -1,5 +1,6 @@
 <?php
 include '../database.php';
+include '../includes/activity_logger.php';
 ?>
 
 <!DOCTYPE html>
@@ -26,7 +27,7 @@ include '../database.php';
 
     <main class="main-content">
         <div class="page-header">
-            <h4><i class="fas fa-user me-2"></i>Announcement Management</h4>
+            <h4><i class="fa fa-calendar me-2"></i>Announcement Management</h4>
             <div class="action-buttons">
                 <button class="btn btn-primary" id="add-announcement-btn" data-bs-toggle="modal" data-bs-target="#add-announcement-modal">
                     <i class="fas fa-plus me-1"></i>Add Announcement
@@ -43,11 +44,14 @@ include '../database.php';
             $details = $_POST['details'];
 
             if ($conn) {
-                $stmt = $conn->prepare("INSERT INTO announcements (title, details) 
-                                            VALUES (?, ?)");
+                $stmt = $conn->prepare("INSERT INTO announcements (title, details, createdAt) 
+                                            VALUES (?, ?, NOW())");
                 $stmt->bind_param("ss", $title, $details);
 
                 if ($stmt->execute()) {
+
+                    logActivity($conn, $_SESSION['id'], $_SESSION['user_type'], 'CREATE_ANNOUNCEMENT', "created new announcement. Check the Recent Announcement Board.");
+
                     echo "<script>
                             document.addEventListener('DOMContentLoaded', function() {
                                 Swal.fire({
@@ -77,7 +81,7 @@ include '../database.php';
             }
         }
 
-         //UPDATE QUERY
+        //UPDATE QUERY
         if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnEdit'])) {
             $conn = connectToDB();
             $announcement_id = $_POST['editId'];
@@ -92,6 +96,9 @@ include '../database.php';
                 $stmt->bind_param("ssi", $title, $details, $announcement_id);
 
                 if ($stmt->execute()) {
+
+                    logActivity($conn, $_SESSION['id'], $_SESSION['user_type'], 'UPDATE_ANNOUNCEMENT', "updated announcement details. Check the Recent Announcement Board.");
+
                     echo "<script>
                             document.addEventListener('DOMContentLoaded', function() {
                                 Swal.fire({
@@ -118,7 +125,7 @@ include '../database.php';
             }
         }
 
-         //DELETE QUERY
+        //DELETE QUERY
         if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnDelete'])) {
             $conn = connectToDB();
             $announcement_id = $_POST['id'];
@@ -128,6 +135,9 @@ include '../database.php';
                 $stmt->bind_param("i", $announcement_id);
 
                 if ($stmt->execute()) {
+
+                    logActivity($conn, $_SESSION['id'], $_SESSION['user_type'], 'DELETE_ANNOUNCEMENT', "deleted an announcement.");
+
                     echo "<script>
                             document.addEventListener('DOMContentLoaded', function() {
                                 Swal.fire({
@@ -177,9 +187,9 @@ include '../database.php';
                 <table class="table table-hover">
                     <thead>
                         <tr>
-                            <th>Title</th>
-                            <th>Details</th>
-                            <th>Action</th>
+                            <th class="col-3">Title</th>
+                            <th class="col-7">Details</th>
+                            <th class="col-2">Action</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -271,16 +281,16 @@ include '../database.php';
                         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
-                            <div class="row g-3">
-                                <h4 class="pb-2 border-bottom">Announcement Details</h4>
-                               <?php
-                                echo "<p><strong>Title: </strong><span id='viewAnnouncementTitle'></span></p>
+                        <div class="row g-3">
+                            <h4 class="pb-2 border-bottom">Announcement Details</h4>
+                            <?php
+                            echo "<p><strong>Title: </strong><span id='viewAnnouncementTitle'></span></p>
                                     <p><strong>Details: </strong><span id='viewAnnouncementDetails'></span></p>";
-                                ?>
-                            </div>
-                            <div class="modal-footer">
-                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                            </div>
+                            ?>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        </div>
                     </div>
                 </div>
             </div>

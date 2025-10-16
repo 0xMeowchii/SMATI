@@ -1,7 +1,7 @@
 <?php
 session_name('TEACHER');
 session_start();
-if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
+if (!isset($_SESSION['user_type']) || $_SESSION['user_type'] !== 'teacher') {
     header("Location: teacher-login.php");
     exit();
 }

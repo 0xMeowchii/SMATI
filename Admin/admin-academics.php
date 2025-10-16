@@ -1,4 +1,7 @@
-<?php include('../database.php'); ?>
+<?php
+include('../database.php');
+include '../includes/activity_logger.php';
+?>
 <!DOCTYPE html>
 <html lang="en">
 
@@ -49,6 +52,9 @@
                 $stmt->bind_param("ssisii", $subjectname, $course, $teacher_id, $yearlevel, $schoolyear_id, $subject_id);
 
                 if ($stmt->execute()) {
+
+                    logActivity($conn, $_SESSION['id'], $_SESSION['user_type'], 'UPDATE_SUBJECT', "Updated Subject Details: $subjectname");
+
                     echo "<script>
                             document.addEventListener('DOMContentLoaded', function() {
                                 Swal.fire({
@@ -79,12 +85,17 @@
         if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnDrop'])) {
             $conn = connectToDB();
             $subject_id = $_POST['subjectId'];
+            $subjectname = $_POST['dropSubjectname'];
+            $schoolyear = $_POST['dropSchoolyear'];
 
             if ($conn) {
                 $stmt = $conn->prepare("UPDATE subjects SET status = '0' WHERE subject_id=?");
                 $stmt->bind_param("i", $subject_id);
 
                 if ($stmt->execute()) {
+
+                    logActivity($conn, $_SESSION['id'], $_SESSION['user_type'], 'DROP_SUBJECT', "Drop Subject: $subjectname, $schoolyear");
+
                     echo "<script>
                             document.addEventListener('DOMContentLoaded', function() {
                                 Swal.fire({
@@ -162,10 +173,9 @@
                                 <a class='btn btn-sm btn-outline-primary me-1 view-subject-btn'
                                 data-name='" . $row['subject'] . "'
                                 data-teacher='" . $row['lastname'] . ", " . $row['firstname'] . "'
-                                data-course='" . $row['course'] . "'
                                 data-yearlevel='" . $row['yearlevel'] . "'
                                 data-schoolyear='" . $row['schoolyear'] . ", " . $row['semester'] . " Semester" . "'
-                                data-createdAt='" . $row['createdAt'] . "'
+                                data-createdAt='" . (new DateTime($row['subject_created']))->format('m-d-Y h:i A') . "'
                                 data-bs-toggle='modal' 
                                 data-bs-target='#viewSubjectModal'>
                                     <i class='fas fa-eye'></i>
@@ -185,6 +195,8 @@
 
                                 <a class='btn btn-sm btn-outline-danger me-1 drop-subject-btn'
                                 data-id='" . $row['subject_id'] . "'
+                                data-name='" . $row['subject'] . "'
+                                data-schoolyear='" . $row['schoolyear'] . ", " . $row['semester'] . " Semester" . "'
                                 data-bs-toggle='modal' 
                                  data-bs-target='#dropSubjectModal'>
                                     <i class='fas fa-trash'></i>
@@ -329,6 +341,8 @@
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">No</button>
                         <form action="<?php htmlspecialchars($_SERVER['PHP_SELF']) ?>" method="post">
                             <input type="hidden" name="subjectId" id="subjectId">
+                            <input type="hidden" name="dropSubjectname" id="dropSubjectname">
+                            <input type="hidden" name="dropSchoolyear" id="dropSchoolyear">
                             <button type="submit" class="btn btn-danger" name="btnDrop">Yes</button>
                         </form>
                     </div>
@@ -344,9 +358,8 @@
             btn.addEventListener('click', function() {
                 document.getElementById('modalSubjectName').textContent = btn.getAttribute('data-name');
                 document.getElementById('modalSubjectTeacher').textContent = btn.getAttribute('data-teacher');
-                document.getElementById('modalSubjectCourse').textContent = btn.getAttribute('data-course');
                 document.getElementById('modalSubjectYearlevel').textContent = btn.getAttribute('data-yearlevel');
-                document.getElementById('modalSubjectSchoolyear').textContent = btn.getAttribute('data-schoolyear')
+                document.getElementById('modalSubjectSchoolyear').textContent = btn.getAttribute('data-schoolyear');
                 document.getElementById('createdAt').textContent = btn.getAttribute('data-createdAt');
             });
         });
@@ -370,7 +383,9 @@
         });
         document.querySelectorAll('.drop-subject-btn').forEach(function(btn) {
             btn.addEventListener('click', function() {
+                document.getElementById('dropSubjectname').value = btn.getAttribute('data-name');
                 document.getElementById('subjectId').value = btn.getAttribute('data-id');
+                document.getElementById('dropSchoolyear').value = btn.getAttribute('data-schoolyear');
             });
         });
 

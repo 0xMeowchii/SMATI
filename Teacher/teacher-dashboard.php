@@ -368,129 +368,138 @@ include '../database.php';
             </div>
         </div>
 
-        <?php foreach ($concerns as $concern): ?>
-            <?php
-            // Determine badge class and icon based on status
-            $badge_class = '';
-            $status_icon = '';
-            $border_class = '';
+        <?php if (!empty($concerns)): ?>
+            <?php foreach ($concerns as $concern): ?>
+                <?php
+                // Determine badge class and icon based on status
+                $badge_class = '';
+                $status_icon = '';
+                $border_class = '';
 
-            switch ($concern['status']) {
-                case 'Pending':
-                    $badge_class = 'bg-warning text-dark';
-                    $status_icon = 'fa-clock';
-                    $border_class = 'border-warning';
-                    break;
-                case 'Approved':
-                    $badge_class = 'bg-success text-white';
-                    $status_icon = 'fa-check-circle';
-                    $border_class = 'border-success';
-                    break;
-                case 'Case Closed':
-                    $badge_class = 'bg-danger text-white';
-                    $status_icon = 'fa-archive';
-                    $border_class = 'border-danger';
-                    break;
-                default:
-                    $badge_class = 'bg-warning text-dark';
-                    $status_icon = 'fa-clock';
-                    $border_class = 'border-warning';
-            }
+                switch ($concern['status']) {
+                    case 'Pending':
+                        $badge_class = 'bg-warning text-dark';
+                        $status_icon = 'fa-clock';
+                        $border_class = 'border-warning';
+                        break;
+                    case 'Approved':
+                        $badge_class = 'bg-success text-white';
+                        $status_icon = 'fa-check-circle';
+                        $border_class = 'border-success';
+                        break;
+                    case 'Case Closed':
+                        $badge_class = 'bg-danger text-white';
+                        $status_icon = 'fa-archive';
+                        $border_class = 'border-danger';
+                        break;
+                    default:
+                        $badge_class = 'bg-warning text-dark';
+                        $status_icon = 'fa-clock';
+                        $border_class = 'border-warning';
+                }
 
-            // Determine button states and classes
-            $approve_disabled = ($concern['status'] == 'Approved' || $concern['status'] == 'Case Closed') ? 'disabled' : '';
-            $close_disabled = ($concern['status'] != 'Approved') ? 'disabled' : '';
+                // Determine button states and classes
+                $approve_disabled = ($concern['status'] == 'Approved' || $concern['status'] == 'Case Closed') ? 'disabled' : '';
+                $close_disabled = ($concern['status'] != 'Approved') ? 'disabled' : '';
 
-            $approve_class = $approve_disabled ? 'btn-outline-secondary' : 'btn-outline-success';
-            $close_class = $close_disabled ? 'btn-outline-secondary' : 'btn-outline-danger';
-            ?>
+                $approve_class = $approve_disabled ? 'btn-outline-secondary' : 'btn-outline-success';
+                $close_class = $close_disabled ? 'btn-outline-secondary' : 'btn-outline-danger';
+                ?>
 
-            <div class="card rounded-4 mb-4">
-                <div class="card-body rounded-start-4 border-start border-5 position-relative <?php echo $border_class; ?>">
-                    <div class="d-flex justify-content-between align-items-start mb-3">
-                        <div class="pt-3 mb-2">
-                            <div class="h5 text-primary fw-bold"><?php echo $concern['reference_num']; ?></div>
-                            <div class="text-muted small">Submitted on <?php echo $concern['date']; ?></div>
-                        </div>
-                        <div class="d-flex align-items-center">
-                            <span class="badge <?php echo $badge_class; ?> px-3 py-2">
-                                <i class="fas <?php echo $status_icon; ?> me-1"></i>
-                                <?php echo $concern['status']; ?>
-                            </span>
-                        </div>
-                    </div>
-
-                    <div class="badge bg-light text-primary px-3 py-2 mb-4">
-                        <i class="fas fa-tag me-1"></i><?php echo $concern['type']; ?>
-                    </div>
-
-                    <h5 class="card-title"><?php echo $concern['fullname']; ?></h5>
-
-                    <div class="card-text text-muted mb-3">
-                        <?php echo $concern['details']; ?>
-                    </div>
-
-                    <div class="d-flex justify-content-between align-items-center pt-3 border-top">
-                        <div class='position-relative d-inline-flex gap-1'>
-                            <!-- PDF Download Button - Always visible -->
-                            <a class='btn btn-sm btn-outline-primary download-pdf-btn'
-                                data-num='<?php echo $concern['reference_num']; ?>'
-                                data-name='<?php echo $concern['fullname']; ?>'
-                                data-section='<?php echo $concern['section']; ?>'
-                                data-email='<?php echo $concern['email']; ?>'
-                                data-type='<?php echo $concern['type']; ?>'
-                                data-status='<?php echo $concern['status']; ?>'
-                                data-details='<?php echo $concern['details']; ?>'
-                                data-date='<?php echo $concern['date']; ?>'>
-                                <i class='fas fa-download'></i>
-                            </a>
-
-                            <!-- Approve Button - Only show if not already approved/closed -->
-                            <?php if ($concern['status'] == 'Pending'): ?>
-                                <button class='btn btn-sm <?php echo $approve_class; ?> approve-concern-btn'
-                                    data-id='<?php echo $concern['concern_id']; ?>'
-                                    data-bs-toggle='modal'
-                                    data-bs-target='#approveConcernModal'>
-                                    <i class='fas fa-check'></i> Approve
-                                </button>
-                            <?php endif; ?>
-
-                            <!-- Close Button - Only show if approved but not closed -->
-                            <?php if ($concern['status'] == 'Approved'): ?>
-                                <button class='btn btn-sm <?php echo $close_class; ?> close-concern-btn'
-                                    data-id='<?php echo $concern['concern_id']; ?>'
-                                    data-bs-toggle='modal'
-                                    data-bs-target='#closeConcernModal'>
-                                    <i class='fas fa-times'></i> Close
-                                </button>
-                            <?php endif; ?>
-
-                            <!-- Show message for closed cases -->
-                            <?php if ($concern['status'] == 'Case Closed'): ?>
-                                <span class="badge bg-light text-muted px-2 py-2">
-                                    <i class="fas fa-lock me-1"></i> Case Closed
+                <div class="card rounded-4 mb-4">
+                    <div class="card-body rounded-start-4 border-start border-5 position-relative <?php echo $border_class; ?>">
+                        <div class="d-flex justify-content-between align-items-start mb-3">
+                            <div class="pt-3 mb-2">
+                                <div class="h5 text-primary fw-bold"><?php echo $concern['reference_num']; ?></div>
+                                <div class="text-muted small">Submitted on <?php echo $concern['date']; ?></div>
+                            </div>
+                            <div class="d-flex align-items-center">
+                                <span class="badge <?php echo $badge_class; ?> px-3 py-2">
+                                    <i class="fas <?php echo $status_icon; ?> me-1"></i>
+                                    <?php echo $concern['status']; ?>
                                 </span>
-                            <?php endif; ?>
+                            </div>
                         </div>
-                        <div>
-                            <button class="btn btn-sm btn-outline-primary view-concern-btn"
-                                data-num='<?php echo $concern['reference_num']; ?>'
-                                data-name='<?php echo $concern['fullname']; ?>'
-                                data-section='<?php echo $concern['section']; ?>'
-                                data-email='<?php echo $concern['email']; ?>'
-                                data-type='<?php echo $concern['type']; ?>'
-                                data-status='<?php echo $concern['status']; ?>'
-                                data-details='<?php echo $concern['details']; ?>'
-                                data-date='<?php echo $concern['date']; ?>'
-                                data-bs-toggle='modal'
-                                data-bs-target='#viewConcernModal'>
-                                <i class="fas fa-eye me-1"></i>View Details
-                            </button>
+
+                        <div class="badge bg-light text-primary px-3 py-2 mb-4">
+                            <i class="fas fa-tag me-1"></i><?php echo $concern['type']; ?>
+                        </div>
+
+                        <h5 class="card-title"><?php echo $concern['fullname']; ?></h5>
+
+                        <div class="card-text text-muted mb-3">
+                            <?php echo $concern['details']; ?>
+                        </div>
+
+                        <div class="d-flex justify-content-between align-items-center pt-3 border-top">
+                            <div class='position-relative d-inline-flex gap-1'>
+                                <!-- PDF Download Button - Always visible -->
+                                <a class='btn btn-sm btn-outline-primary download-pdf-btn'
+                                    data-num='<?php echo $concern['reference_num']; ?>'
+                                    data-name='<?php echo $concern['fullname']; ?>'
+                                    data-section='<?php echo $concern['section']; ?>'
+                                    data-email='<?php echo $concern['email']; ?>'
+                                    data-type='<?php echo $concern['type']; ?>'
+                                    data-status='<?php echo $concern['status']; ?>'
+                                    data-details='<?php echo $concern['details']; ?>'
+                                    data-date='<?php echo $concern['date']; ?>'>
+                                    <i class='fas fa-download'></i>
+                                </a>
+
+                                <!-- Approve Button - Only show if not already approved/closed -->
+                                <?php if ($concern['status'] == 'Pending'): ?>
+                                    <button class='btn btn-sm <?php echo $approve_class; ?> approve-concern-btn'
+                                        data-id='<?php echo $concern['concern_id']; ?>'
+                                        data-bs-toggle='modal'
+                                        data-bs-target='#approveConcernModal'>
+                                        <i class='fas fa-check'></i> Approve
+                                    </button>
+                                <?php endif; ?>
+
+                                <!-- Close Button - Only show if approved but not closed -->
+                                <?php if ($concern['status'] == 'Approved'): ?>
+                                    <button class='btn btn-sm <?php echo $close_class; ?> close-concern-btn'
+                                        data-id='<?php echo $concern['concern_id']; ?>'
+                                        data-bs-toggle='modal'
+                                        data-bs-target='#closeConcernModal'>
+                                        <i class='fas fa-times'></i> Close
+                                    </button>
+                                <?php endif; ?>
+
+                                <!-- Show message for closed cases -->
+                                <?php if ($concern['status'] == 'Case Closed'): ?>
+                                    <span class="badge bg-light text-muted px-2 py-2">
+                                        <i class="fas fa-lock me-1"></i> Case Closed
+                                    </span>
+                                <?php endif; ?>
+                            </div>
+                            <div>
+                                <button class="btn btn-sm btn-outline-primary view-concern-btn"
+                                    data-num='<?php echo $concern['reference_num']; ?>'
+                                    data-name='<?php echo $concern['fullname']; ?>'
+                                    data-section='<?php echo $concern['section']; ?>'
+                                    data-email='<?php echo $concern['email']; ?>'
+                                    data-type='<?php echo $concern['type']; ?>'
+                                    data-status='<?php echo $concern['status']; ?>'
+                                    data-details='<?php echo $concern['details']; ?>'
+                                    data-date='<?php echo $concern['date']; ?>'
+                                    data-bs-toggle='modal'
+                                    data-bs-target='#viewConcernModal'>
+                                    <i class="fas fa-eye me-1"></i>View Details
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
+            <?php endforeach; ?>
+        <?php else: ?>
+            <!-- No concerns found message -->
+            <div class="text-center py-5">
+                <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                <h4 class="text-muted">No Concerns Found</h4>
+                <p class="text-muted">There are no concerns to display at the moment.</p>
             </div>
-        <?php endforeach; ?>
+        <?php endif; ?>
     </main>
 
     <!-- View Concern Modal -->
