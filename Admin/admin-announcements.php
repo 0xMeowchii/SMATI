@@ -7,18 +7,7 @@ include '../includes/activity_logger.php';
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
-    <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- SweetAlert2 -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
-    <link rel="stylesheet" href="./admin.css">
+    <?php include 'includes/header.php' ?>
 </head>
 
 <body>
@@ -42,11 +31,12 @@ include '../includes/activity_logger.php';
             $conn = connectToDB();
             $title = $_POST['title'];
             $details = $_POST['details'];
+            $type = $_POST['type'];
 
             if ($conn) {
-                $stmt = $conn->prepare("INSERT INTO announcements (title, details, createdAt) 
-                                            VALUES (?, ?, NOW())");
-                $stmt->bind_param("ss", $title, $details);
+                $stmt = $conn->prepare("INSERT INTO announcements (title, details, type, createdAt) 
+                                            VALUES (?, ?, ?, NOW())");
+                $stmt->bind_param("sss", $title, $details, $type);
 
                 if ($stmt->execute()) {
 
@@ -87,13 +77,15 @@ include '../includes/activity_logger.php';
             $announcement_id = $_POST['editId'];
             $title = $_POST['editTitle'];
             $details = $_POST['editDetails'];
+            $type = $_POST['editType'];
 
             if ($conn) {
                 $stmt = $conn->prepare("UPDATE announcements 
                                         SET title=?,
-                                            details=?
+                                            details=?,
+                                            type=?
                                         WHERE announcement_id=?");
-                $stmt->bind_param("ssi", $title, $details, $announcement_id);
+                $stmt->bind_param("sssi", $title, $details, $type, $announcement_id);
 
                 if ($stmt->execute()) {
 
@@ -188,8 +180,9 @@ include '../includes/activity_logger.php';
                     <thead>
                         <tr>
                             <th class="col-3">Title</th>
-                            <th class="col-7">Details</th>
-                            <th class="col-2">Action</th>
+                            <th class="col-5">Details</th>
+                            <th class="col-2">Priority</th>
+                            <th class="col-3">Action</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -204,11 +197,13 @@ include '../includes/activity_logger.php';
                                 echo "<tr>";
                                 echo "<td>" . $row["title"] . "</td>";
                                 echo "<td>" . $row["details"] . "</td>";
+                                echo "<td>" . $row["type"] . "</td>";
                                 echo "<td>
                                                 <a class='btn btn-sm btn-outline-primary me-1 view-announcement-btn'
                                                 data-id='" . $row["announcement_id"] . "'
                                                 data-title='" . $row["title"] . "'
                                                 data-details='" . $row["details"] . "'
+                                                data-type='" . $row["type"] . "'
                                                 data-bs-toggle='modal' 
                                                 data-bs-target='#view-announcement-modal'>
                                                     <i class='fas fa-eye'></i>
@@ -218,6 +213,7 @@ include '../includes/activity_logger.php';
                                                 data-id='" . $row["announcement_id"] . "'
                                                 data-title='" . $row["title"] . "'
                                                 data-details='" . $row["details"] . "'
+                                                data-type='" . $row["type"] . "'
                                                 data-bs-toggle='modal' 
                                                 data-bs-target='#edit-announcement-modal'>
                                                     <i class='fas fa-edit'></i>
@@ -253,12 +249,20 @@ include '../includes/activity_logger.php';
                         <form action="<?php htmlspecialchars($_SERVER['PHP_SELF']) ?>" method="POST">
                             <div class="row g-3">
                                 <h4 class="pb-2 border-bottom">Announcement Details</h4>
-                                <div class="form-floating">
-                                    <input class="form-control" placeholder="Title" id="floatingTextarea1" name="title"></input>
-                                    <label for="floatingTextarea1">Title</label>
+                                <div class="col-12 col-md-8">
+                                    <div class="form-floating">
+                                        <input class="form-control" placeholder="Title" id="floatingTextarea1" name="title" required> </input>
+                                        <label for="floatingTextarea1">Title</label>
+                                    </div>
+                                </div>
+                                <div class="col-12 col-md-4">
+                                    <select class="form-control rounded-2" name="type" required>
+                                        <option value="Low">Priority: Low</option>
+                                        <option value="High">Priority: High</option>
+                                    </select>
                                 </div>
                                 <div class="form-floating">
-                                    <textarea class="form-control" placeholder="Details" id="floatingTextarea2" style="height: 120px" name="details"></textarea>
+                                    <textarea class="form-control" placeholder="Details" id="floatingTextarea2" style="height: 120px" name="details" required></textarea>
                                     <label for="floatingTextarea2">Details</label>
                                 </div>
                             </div>
@@ -285,7 +289,8 @@ include '../includes/activity_logger.php';
                             <h4 class="pb-2 border-bottom">Announcement Details</h4>
                             <?php
                             echo "<p><strong>Title: </strong><span id='viewAnnouncementTitle'></span></p>
-                                    <p><strong>Details: </strong><span id='viewAnnouncementDetails'></span></p>";
+                                    <p><strong>Details: </strong><span id='viewAnnouncementDetails'></span></p>
+                                    <p><strong>Priority: </strong><span id='viewAnnouncementPriority'></span></p>";
                             ?>
                         </div>
                         <div class="modal-footer">
@@ -309,9 +314,17 @@ include '../includes/activity_logger.php';
                             <input type="hidden" name="editId" id="editId">
                             <div class="row g-3">
                                 <h4 class="pb-2 border-bottom">Announcement Details</h4>
-                                <div class="form-floating">
-                                    <input class="form-control" placeholder="Title" id="editTitle" name="editTitle"></input>
-                                    <label for="editTitle">Title</label>
+                                <div class="col-12 col-md-8">
+                                    <div class="form-floating">
+                                        <input class="form-control" placeholder="Title" id="editTitle" name="editTitle"></input>
+                                        <label for="editTitle">Title</label>
+                                    </div>
+                                </div>
+                                <div class="col-12 col-md-4">
+                                    <select class="form-control rounded-2" name="editType" id="editType" required>
+                                        <option value="Low">Priority: Low</option>
+                                        <option value="High">Priority: High</option>
+                                    </select>
                                 </div>
                                 <div class="form-floating">
                                     <textarea class="form-control" placeholder="Details" id="editDetails" style="height: 120px" name="editDetails"></textarea>
@@ -359,6 +372,7 @@ include '../includes/activity_logger.php';
             btn.addEventListener('click', function() {
                 document.getElementById('viewAnnouncementTitle').textContent = btn.getAttribute('data-title');
                 document.getElementById('viewAnnouncementDetails').textContent = btn.getAttribute('data-details');
+                document.getElementById('viewAnnouncementPriority').textContent = btn.getAttribute('data-type');
             });
         });
         document.querySelectorAll('.edit-announcement-btn').forEach(function(btn) {
@@ -366,6 +380,7 @@ include '../includes/activity_logger.php';
                 document.getElementById('editId').value = btn.getAttribute('data-id');
                 document.getElementById('editTitle').value = btn.getAttribute('data-title');
                 document.getElementById('editDetails').value = btn.getAttribute('data-details');
+                document.getElementById('editType').value = btn.getAttribute('data-type');
             });
         });
 

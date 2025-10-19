@@ -34,6 +34,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnLogin'])) {
                 $errors[] = "This account has been deactivated.";
             } elseif ($password === $user['password']) {
                 $_SESSION['id'] = $user['student_id'];
+                $_SESSION['firstname'] = $user['firstname'];
                 $_SESSION['fullname'] = $user['lastname'] . ", " . $user['firstname'];
                 $_SESSION['logged_in'] = true;
                 $showSuccess = true;
