@@ -8,6 +8,54 @@ include '../includes/activity_logger.php';
 
 <head>
     <?php include 'includes/header.php' ?>
+    <style>
+        .priority-high {
+            border-left: 4px solid #dc3545;
+        }
+
+        .priority-medium {
+            border-left: 4px solid #ffc107;
+        }
+
+        .priority-low {
+            border-left: 4px solid #198754;
+        }
+
+        .announcement-card {
+            transition: transform 0.2s, box-shadow 0.2s;
+            height: 100%;
+        }
+
+        .announcement-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .card-title {
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .priority-badge {
+            font-size: 0.75rem;
+        }
+
+        .details-text {
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            color: #6c757d;
+        }
+
+        .action-buttons1 .btn {
+            width: 36px;
+            height: 36px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+    </style>
 </head>
 
 <body>
@@ -175,65 +223,82 @@ include '../includes/activity_logger.php';
                 </div>
             </div>
 
-            <div class="table-responsive">
-                <table class="table table-hover">
-                    <thead>
-                        <tr>
-                            <th class="col-3">Title</th>
-                            <th class="col-5">Details</th>
-                            <th class="col-2">Priority</th>
-                            <th class="col-3">Action</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php
-                        $conn = connectToDB();
-                        $sql = "SELECT * FROM announcements";
-                        $result = $conn->query($sql);
+            <div class="container my-4">
+                <div class="row" id="announcements-container">
+                    <?php
+                    $conn = connectToDB();
+                    $sql = "SELECT * FROM announcements ORDER BY announcement_id DESC";
+                    $result = $conn->query($sql);
 
-                        if ($result && $result->num_rows > 0) {
-                            // output data of each row
-                            while ($row = $result->fetch_assoc()) {
-                                echo "<tr>";
-                                echo "<td>" . $row["title"] . "</td>";
-                                echo "<td>" . $row["details"] . "</td>";
-                                echo "<td>" . $row["type"] . "</td>";
-                                echo "<td>
-                                                <a class='btn btn-sm btn-outline-primary me-1 view-announcement-btn'
-                                                data-id='" . $row["announcement_id"] . "'
-                                                data-title='" . $row["title"] . "'
-                                                data-details='" . $row["details"] . "'
-                                                data-type='" . $row["type"] . "'
-                                                data-bs-toggle='modal' 
-                                                data-bs-target='#view-announcement-modal'>
-                                                    <i class='fas fa-eye'></i>
-                                                </a>
-
-                                                <a class='btn btn-sm btn-outline-secondary me-1 edit-announcement-btn'
-                                                data-id='" . $row["announcement_id"] . "'
-                                                data-title='" . $row["title"] . "'
-                                                data-details='" . $row["details"] . "'
-                                                data-type='" . $row["type"] . "'
-                                                data-bs-toggle='modal' 
-                                                data-bs-target='#edit-announcement-modal'>
-                                                    <i class='fas fa-edit'></i>
-                                                </a>
-
-                                                <a class='btn btn-sm btn-outline-danger me-1 drop-announcement-btn'
-                                                data-id='" . $row["announcement_id"] . "'
-                                                data-bs-toggle='modal' 
-                                                data-bs-target='#drop-announcement-modal'>
-                                                    <i class='fas fa-trash'></i>
-                                                </a>
-                                              </td>";
-                                echo "</tr>";
+                    if ($result && $result->num_rows > 0) {
+                        // output data of each row
+                        while ($row = $result->fetch_assoc()) {
+                            // Determine priority class
+                            $priorityClass = '';
+                            if ($row["type"] == 'High') {
+                                $priorityClass = 'priority-high';
+                            } elseif ($row["type"] == 'Medium') {
+                                $priorityClass = 'priority-medium';
+                            } else {
+                                $priorityClass = 'priority-low';
                             }
-                        } else {
-                            echo "0 results";
+
+                            // Determine badge color
+                            $badgeClass = '';
+                            if ($row["type"] == 'High') {
+                                $badgeClass = 'bg-danger';
+                            } elseif ($row["type"] == 'Medium') {
+                                $badgeClass = 'bg-warning text-dark';
+                            } else {
+                                $badgeClass = 'bg-success';
+                            }
+
+                            echo '<div class="col-lg-4 col-md-6 mb-4">';
+                            echo '<div class="card announcement-card h-100 ' . $priorityClass . '">';
+                            echo '<div class="card-body d-flex flex-column">';
+                            echo '<div class="d-flex justify-content-between align-items-start mb-2">';
+                            echo '<h5 class="card-title">' . $row["title"] . '</h5>';
+                            echo '<span class="badge ' . $badgeClass . ' priority-badge">' . $row["type"] . '</span>';
+                            echo '</div>';
+                            echo '<p class="card-text details-text flex-grow-1">' . $row["details"] . '</p>';
+                            echo '<div class="action-buttons1 mt-3">';
+                            echo '<a class="btn btn-sm btn-outline-primary me-1 view-announcement-btn"
+                            data-id="' . $row["announcement_id"] . '"
+                            data-title="' . $row["title"] . '"
+                            data-details="' . $row["details"] . '"
+                            data-type="' . $row["type"] . '"
+                            data-bs-toggle="modal" 
+                            data-bs-target="#view-announcement-modal">
+                            <i class="fas fa-eye"></i>
+                        </a>';
+                            echo '<a class="btn btn-sm btn-outline-secondary me-1 edit-announcement-btn"
+                            data-id="' . $row["announcement_id"] . '"
+                            data-title="' . $row["title"] . '"
+                            data-details="' . $row["details"] . '"
+                            data-type="' . $row["type"] . '"
+                            data-bs-toggle="modal" 
+                            data-bs-target="#edit-announcement-modal">
+                            <i class="fas fa-edit"></i>
+                        </a>';
+                            echo '<a class="btn btn-sm btn-outline-danger me-1 drop-announcement-btn"
+                            data-id="' . $row["announcement_id"] . '"
+                            data-bs-toggle="modal" 
+                            data-bs-target="#drop-announcement-modal">
+                            <i class="fas fa-trash"></i>
+                        </a>';
+                            echo '</div>';
+                            echo '</div>';
+                            echo '</div>';
+                            echo '</div>';
                         }
-                        ?>
-                    </tbody>
-                </table>
+                    } else {
+                        echo '<div class="col-12 text-center py-5">';
+                        echo '<h4 class="text-muted">No announcements found</h4>';
+                        echo '<p class="text-muted">Create your first announcement to get started.</p>';
+                        echo '</div>';
+                    }
+                    ?>
+                </div>
             </div>
         </div>
 

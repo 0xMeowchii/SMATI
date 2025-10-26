@@ -1,8 +1,9 @@
 <?php
-session_name('teacher');
+session_name('superuser');
 session_start();
-if (!isset($_SESSION['user_type']) || $_SESSION['user_type'] !== 'teacher') {
-    header("Location: /SMATI/");
+
+if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
+    header("Location: /SMATI/Super User/login.php");
     exit();
 }
 
@@ -12,18 +13,29 @@ $current_page = basename($_SERVER['PHP_SELF']);
 <div class="sidebar">
     <div class="sidebar-brand flex-column text-center">
         <img class="mb-3" src="../images/smatilogo.png" alt="logo" width="80px" height="80px">
-        <p class="mb-0"><?php echo $_SESSION['fullname']; ?></p>
+        <p class="mb-0">Super User</p>
     </div>
     <ul class="nav flex-column mt-3">
         <li class="nav-item">
-            <a class="nav-link <?php echo ($current_page == 'teacher-dashboard.php') ? 'active' : ''; ?>" href="teacher-dashboard.php">
-                <i class="fas fa-tachometer-alt"></i>Dashboard
+            <a class="nav-link <?php echo ($current_page == 'admin-list.php') ? 'active' : ''; ?>" href="admin-list.php">
+                <i class="fas fa-universal-access"></i>Admin
             </a>
+        </li>
          <li class="nav-item">
-            <a class="nav-link <?php echo ($current_page == 'teacher-subject.php') ? 'active' : ''; ?>" href="teacher-subject.php">
-                <i class="fa fa-book"></i>My Subjects
+            <a class="nav-link <?php echo ($current_page == 'teacher-list.php') ? 'active' : ''; ?>" href="teacher-list.php">
+                <i class="fa fa-users"></i>Teacher
             </a>
-        </li> 
+        </li>
+        <li class="nav-item">
+            <a class="nav-link <?php echo ($current_page == 'student-list.php') ? 'active' : ''; ?>" href="student-list.php">
+                <i class="fa fa-user"></i>Student
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link <?php echo ($current_page == 'backup.php') ? 'active' : ''; ?>" href="backup.php">
+                <i class="fa fa-database"></i>Back Up
+            </a>
+        </li>
         <li class="nav-item mt-3">
             <a class="nav-link text-danger" id="logoutBtn">
                 <i class="fas fa-sign-out-alt"></i>Logout
