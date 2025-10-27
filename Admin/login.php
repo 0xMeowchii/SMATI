@@ -1,6 +1,5 @@
 <?php
-session_name('ADMIN');
-session_start();
+require_once 'includes/session.php';
 include('../database.php');
 include '../includes/activity_logger.php';
 date_default_timezone_set('Asia/Manila');
@@ -297,7 +296,7 @@ date_default_timezone_set('Asia/Manila');
             </script>";
         }
     }
-    
+
     //RECOVER PASSWORD
     if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['form_action']) && $_POST['form_action'] === "recover_password") {
         $conn = connectToDB();
@@ -577,7 +576,7 @@ date_default_timezone_set('Asia/Manila');
                 </div>
                 <div class="modal-body">
                     <div class="text-center mb-4">
-                        <i class="fas fa-envelope-circle-check text-primary" style="font-size: 3rem;"></i>
+                        <i class="bi bi-envelope-check text-primary" style="font-size: 3rem;"></i>
                         <h4 class="mt-3">SMATI Authentication</h4>
                         <p class="text-muted">Chooses your authentication method to proceed.</p>
                     </div>
@@ -595,7 +594,7 @@ date_default_timezone_set('Asia/Manila');
 
                     <form id="authForm" method="post" action="<?php echo htmlspecialchars($_SERVER['PHP_SELF']) ?>">
 
-                        <input type="text" id="form_action" name="form_action" value="">
+                        <input type="hidden" id="form_action" name="form_action" value="">
                         <input type="hidden" id="email" name="email">
                         <input type="hidden" id="password" name="password">
                         <input type="hidden" id="question" name="security_question">
@@ -622,7 +621,14 @@ date_default_timezone_set('Asia/Manila');
                         <!-- PIN Section -->
                         <div class="d-none" id="authPIN">
                             <label class="form-label text-center">Enter 6-digit PIN</label>
-                            <input type="password" class="form-control otp-input" maxlength="6" placeholder="000000" name="authPIN">
+                            <input type="password"
+                                class="form-control otp-input"
+                                maxlength="6"
+                                placeholder="000000"
+                                name="authPIN"
+                                inputmode="numeric"
+                                pattern="[0-9]*"
+                                onkeypress="return event.charCode >= 48 && event.charCode <= 57">
                         </div>
 
                 </div>
@@ -1012,6 +1018,20 @@ date_default_timezone_set('Asia/Manila');
             const forgotForm = document.getElementById('forgotPasswordFormInner1');
             const authForm = document.getElementById('authForm');
             const authModal = new bootstrap.Modal(document.getElementById('authModal'));
+            const pinInput = document.querySelector('input[name="authPIN"]');
+
+            // Prevent non-numeric input
+            pinInput.addEventListener('input', function(e) {
+                this.value = this.value.replace(/[^0-9]/g, '');
+            });
+
+            // Also prevent paste of non-numeric content
+            pinInput.addEventListener('paste', function(e) {
+                const pasteData = e.clipboardData.getData('text');
+                if (!/^\d+$/.test(pasteData)) {
+                    e.preventDefault();
+                }
+            });
 
 
 

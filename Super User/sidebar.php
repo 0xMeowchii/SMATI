@@ -1,6 +1,4 @@
 <?php
-session_name('superuser');
-session_start();
 
 if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
     header("Location: /SMATI/Super User/login.php");
@@ -12,7 +10,7 @@ $current_page = basename($_SERVER['PHP_SELF']);
 
 <div class="sidebar">
     <div class="sidebar-brand flex-column text-center">
-        <img class="mb-3" src="../images/smatilogo.png" alt="logo" width="80px" height="80px">
+        <img class="mb-3" src="../images/logo5.png" alt="logo" width="80px" height="80px">
         <p class="mb-0">Super User</p>
     </div>
     <ul class="nav flex-column mt-3">
@@ -32,7 +30,7 @@ $current_page = basename($_SERVER['PHP_SELF']);
             </a>
         </li>
         <li class="nav-item">
-            <a class="nav-link <?php echo ($current_page == 'backup.php') ? 'active' : ''; ?>" href="backup.php">
+            <a class="nav-link <?php echo ($current_page == 'settings.php') ? 'active' : ''; ?>" href="settings.php">
                 <i class="fa fa-database"></i>Back Up
             </a>
         </li>

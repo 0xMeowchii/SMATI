@@ -1,4 +1,5 @@
 <?php
+require_once 'includes/session.php';
 include '../database.php';
 include '../includes/activity_logger.php';
 ?>
@@ -41,8 +42,6 @@ include '../includes/activity_logger.php';
         }
 
         .details-text {
-            display: -webkit-box;
-            -webkit-line-clamp: 3;
             -webkit-box-orient: vertical;
             overflow: hidden;
             color: #6c757d;
@@ -233,12 +232,11 @@ include '../includes/activity_logger.php';
                     if ($result && $result->num_rows > 0) {
                         // output data of each row
                         while ($row = $result->fetch_assoc()) {
+                            $row['createdAt'] = new DateTime();
                             // Determine priority class
                             $priorityClass = '';
                             if ($row["type"] == 'High') {
                                 $priorityClass = 'priority-high';
-                            } elseif ($row["type"] == 'Medium') {
-                                $priorityClass = 'priority-medium';
                             } else {
                                 $priorityClass = 'priority-low';
                             }
@@ -247,10 +245,15 @@ include '../includes/activity_logger.php';
                             $badgeClass = '';
                             if ($row["type"] == 'High') {
                                 $badgeClass = 'bg-danger';
-                            } elseif ($row["type"] == 'Medium') {
-                                $badgeClass = 'bg-warning text-dark';
                             } else {
                                 $badgeClass = 'bg-success';
+                            }
+
+                            $iconClass = '';
+                            if ($row["type"] == 'High') {
+                                $iconClass = 'bi bi-arrow-up';
+                            } else {
+                                $iconClass = 'bi bi-arrow-down';
                             }
 
                             echo '<div class="col-lg-4 col-md-6 mb-4">';
@@ -258,9 +261,10 @@ include '../includes/activity_logger.php';
                             echo '<div class="card-body d-flex flex-column">';
                             echo '<div class="d-flex justify-content-between align-items-start mb-2">';
                             echo '<h5 class="card-title">' . $row["title"] . '</h5>';
-                            echo '<span class="badge ' . $badgeClass . ' priority-badge">' . $row["type"] . '</span>';
+                            echo '<span class="badge ' . $badgeClass . ' priority-badge"><i class="' . $iconClass . '"></i>' . $row["type"] . '</span>';
                             echo '</div>';
                             echo '<p class="card-text details-text flex-grow-1">' . $row["details"] . '</p>';
+                            echo '<p class="card-text details-text"><i class="bi bi-calendar-event-fill me-2"></i>' . $row["createdAt"]->format('m-d-Y h:i A') . '</p>';
                             echo '<div class="action-buttons1 mt-3">';
                             echo '<a class="btn btn-sm btn-outline-primary me-1 view-announcement-btn"
                             data-id="' . $row["announcement_id"] . '"
@@ -455,82 +459,79 @@ include '../includes/activity_logger.php';
             });
         });
 
-        // Real-time search functionality for students table
+        // Simplified version for date search
         document.addEventListener('DOMContentLoaded', function() {
             const searchInput = document.getElementById('searchInput');
-            const tableBody = document.querySelector('tbody');
-            const tableRows = Array.from(tableBody.querySelectorAll('tr'));
+            const announcementsContainer = document.getElementById('announcements-container');
+            const announcementCards = Array.from(announcementsContainer.querySelectorAll('.col-lg-4'));
 
-            // Function to perform the search
             function performSearch(searchTerm) {
                 const query = searchTerm.toLowerCase().trim();
-                let visibleRows = 0;
+                let visibleCards = 0;
 
-                tableRows.forEach(function(row) {
-                    // Get all text content from the row (excluding action buttons)
-                    const cells = row.querySelectorAll('td');
-                    let rowText = '';
-
-                    // Combine text from StudentID, Name, Course, and Email columns (skip Action column)
-                    for (let i = 0; i < cells.length - 1; i++) {
-                        rowText += cells[i].textContent.toLowerCase() + ' ';
+                announcementCards.forEach(function(card) {
+                    // Skip the "no announcements" message card
+                    if (card.classList.contains('col-12') && card.querySelector('h4.text-muted')) {
+                        card.style.display = 'none';
+                        return;
                     }
 
-                    // Check if search term matches any part of the row text
-                    if (query === '' || rowText.includes(query)) {
-                        row.style.display = '';
-                        visibleRows++;
+                    // Get all text content from the entire card
+                    const cardText = card.textContent.toLowerCase();
+
+                    // Check if search term matches any part of the card content
+                    if (query === '' || cardText.includes(query)) {
+                        card.style.display = '';
+                        visibleCards++;
                     } else {
-                        row.style.display = 'none';
+                        card.style.display = 'none';
                     }
                 });
 
-                // Optional: Show/hide "No results" message
-                showNoResultsMessage(visibleRows === 0 && query !== '');
+                // Show/hide "No results" message
+                showNoResultsMessage(visibleCards === 0 && query !== '');
             }
 
-            // Function to show/hide no results message
             function showNoResultsMessage(show) {
-                let noResultsRow = document.getElementById('no-results-row');
+                let noResultsCard = document.getElementById('no-results-card');
 
-                if (show && !noResultsRow) {
-                    // Create no results row if it doesn't exist
-                    noResultsRow = document.createElement('tr');
-                    noResultsRow.id = 'no-results-row';
-                    noResultsRow.innerHTML = `
-                <td colspan="5" class="text-center py-4" style="color: #6c757d;">
-                    <i class="fas fa-search mb-2" style="font-size: 2em; opacity: 0.5;"></i>
-                    <br>
-                    No Announcement found matching your search
-                </td>
+                if (show && !noResultsCard) {
+                    noResultsCard = document.createElement('div');
+                    noResultsCard.id = 'no-results-card';
+                    noResultsCard.className = 'col-12 text-center py-5';
+                    noResultsCard.innerHTML = `
+                <h4 class="text-muted">No announcements found</h4>
+                <p class="text-muted">No announcements match your search criteria</p>
+                <div class="mt-3">
+                    <i class="fas fa-search" style="font-size: 3em; opacity: 0.3;"></i>
+                </div>
             `;
-                    tableBody.appendChild(noResultsRow);
-                } else if (!show && noResultsRow) {
-                    // Remove no results row if it exists
-                    noResultsRow.remove();
+                    announcementsContainer.appendChild(noResultsCard);
+                } else if (!show && noResultsCard) {
+                    noResultsCard.remove();
+                }
+
+                const originalNoAnnouncements = announcementsContainer.querySelector('.col-12.text-center.py-5');
+                if (originalNoAnnouncements && !originalNoAnnouncements.id) {
+                    originalNoAnnouncements.style.display = show ? 'none' : '';
                 }
             }
 
-            // Add event listener for real-time search
-            searchInput.addEventListener('input', function(e) {
-                performSearch(e.target.value);
-            });
+            // Event listeners
+            if (searchInput) {
+                searchInput.addEventListener('input', function(e) {
+                    performSearch(e.target.value);
+                });
 
-            // Add event listener for paste events
-            searchInput.addEventListener('paste', function(e) {
-                // Small delay to ensure pasted content is processed
-                setTimeout(function() {
-                    performSearch(searchInput.value);
-                }, 10);
-            });
+                searchInput.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') performSearch(this.value);
+                });
 
-
-
-            // Optional: Add search icon click functionality
-            const searchIcon = document.querySelector('#searchInput + .input-group-text');
-            if (searchIcon) {
-                searchIcon.addEventListener('click', function() {
-                    searchInput.focus();
+                searchInput.addEventListener('keydown', function(e) {
+                    if (e.key === 'Escape') {
+                        this.value = '';
+                        performSearch('');
+                    }
                 });
             }
         });

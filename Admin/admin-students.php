@@ -1,4 +1,5 @@
 <?php
+require_once 'includes/session.php';
 include '../database.php';
 include '../includes/activity_logger.php';
 ?>
@@ -7,7 +8,7 @@ include '../includes/activity_logger.php';
 <html lang="en">
 
 <head>
-<?php include 'includes/header.php' ?>
+    <?php include 'includes/header.php' ?>
 </head>
 
 <body>
@@ -190,7 +191,7 @@ include '../includes/activity_logger.php';
                 </div>
             </div>
 
-            <div class="table-responsive">
+            <div class="table-responsive flex-grow-1 overflow-auto" style="max-height:600px;">
                 <table class="table table-hover">
                     <thead>
                         <tr>
@@ -251,7 +252,11 @@ include '../includes/activity_logger.php';
                                 echo "</tr>";
                             }
                         } else {
-                            echo "0 results";
+                            echo "<td colspan='5' class='text-center py-4' style='color: #6c757d;'>";
+                            echo "<i class='fas fa-search mb-2' style='font-size: 2em; opacity: 0.5;'></i>";
+                            echo "<br>";
+                            echo "No students found matching your search";
+                            echo "</td>";
                         }
                         ?>
 

@@ -10,3 +10,4 @@
 <!-- SweetAlert2 -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
 <link rel="stylesheet" href="./css/style.css">
+<link rel="icon" type="image/png" href="../images/logo5.png">

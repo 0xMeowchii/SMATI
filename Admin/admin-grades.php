@@ -1,4 +1,6 @@
-<?php include('../database.php'); ?>
+<?php 
+require_once 'includes/session.php';
+include('../database.php'); ?>
 <!DOCTYPE html>
 <html lang="en">
 
@@ -30,7 +32,7 @@
                 </div>
             </div>
 
-            <div class="table-responsive">
+            <div class="table-responsive flex-grow-1 overflow-auto" style="max-height:600px;">
                 <table class="table table-hover">
                     <thead>
                         <th>StudentID</th>

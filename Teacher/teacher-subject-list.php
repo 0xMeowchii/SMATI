@@ -1,4 +1,5 @@
 <?php
+include 'includes/session.php';
 include('../database.php');
 include '../includes/activity_logger.php';
 ?>
@@ -6,18 +7,7 @@ include '../includes/activity_logger.php';
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
-    <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- SweetAlert2 -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
-    <link rel="stylesheet" href="../Teacher/teacher.css">
+    <?php include 'includes/header.php' ?>
     <style>
         .no-results-message {
             background: #f8f9fa;
@@ -57,6 +47,7 @@ include '../includes/activity_logger.php';
             'subject_id' => $row['subject_id'],
             'schoolyear' => $row['schoolyear_id'],
             'subject_name' => $row['subject'],
+            'subject_code' => $row['subject_code'],
             'yearlevel' => $row['yearlevel']
         ];
     }
@@ -78,6 +69,7 @@ include '../includes/activity_logger.php';
         //INSERT QUERY
         if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnAdd'])) {
             $conn = connectToDB();
+            $subjectcode = $_POST['subjectcode'];
             $subjectname = $_POST['subjectname'];
             $teacher_id = $_SESSION['id'];
             $yearlevel = $_POST['yearlevel'];
@@ -85,9 +77,9 @@ include '../includes/activity_logger.php';
             $status = '1';
 
             if ($conn) {
-                $stmt = $conn->prepare("INSERT INTO subjects (subject, teacher_id, yearlevel, schoolyear_id, status) 
-                                            VALUES (?, ?, ?, ?, ?)");
-                $stmt->bind_param("sisis", $subjectname, $teacher_id, $yearlevel, $schoolyear_id, $status);
+                $stmt = $conn->prepare("INSERT INTO subjects (subject_code, subject, teacher_id, yearlevel, schoolyear_id, status) 
+                                            VALUES (?, ?, ?, ?, ?, ?)");
+                $stmt->bind_param("ssisis", $subjectcode, $subjectname, $teacher_id, $yearlevel, $schoolyear_id, $status);
 
                 if ($stmt->execute()) {
                     logActivity($conn, $teacher_id, $_SESSION['user_type'], 'CREATE_SUBJECT', "Created subject: $subjectname");
@@ -126,13 +118,14 @@ include '../includes/activity_logger.php';
             $subject_id = $_POST['editId'];
             $teacher_id = $_SESSION['id'];
             $subjectname = $_POST['editSubjectname'];
+            $subjectcode = $_POST['editSubjectcode'];
             $yearlevel = $_POST['editYearlevel'];
 
             if ($conn) {
                 $stmt = $conn->prepare("UPDATE subjects
-                                        SET subject = ?, yearlevel = ?
+                                        SET subject = ?, yearlevel = ?, subject_code = ?
                                         WHERE subject_id = ?");
-                $stmt->bind_param("ssi", $subjectname, $yearlevel, $subject_id);
+                $stmt->bind_param("sssi", $subjectname, $yearlevel, $subjectcode ,$subject_id);
 
                 if ($stmt->execute()) {
 
@@ -232,7 +225,7 @@ include '../includes/activity_logger.php';
                     <div class="col">
                         <div class="card text-center rounded-4">
                             <div class="card-header rounded-top-4 bg-primary text-white fw-bold">
-                                SUBJECT CODE
+                                <?php echo $subject['subject_code'] ?>
                             </div>
                             <div class="card-body">
                                 <h5 class="card-title"><?php echo $subject['subject_name'] ?></h5>
@@ -247,6 +240,7 @@ include '../includes/activity_logger.php';
                                     </a>
                                     <a class='btn btn-sm btn-outline-secondary me-1 edit-subject-btn'
                                         data-id='<?php echo $subject['subject_id']; ?>'
+                                        data-code='<?php echo $subject['subject_code']; ?>'
                                         data-name='<?php echo $subject['subject_name']; ?>'
                                         data-yearlevel='<?php echo $subject['yearlevel']; ?>'
                                         data-bs-toggle='modal'
@@ -384,6 +378,7 @@ include '../includes/activity_logger.php';
         document.querySelectorAll('.edit-subject-btn').forEach(function(btn) {
             btn.addEventListener('click', function() {
                 document.getElementById('editId').value = btn.getAttribute('data-id');
+                document.getElementById('editSubjectcode').value = btn.getAttribute('data-code');
                 document.getElementById('editSubjectname').value = btn.getAttribute('data-name');
 
                 // Fixed: Properly set radio button value

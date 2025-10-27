@@ -1,4 +1,5 @@
 <?php
+require_once 'includes/session.php';
 include '../database.php';
 include '../includes/activity_logger.php';
 ?>
@@ -6,7 +7,7 @@ include '../includes/activity_logger.php';
 <html lang="en">
 
 <head>
-<?php include 'includes/header.php' ?>
+    <?php include 'includes/header.php' ?>
 </head>
 
 <body>
@@ -170,7 +171,7 @@ include '../includes/activity_logger.php';
 
         ?>
 
-        <!-- Student Table -->
+        <!-- Teachers Table -->
         <div class="container">
             <div class="table-header">
                 <div class="row align-items-center">
@@ -185,31 +186,33 @@ include '../includes/activity_logger.php';
                     </div>
                 </div>
             </div>
-            <table class="table table-hover">
-                <thead>
-                    <tr>
-                        <th>TeacherID</th>
-                        <th>Name</th>
-                        <th>Department</th>
-                        <th>Email</th>
-                        <th>Action</th>
-                    </tr>
-                <tbody>
 
-                    <?php
-                    $conn = connectToDB();
-                    $sql = "SELECT * FROM teachers WHERE status = '1'";
-                    $result = $conn->query($sql);
+            <div class="table-responsive flex-grow-1 overflow-auto" style="max-height:600px;">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>TeacherID</th>
+                            <th>Name</th>
+                            <th>Department</th>
+                            <th>Email</th>
+                            <th>Action</th>
+                        </tr>
+                    <tbody>
 
-                    if ($result && $result->num_rows > 0) {
-                        // output data of each row
-                        while ($row = $result->fetch_assoc()) {
-                            echo "<tr>";
-                            echo "<td>" . $row["teacher_id"] . "</td>";
-                            echo "<td>" . $row["lastname"] . ", " . $row["firstname"] . "</td>";
-                            echo "<td>" . $row["department"] . "</td>";
-                            echo "<td>" . $row["email"] . "</td>";
-                            echo "<td>
+                        <?php
+                        $conn = connectToDB();
+                        $sql = "SELECT * FROM teachers WHERE status = '1'";
+                        $result = $conn->query($sql);
+
+                        if ($result && $result->num_rows > 0) {
+                            // output data of each row
+                            while ($row = $result->fetch_assoc()) {
+                                echo "<tr>";
+                                echo "<td>" . $row["teacher_id"] . "</td>";
+                                echo "<td>" . $row["lastname"] . ", " . $row["firstname"] . "</td>";
+                                echo "<td>" . $row["department"] . "</td>";
+                                echo "<td>" . $row["email"] . "</td>";
+                                echo "<td>
                                                 <a class='btn btn-sm btn-outline-primary me-1 view-teacher-btn'
                                                 data-id='" . $row["teacher_id"] . "'
                                                 data-name='" . $row["lastname"] . ", " . $row["firstname"] . "'
@@ -242,16 +245,22 @@ include '../includes/activity_logger.php';
                                                     <i class='fas fa-trash'></i>
                                                 </a>
                                               </td>";
-                            echo "</tr>";
+                                echo "</tr>";
+                            }
+                        } else {
+                            echo "<td colspan='5' class='text-center py-4' style='color: #6c757d;'>";
+                            echo "<i class='fas fa-search mb-2' style='font-size: 2em; opacity: 0.5;'></i>";
+                            echo "<br>";
+                            echo "No students found matching your search";
+                            echo "</td>";
                         }
-                    } else {
-                        echo "0 results";
-                    }
-                    ?>
+                        ?>
 
-                </tbody>
-                </thead>
-            </table>
+                    </tbody>
+                    </thead>
+                </table>
+            </div>
+
         </div>
 
         <!-- Add Teacher Modal -->

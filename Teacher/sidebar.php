@@ -1,6 +1,4 @@
 <?php
-session_name('teacher');
-session_start();
 if (!isset($_SESSION['user_type']) || $_SESSION['user_type'] !== 'teacher') {
     header("Location: /SMATI/");
     exit();
@@ -11,7 +9,7 @@ $current_page = basename($_SERVER['PHP_SELF']);
 
 <div class="sidebar">
     <div class="sidebar-brand flex-column text-center">
-        <img class="mb-3" src="../images/smatilogo.png" alt="logo" width="80px" height="80px">
+        <img class="mb-3" src="../images/logo5.png" alt="logo" width="80px" height="80px">
         <p class="mb-0"><?php echo $_SESSION['fullname']; ?></p>
     </div>
     <ul class="nav flex-column mt-3">

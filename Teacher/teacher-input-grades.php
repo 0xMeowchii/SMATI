@@ -1,4 +1,5 @@
 <?php
+include 'includes/session.php';
 include('../database.php');
 
 //array student informations
@@ -41,18 +42,7 @@ if ($result->num_rows > 0) {
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
-    <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- SweetAlert2 -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
-    <link rel="stylesheet" href="../Teacher/teacher.css">
+    <?php include 'includes/header.php' ?>
 </head>
 
 <body>
@@ -87,7 +77,7 @@ if ($result->num_rows > 0) {
             $subject = $_GET['subject_id'];
             $sy = $_GET['sy'];
             $conn = connectToDB();
-            $sql = "SELECT s.*, g.prelim, g.midterm, g.prefinals, g.finals, g.comment, g.average, g.equivalent, g.remarks
+            $sql = "SELECT s.*, g.prelim, g.midterm, g.finals, g.comment, g.average, g.equivalent, g.remarks
                     FROM students s
                     LEFT JOIN grades g ON s.student_id = g.student_id 
                     AND g.subject_id = ?
@@ -116,8 +106,6 @@ if ($result->num_rows > 0) {
                             $conn->real_escape_string($gradeData['prelim']) : NULL;
                         $midterm = isset($gradeData['midterm']) && $gradeData['midterm'] !== '' ?
                             $conn->real_escape_string($gradeData['midterm']) : NULL;
-                        $prefinals = isset($gradeData['prefinals']) && $gradeData['prefinals'] !== '' ?
-                            $conn->real_escape_string($gradeData['prefinals']) : NULL;
                         $finals = isset($gradeData['finals']) && $gradeData['finals'] !== '' ?
                             $conn->real_escape_string($gradeData['finals']) : NULL;
                         $average = floatval($gradeData['average'] ?? 0);
@@ -126,12 +114,11 @@ if ($result->num_rows > 0) {
                         $comment = $conn->real_escape_string($gradeData['comment'] ?? '');
 
                         $sql = "INSERT INTO grades 
-                                (subject_id, teacher_id, student_id, schoolyear_id, prelim, midterm, prefinals, finals, average, equivalent, remarks, comment) 
-                                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                                (subject_id, teacher_id, student_id, schoolyear_id, prelim, midterm, finals, average, equivalent, remarks, comment) 
+                                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                                 ON DUPLICATE KEY UPDATE
                                 prelim = VALUES(prelim), 
                                 midterm = VALUES(midterm), 
-                                prefinals = VALUES(prefinals), 
                                 finals = VALUES(finals), 
                                 average = VALUES(average),
                                 equivalent = VALUES(equivalent),
@@ -139,7 +126,7 @@ if ($result->num_rows > 0) {
                                 comment = VALUES(comment)";
 
                         $stmt = $conn->prepare($sql);
-                        $stmt->bind_param("iiiiddddddss", $subject_id, $teacher_id, $student_id, $schoolyear_id, $prelim, $midterm, $prefinals, $finals, $average, $equivalent, $remarks, $comment);
+                        $stmt->bind_param("iiiidddddss", $subject_id, $teacher_id, $student_id, $schoolyear_id, $prelim, $midterm, $finals, $average, $equivalent, $remarks, $comment);
 
                         if (!$stmt->execute()) {
                             $success = false;
@@ -202,7 +189,6 @@ if ($result->num_rows > 0) {
                             <th>Student Name</th>
                             <th>Prelim</th>
                             <th>Midterm</th>
-                            <th>Prefinals</th>
                             <th>Finals</th>
                             <th>Average</th>
                             <th>Equivalent</th>
@@ -230,12 +216,6 @@ if ($result->num_rows > 0) {
                                             class='form-control form-control-sm grade-input'
                                             min='0' max='100' step='0.01'
                                             value="<?php echo isset($currentGrades['midterm']) ? htmlspecialchars($currentGrades['midterm']) : ''; ?>">
-                                    </td>
-                                    <td>
-                                        <input type='number' name="grades[<?php echo $student_id; ?>][prefinals]"
-                                            class='form-control form-control-sm grade-input'
-                                            min='0' max='100' step='0.01'
-                                            value="<?php echo isset($currentGrades['prefinals']) ? htmlspecialchars($currentGrades['prefinals']) : ''; ?>">
                                     </td>
                                     <td>
                                         <input type='number' name="grades[<?php echo $student_id; ?>][finals]"
@@ -340,11 +320,10 @@ if ($result->num_rows > 0) {
 
                 const prelim = parseFloat(studentRow.querySelector('input[name*="[prelim]"]').value) || 0;
                 const midterm = parseFloat(studentRow.querySelector('input[name*="[midterm]"]').value) || 0;
-                const prefinals = parseFloat(studentRow.querySelector('input[name*="[prefinals]"]').value) || 0;
                 const finals = parseFloat(studentRow.querySelector('input[name*="[finals]"]').value) || 0;
 
                 // Calculate average
-                const average = (prelim + midterm + prefinals + finals) / 4;
+                const average = (prelim + midterm + finals) / 3;
 
                 // Calculate equivalent and remarks
                 let equivalent = '5.00';

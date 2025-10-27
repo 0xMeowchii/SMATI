@@ -1,20 +1,11 @@
-<?php include('../database.php'); ?>
+<?php
+include 'includes/session.php';
+include('../database.php'); ?>
 <!DOCTYPE html>
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
-    <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- SweetAlert2 -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
-    <link rel="stylesheet" href="../Teacher/teacher.css">
+    <?php include 'includes/header.php' ?>
 </head>
 
 <body>
@@ -48,7 +39,7 @@
                         <th>Action</th>
                     </thead>
                     <tbody>
-                       <?php
+                        <?php
                         $conn = connectToDB();
                         $sql = "SELECT * FROM schoolyear ORDER BY schoolyear_id DESC";
                         $result = $conn->query($sql);
@@ -57,10 +48,10 @@
                             // output data of each row
                             while ($row = $result->fetch_assoc()) {
                                 echo "<tr>";
-                                echo "<td>" .$row['schoolyear']. ", ".$row['semester']. " Semester"."</td>";
+                                echo "<td>" . $row['schoolyear'] . ", " . $row['semester'] . " Semester" . "</td>";
                                 echo "<td>
                                         <a class='btn btn-sm btn-outline-primary'
-                                         href='teacher-subject-list.php?sy=".$row['schoolyear_id']."'>
+                                         href='teacher-subject-list.php?sy=" . $row['schoolyear_id'] . "'>
                                         <i class='fas fa-eye me-2'></i>View
                                         </a>
                                         </td>";
@@ -80,6 +71,74 @@
     <!-- Bootstrap JS Bundle with Popper -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        function initializeSearchInput() {
+            const searchInput = document.getElementById('searchInput');
+            const tableRows = document.querySelectorAll('tbody tr');
+            const noResultsRow = document.getElementById('noResults') || createNoResultsRow();
+
+            if (!searchInput) return;
+
+            function createNoResultsRow() {
+                const tbody = document.querySelector('tbody');
+                const row = document.createElement('tr');
+                row.id = 'noResults';
+                row.style.display = 'none';
+                row.innerHTML = `<td colspan="2" class="text-center text-muted py-4">No results found</td>`;
+                tbody.appendChild(row);
+                return row;
+            }
+
+            function performSearch() {
+                const searchTerm = searchInput.value.toLowerCase().trim();
+                let hasVisibleRows = false;
+
+                tableRows.forEach(row => {
+                    if (row.id === 'noResults') return;
+
+                    const schoolYearText = row.cells[0].textContent.toLowerCase();
+                    const isVisible = schoolYearText.includes(searchTerm);
+
+                    row.style.display = isVisible ? '' : 'none';
+                    if (isVisible) hasVisibleRows = true;
+                });
+
+                // Show/hide no results message
+                if (searchTerm && !hasVisibleRows) {
+                    noResultsRow.style.display = '';
+                } else {
+                    noResultsRow.style.display = 'none';
+                }
+            }
+
+            // Debounced search to improve performance
+            let timeoutId;
+            searchInput.addEventListener('input', function() {
+                clearTimeout(timeoutId);
+                timeoutId = setTimeout(performSearch, 300);
+            });
+
+            // Enter key support
+            searchInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    clearTimeout(timeoutId);
+                    performSearch();
+                }
+            });
+
+            // Clear search on escape
+            searchInput.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    this.value = '';
+                    performSearch();
+                }
+            });
+        }
+
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', initializeSearchInput);
+    </script>
 </body>
 
 </html>

@@ -1,4 +1,5 @@
 <?php
+require_once 'includes/session.php';
 include('../database.php');
 
 $conn = connectToDB();
@@ -67,7 +68,6 @@ while ($row = $result->fetch_assoc()) {
                                         <th>Teacher</th>
                                         <th>Prelim</th>
                                         <th>Midterm</th>
-                                        <th>Pre-finals</th>
                                         <th>Finals</th>
                                         <th>Average</th>
                                         <th>Equivalent</th>
@@ -94,7 +94,6 @@ while ($row = $result->fetch_assoc()) {
                                                 echo "<td>" . $row["lastname"] . ", " . $row["firstname"] . "</td>";
                                                 echo "<td>" . $row['prelim'] . "</td>";
                                                 echo "<td>" . $row['midterm'] . "</td>";
-                                                echo "<td>" . $row['prefinals'] . "</td>";
                                                 echo "<td>" . $row['finals'] . "</td>";
                                                 echo "<td>" . $row['average'] . "</td>";
                                                 echo "<td>" . $row['equivalent'] . "</td>";

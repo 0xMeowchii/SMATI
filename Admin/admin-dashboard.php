@@ -1,4 +1,5 @@
 <?php
+require_once 'includes/session.php';
 include '../database.php';
 
 //ACTIVE STUDENTS
@@ -332,12 +333,13 @@ $todayActivitylogs = $result->num_rows;
                             <?php endforeach; ?>
                         </div>
 
+
+                    </div>
+                    <div class="card-footer">
                         <!-- View All Button -->
-                        <div class="mt-3 pt-3 border-top">
-                            <button class="btn btn-outline-primary w-100" data-bs-toggle="modal" data-bs-target="#view-activitylogs-modal">
-                                <i class="fas fa-list me-2"></i>View All Activity Logs
-                            </button>
-                        </div>
+                        <button class="btn btn-outline-primary w-100" data-bs-toggle="modal" data-bs-target="#view-activitylogs-modal">
+                            <i class="fas fa-list me-2"></i>View All Activity Logs
+                        </button>
                     </div>
                 </div>
             </div>
@@ -352,7 +354,6 @@ $todayActivitylogs = $result->num_rows;
                     <div class="card-body d-flex flex-column">
                         <!-- Scrollable Announcements List -->
                         <div class="flex-grow-1 overflow-auto" style="max-height: 400px;">
-
                             <?php foreach ($announcements as $announcement): ?>
                                 <div class="card list-card border-0 bg-light mb-3">
                                     <div class="card-body border-start rounded-4 border-4 border-primary py-3">
@@ -362,14 +363,13 @@ $todayActivitylogs = $result->num_rows;
                                     </div>
                                 </div>
                             <?php endforeach; ?>
-
-                            <!-- View All Button -->
-                            <div class="mt-3 pt-3 border-top">
-                                <a href="admin-announcements.php" class="btn btn-outline-primary w-100">
-                                    <i class="fas fa-bullhorn me-2"></i>View All Announcements
-                                </a>
-                            </div>
                         </div>
+
+                    </div>
+                    <div class="card-footer">
+                        <a href="admin-announcements.php" class="btn btn-outline-primary w-100">
+                            <i class="fas fa-bullhorn me-2"></i>View All Announcements
+                        </a>
                     </div>
                 </div>
             </div>

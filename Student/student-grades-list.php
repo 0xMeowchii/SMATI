@@ -1,20 +1,11 @@
-<?php include('../database.php'); ?>
+<?php 
+include 'includes/session.php';
+include('../database.php'); ?>
 <!DOCTYPE html>
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
-    <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- SweetAlert2 -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
-    <link rel="stylesheet" href="../Student/student.css">
+<?php include 'includes/header.php' ?>
 </head>
 
 <body>
@@ -48,7 +39,6 @@
                         <th>Teacher</th>
                         <th>Prelim</th>
                         <th>Midterm</th>
-                        <th>Pre-finals</th>
                         <th>Finals</th>
                         <th>Average</th>
                         <th>Equivalent</th>
@@ -74,7 +64,6 @@
                                 echo "<td>" .$row["lastname"] . ", " . $row["firstname"] . "</td>";
                                 echo "<td>" .$row['prelim']."</td>";
                                 echo "<td>" .$row['midterm']."</td>";
-                                echo "<td>" .$row['prefinals']."</td>";
                                 echo "<td>" .$row['finals']."</td>";
                                 echo "<td>" .$row['average']."</td>";
                                 echo "<td>" .$row['equivalent']."</td>";
