@@ -150,7 +150,7 @@ $todayActivitylogs = $result->num_rows;
     <!-- Sidebar -->
     <?php
 
-    include('sidebar.php');
+    include('includes/sidebar.php');
 
     //Fetch announcements
     $conn = connectToDB();

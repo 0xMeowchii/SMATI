@@ -59,7 +59,7 @@ include '../includes/activity_logger.php';
 
 <body>
     <!-- Sidebar -->
-    <?php include('sidebar.php'); ?>
+    <?php include('includes/sidebar.php'); ?>
 
     <main class="main-content">
         <div class="page-header">

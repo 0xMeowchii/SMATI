@@ -27,6 +27,11 @@ $current_page = basename($_SERVER['PHP_SELF']);
                 <i class="fas fa-users"></i>Teachers
             </a>
         </li>
+         <li class="nav-item">
+            <a class="nav-link <?php echo ($current_page == 'admin-registrar.php') ? 'active' : ''; ?>" href="admin-registrar.php">
+                <i class="fas fa-address-book"></i>Registrar
+            </a>
+        </li>
         <li class="nav-item">
             <a class="nav-link <?php echo ($current_page == 'admin-academics.php') ? 'active' : ''; ?>" href="admin-academics.php">
                 <i class="fas fa-chart-bar"></i>Academics

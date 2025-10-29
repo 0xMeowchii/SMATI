@@ -19,10 +19,10 @@ include '../includes/activity_logger.php';
 
     <main class="main-content">
         <div class="page-header">
-            <h4><i class="fas fa-user me-2"></i>Students Management</h4>
+            <h4><i class="fas fa-address-book me-2"></i>Registrars Management</h4>
             <div class="action-buttons">
-                <button class="btn btn-primary" id="add-student-btn" data-bs-toggle="modal" data-bs-target="#add-students-modal">
-                    <i class="fas fa-plus me-1"></i>Add Student
+                <button class="btn btn-primary" id="add-registrar-btn" data-bs-toggle="modal" data-bs-target="#add-registrar-modal">
+                    <i class="fas fa-plus me-1"></i>Add Registrar
                 </button>
             </div>
         </div>
@@ -36,27 +36,26 @@ include '../includes/activity_logger.php';
             $firstname = $_POST['firstname'];
             $lastname = $_POST['lastname'];
             $email = $_POST['email'];
-            $course = $_POST['set'];
             $username = $_POST['username'];
-            $password = $_POST['password'];
+            $password = password_hash($_POST['password'], PASSWORD_DEFAULT);
             $status = '1';
 
             if ($conn) {
-                $stmt = $conn->prepare("INSERT INTO students (firstname, lastname, email, course, username, password, status) 
-                                            VALUES (?, ?, ?, ?, ?, ?,?)");
-                $stmt->bind_param("sssssss", $firstname, $lastname, $email, $course, $username, $password, $status);
+                $stmt = $conn->prepare("INSERT INTO registrars (firstname, lastname, email, username, password, status) 
+                                            VALUES (?, ?, ?, ?, ?, ?)");
+                $stmt->bind_param("ssssss", $firstname, $lastname, $email, $username, $password, $status);
 
                 if ($stmt->execute()) {
 
-                    $studentName = $lastname . ', ' . $firstname;
-                    logActivity($conn, $_SESSION['id'], $_SESSION['user_type'], 'CREATE_STUDENT', "Created student account: $studentName (Set: $course)");
+                    $registrarName = $lastname . ', ' . $firstname;
+                    logActivity($conn, $_SESSION['id'], $_SESSION['user_type'], 'CREATE_REGISTRAR', "Created registrar account: $registrarName");
 
                     echo "<script>
                             document.addEventListener('DOMContentLoaded', function() {
                                 Swal.fire({
                                     icon: 'success',
                                     title: 'Success!',
-                                    text: 'Student Added Successfully!',
+                                    text: 'Registrar Added Successfully!',
                                     timer: 2000,
                                     showConfirmButton: false
                                 });
@@ -83,35 +82,35 @@ include '../includes/activity_logger.php';
         //UPDATE QUERY
         if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnEdit'])) {
             $conn = connectToDB();
-            $student_id = $_POST['editId'];
+            $registrar_id = $_POST['editId'];
             $firstname = $_POST['editFname'];
             $lastname = $_POST['editLname'];
             $email = $_POST['editEmail'];
-            $course = $_POST['editCourse'];
             $username = $_POST['editUsername'];
             $password = $_POST['editPassword'];
 
             if ($conn) {
-                $stmt = $conn->prepare("UPDATE students 
+
+                $hashed_password = password_hash($password, PASSWORD_DEFAULT);
+                $stmt = $conn->prepare("UPDATE registrars 
                                         SET firstname=?,
                                             lastname=?,
                                             email=?,
-                                            course=?,
                                             username=?,
                                             password=?
-                                        WHERE student_id=?");
-                $stmt->bind_param("ssssssi", $firstname, $lastname, $email, $course, $username, $password, $student_id);
+                                        WHERE registrar_id=?");
+                $stmt->bind_param("sssssi", $firstname, $lastname, $email, $username, $hashed_password, $registrar_id);
 
                 if ($stmt->execute()) {
 
-                    logActivity($conn, $_SESSION['id'], $_SESSION['user_type'], 'UPDATE_STUDENT', "Updated student account: Student ID = $student_id");
+                    logActivity($conn, $_SESSION['id'], $_SESSION['user_type'], 'UPDATE_REGISTRAR', "Updated registrar account: Registrar ID = $registrar_id");
 
                     echo "<script>
                             document.addEventListener('DOMContentLoaded', function() {
                                 Swal.fire({
                                     icon: 'success',
                                     title: 'Success!',
-                                    text: 'Student Updated Successfully!',
+                                    text: 'Registrar Updated Successfully!',
                                     timer: 2000,
                                     showConfirmButton: false
                                 });
@@ -135,22 +134,22 @@ include '../includes/activity_logger.php';
         //DROP QUERY
         if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnDrop'])) {
             $conn = connectToDB();
-            $student_id = $_POST['studentId'];
+            $registrar_id = $_POST['registrarId'];
 
             if ($conn) {
-                $stmt = $conn->prepare("UPDATE students SET status = '0' WHERE student_id=?");
-                $stmt->bind_param("i", $student_id);
+                $stmt = $conn->prepare("UPDATE registrars SET status = '0' WHERE registrar_id=?");
+                $stmt->bind_param("i", $registrar_id);
 
                 if ($stmt->execute()) {
 
-                    logActivity($conn, $_SESSION['id'], $_SESSION['user_type'], 'DROP_STUDENT', "Drop Student Account: Student ID = $student_id");
+                    logActivity($conn, $_SESSION['id'], $_SESSION['user_type'], 'DROP_REGISTRAR', "Drop registrar Account: Registrar ID = $registrar_id");
 
                     echo "<script>
                             document.addEventListener('DOMContentLoaded', function() {
                                 Swal.fire({
                                     icon: 'success',
                                     title: 'Success!',
-                                    text: 'Student Drop Successfully!',
+                                    text: 'Registrar Drop Successfully!',
                                     timer: 2000,
                                     showConfirmButton: false
                                 });
@@ -175,16 +174,16 @@ include '../includes/activity_logger.php';
 
         ?>
 
-        <!-- Student Table -->
+        <!-- Registrar Table -->
         <div class="container">
             <div class="table-header">
                 <div class="row align-items-center">
                     <div class="col-md-6">
-                        <h5>All Students</h5>
+                        <h5>All Registrars</h5>
                     </div>
                     <div class="col-md-6">
                         <div class="input-group mb-3">
-                            <input type="text" class="form-control" id="searchInput" placeholder="Search Students...">
+                            <input type="text" class="form-control" id="searchInput" placeholder="Search Registrar...">
                             <span class="input-group-text bg-primary"><i class="fas fa-search text-white"></i></span>
                         </div>
                     </div>
@@ -195,9 +194,8 @@ include '../includes/activity_logger.php';
                 <table class="table table-hover">
                     <thead>
                         <tr>
-                            <th>StudentID</th>
+                            <th>RegistrarID</th>
                             <th>Name</th>
-                            <th>Set</th>
                             <th>Email</th>
                             <th>Action</th>
                         </tr>
@@ -205,47 +203,44 @@ include '../includes/activity_logger.php';
                     <tbody>
                         <?php
                         $conn = connectToDB();
-                        $sql = "SELECT * FROM students WHERE status = '1'";
+                        $sql = "SELECT * FROM registrars WHERE status = '1'";
                         $result = $conn->query($sql);
 
                         if ($result && $result->num_rows > 0) {
                             // output data of each row
                             while ($row = $result->fetch_assoc()) {
                                 echo "<tr>";
-                                echo "<td>" . $row["student_id"] . "</td>";
+                                echo "<td>" . $row["registrar_id"] . "</td>";
                                 echo "<td>" . $row["lastname"] . ", " . $row["firstname"] . "</td>";
-                                echo "<td>" . $row["course"] . "</td>";
                                 echo "<td>" . $row["email"] . "</td>";
                                 echo "<td>
-                                                <a class='btn btn-sm btn-outline-primary me-1 view-student-btn'
-                                                data-id='" . $row["student_id"] . "'
+                                                <a class='btn btn-sm btn-outline-primary me-1 view-registrar-btn'
+                                                data-id='" . $row["registrar_id"] . "'
                                                 data-name='" . $row["lastname"] . ", " . $row["firstname"] . "'
-                                                data-course='" . $row["course"] . "'
                                                 data-email='" . $row["email"] . "'
                                                 data-username='" . $row["username"] . "'
                                                 data-createdAt='" . $row["createdAt"] . "'
                                                 data-bs-toggle='modal' 
-                                                data-bs-target='#viewStudentModal'>
+                                                data-bs-target='#viewRegistrarModal'>
                                                     <i class='fas fa-eye'></i>
                                                 </a>
 
-                                                <a class='btn btn-sm btn-outline-secondary me-1 edit-student-btn'
-                                                data-id='" . $row["student_id"] . "'
+                                                <a class='btn btn-sm btn-outline-secondary me-1 edit-registrar-btn'
+                                                data-id='" . $row["registrar_id"] . "'
                                                 data-fname='" . $row["firstname"] . "'
                                                 data-lname='" . $row["lastname"] . "'
-                                                data-course='" . $row["course"] . "'
                                                 data-email='" . $row["email"] . "'
                                                 data-username='" . $row["username"] . "'
                                                 data-password='" . $row["password"] . "'
                                                 data-bs-toggle='modal' 
-                                                data-bs-target='#editStudentModal'>
+                                                data-bs-target='#editRegistrarModal'>
                                                     <i class='fas fa-edit'></i>
                                                 </a>
 
-                                                <a class='btn btn-sm btn-outline-danger me-1 drop-student-btn'
-                                                data-id='" . $row["student_id"] . "'
+                                                <a class='btn btn-sm btn-outline-danger me-1 drop-registrar-btn'
+                                                data-id='" . $row["registrar_id"] . "'
                                                 data-bs-toggle='modal' 
-                                                data-bs-target='#dropStudentModal'>
+                                                data-bs-target='#dropRegistrarModal'>
                                                     <i class='fas fa-trash'></i>
                                                 </a>
                                               </td>";
@@ -255,7 +250,7 @@ include '../includes/activity_logger.php';
                             echo "<td colspan='5' class='text-center py-4' style='color: #6c757d;'>";
                             echo "<i class='fas fa-search mb-2' style='font-size: 2em; opacity: 0.5;'></i>";
                             echo "<br>";
-                            echo "No students found matching your search";
+                            echo "No Registrar found matching your search";
                             echo "</td>";
                         }
                         ?>
@@ -265,18 +260,18 @@ include '../includes/activity_logger.php';
             </div>
         </div>
 
-        <!-- Add Student Modal -->
-        <div class="modal fade" id="add-students-modal" tabindex="-1" aria-hidden="true">
+        <!-- Add Registrar Modal -->
+        <div class="modal fade" id="add-registrar-modal" tabindex="-1" aria-hidden="true">
             <div class="modal-dialog modal-lg">
                 <div class="modal-content">
                     <div class="modal-header bg-primary text-white">
-                        <h5 class="modal-title" id="studentModalTitle">Add New Student</h5>
+                        <h5 class="modal-title" id="studentModalTitle">Add New Registrar</h5>
                         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
                         <form action="<?php htmlspecialchars($_SERVER['PHP_SELF']) ?>" method="POST">
                             <div class="row g-3">
-                                <h4 class="pb-2 border-bottom">Student Information</h4>
+                                <h4 class="pb-2 border-bottom">Registrar Information</h4>
                                 <div class="col-md-6">
                                     <label for="firstname" class="form-label">First Name</label>
                                     <input type="text" class="form-control" name="firstname" id="firstname" required>
@@ -285,17 +280,9 @@ include '../includes/activity_logger.php';
                                     <label for="lastname" class="form-label">Last Name</label>
                                     <input type="text" class="form-control" name="lastname" id="lastname" required>
                                 </div>
-                                <div class="col-md-6">
+                                <div class="col">
                                     <label for="email" class="form-label">Email</label>
                                     <input type="email" class="form-control" name="email" id="email" required>
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <label for="course" class="form-label">Set</label>
-                                    <select class="form-select" name="set" id="set" required>
-                                        <option value="">Select Set</option>
-                                        <option value="A">A</option>
-                                        <option value="B">B</option>
-                                    </select>
                                 </div>
                                 <h4 class="pb-2 border-bottom">User Account</h4>
                                 <div class="col-md-6">
@@ -318,7 +305,7 @@ include '../includes/activity_logger.php';
                             </div>
                             <div class="modal-footer">
                                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                                <button type="submit" class="btn btn-primary" name="btnAdd">Save Student</button>
+                                <button type="submit" class="btn btn-primary" name="btnAdd">Save Registrar</button>
                             </div>
                         </form>
                     </div>
@@ -327,19 +314,19 @@ include '../includes/activity_logger.php';
             </div>
         </div>
 
-        <!-- Edit Student Modal -->
-        <div class="modal fade" id="editStudentModal" tabindex="-1" aria-hidden="true">
+        <!-- Edit Registrar Modal -->
+        <div class="modal fade" id="editRegistrarModal" tabindex="-1" aria-hidden="true">
             <div class="modal-dialog modal-lg">
                 <div class="modal-content">
                     <div class="modal-header bg-primary text-white">
-                        <h5 class="modal-title" id="editStudentModal">Edit Student</h5>
+                        <h5 class="modal-title" id="ediRegistrarModal">Edit Registrar</h5>
                         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
                         <form action="<?php htmlspecialchars($_SERVER['PHP_SELF']) ?>" method="POST">
                             <input type="hidden" name="editId" id="editId">
                             <div class="row g-3">
-                                <h4 class="pb-2 border-bottom">Student Information</h4>
+                                <h4 class="pb-2 border-bottom">Registrar Information</h4>
                                 <div class="col-md-6">
                                     <label for="firstname" class="form-label">First Name</label>
                                     <input type="text" class="form-control" name="editFname" id="editFname" required>
@@ -348,17 +335,9 @@ include '../includes/activity_logger.php';
                                     <label for="lastname" class="form-label">Last Name</label>
                                     <input type="text" class="form-control" name="editLname" id="editLname" required>
                                 </div>
-                                <div class="col-md-6">
+                                <div class="col">
                                     <label for="email" class="form-label">Email</label>
                                     <input type="email" class="form-control" name="editEmail" id="editEmail" required>
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <label for="course" class="form-label">Set</label>
-                                    <select class="form-select" name="editCourse" id="editCourse" required>
-                                        <option value="">Select Set</option>
-                                        <option value="A">A</option>
-                                        <option value="B">B</option>
-                                    </select>
                                 </div>
                                 <h4 class="pb-2 border-bottom">User Account</h4>
                                 <div class="col-md-6">
@@ -381,7 +360,7 @@ include '../includes/activity_logger.php';
                             </div>
                             <div class="modal-footer">
                                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                                <button type="submit" class="btn btn-primary" name="btnEdit">Update Student</button>
+                                <button type="submit" class="btn btn-primary" name="btnEdit">Update Registrar</button>
                             </div>
                         </form>
                     </div>
@@ -390,21 +369,20 @@ include '../includes/activity_logger.php';
         </div>
 
 
-        <!-- View Student Modal -->
-        <div class="modal fade" id="viewStudentModal" tabindex="-1" aria-labelledby="viewStudentModal" aria-hidden="true">
+        <!-- View Registrar Modal -->
+        <div class="modal fade" id="viewRegistrarModal" tabindex="-1" aria-labelledby="viewRegistrarModal" aria-hidden="true">
             <div class="modal-dialog">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h3 class="modal-title" id="viewStudentModal">Student Details</h3>
+                        <h3 class="modal-title">Registrar Details</h3>
                     </div>
                     <div class="modal-body">
                         <?php
-                        echo "<p><strong>Student ID: </strong><span id='modalStudentId'></span></p>
-                              <p><strong>Name: </strong><span id='modalStudentName'></span></p>
-                              <p><strong>Set: </strong><span id='modalStudentCourse'></span></p>
-                              <p><strong>Email: </strong><span id='modalStudentEmail'></span></p>";
+                        echo "<p><strong>Registrar ID: </strong><span id='modalRegistrarId'></span></p>
+                              <p><strong>Name: </strong><span id='modalRegistrarName'></span></p>
+                              <p><strong>Email: </strong><span id='modalRegistrarEmail'></span></p>";
                         echo "<h3 class='pb-3 pt-3 border-bottom'>User Acccount</h3>
-                              <p><strong>Username: </strong><span id='modalStudentUsername'></span></p>
+                              <p><strong>Username: </strong><span id='modalRegistrarUsername'></span></p>
                               <p><strong>createdAt: </strong><span id='createdAt'></span></p>";
 
                         ?>
@@ -416,8 +394,8 @@ include '../includes/activity_logger.php';
             </div>
         </div>
 
-        <!-- Drop Student Modal -->
-        <div class="modal fade" id="dropStudentModal" tabindex="-1" role="dialog" aria-labelledby="dropStudentModal" aria-hidden="true">
+        <!-- Drop Registrar Modal -->
+        <div class="modal fade" id="dropRegistrarModal" tabindex="-1" role="dialog" aria-labelledby="dropStudentModal" aria-hidden="true">
             <div class="modal-dialog">
                 <div class="modal-content">
                     <div class="modal-header">
@@ -425,12 +403,12 @@ include '../includes/activity_logger.php';
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
-                        Are you sure you want to drop this student?
+                        Are you sure you want to drop this Registrar?
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">No</button>
                         <form action="<?php htmlspecialchars($_SERVER['PHP_SELF']) ?>" method="post">
-                            <input type="hidden" name="studentId" id="studentId">
+                            <input type="hidden" name="registrarId" id="registrarId">
                             <button type="submit" class="btn btn-danger" name="btnDrop">Yes</button>
                         </form>
                     </div>
@@ -442,31 +420,29 @@ include '../includes/activity_logger.php';
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
-        document.querySelectorAll('.view-student-btn').forEach(function(btn) {
+        document.querySelectorAll('.view-registrar-btn').forEach(function(btn) {
             btn.addEventListener('click', function() {
-                document.getElementById('modalStudentId').textContent = btn.getAttribute('data-id');
-                document.getElementById('modalStudentName').textContent = btn.getAttribute('data-name');
-                document.getElementById('modalStudentCourse').textContent = btn.getAttribute('data-course');
-                document.getElementById('modalStudentEmail').textContent = btn.getAttribute('data-email');
-                document.getElementById('modalStudentUsername').textContent = btn.getAttribute('data-username');
+                document.getElementById('modalRegistrarId').textContent = btn.getAttribute('data-id');
+                document.getElementById('modalRegistrarName').textContent = btn.getAttribute('data-name');
+                document.getElementById('modalRegistrarEmail').textContent = btn.getAttribute('data-email');
+                document.getElementById('modalRegistrarUsername').textContent = btn.getAttribute('data-username');
                 document.getElementById('createdAt').textContent = btn.getAttribute('data-createdAt');
             });
         });
-        document.querySelectorAll('.edit-student-btn').forEach(function(btn) {
+        document.querySelectorAll('.edit-registrar-btn').forEach(function(btn) {
             btn.addEventListener('click', function() {
                 document.getElementById('editId').value = btn.getAttribute('data-id');
                 document.getElementById('editFname').value = btn.getAttribute('data-fname');
                 document.getElementById('editLname').value = btn.getAttribute('data-lname');
                 document.getElementById('editEmail').value = btn.getAttribute('data-email');
-                document.getElementById('editCourse').value = btn.getAttribute('data-course');
                 document.getElementById('editUsername').value = btn.getAttribute('data-username');
                 document.getElementById('editPassword').value = btn.getAttribute('data-password');
             });
         });
 
-        document.querySelectorAll('.drop-student-btn').forEach(function(btn) {
+        document.querySelectorAll('.drop-registrar-btn').forEach(function(btn) {
             btn.addEventListener('click', function() {
-                document.getElementById('studentId').value = btn.getAttribute('data-id');
+                document.getElementById('registrarId').value = btn.getAttribute('data-id');
             });
         });
 

@@ -60,7 +60,7 @@ include '../includes/activity_logger.php';
 
 <body>
     <!-- Sidebar -->
-    <?php include('sidebar.php'); ?>
+    <?php include('includes/sidebar.php'); ?>
 
     <main class="main-content">
         <div class="page-header">
@@ -276,6 +276,47 @@ include '../includes/activity_logger.php';
                 echo "<script>alert('Database connection failed');</script>";
             }
         }
+
+         //RESTORE REGISTRAR QUERY
+        if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnRestore3'])) {
+            $conn = connectToDB();
+            $registrar_id = $_POST['registrarId'];
+
+            if ($conn) {
+                $stmt = $conn->prepare("UPDATE registrars SET status = '1' WHERE registrar_id=?");
+                $stmt->bind_param("i", $registrar_id);
+
+                if ($stmt->execute()) {
+
+                    logActivity($conn, $_SESSION['id'], $_SESSION['user_type'], 'RETRIEVE_REGISTRAR', "retrieved registrar from the archive.");
+
+                    echo "<script>
+                            document.addEventListener('DOMContentLoaded', function() {
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Success!',
+                                    text: 'Registrar Restored Successfully!',
+                                    timer: 2000,
+                                    showConfirmButton: false
+                                });
+                            });
+                        </script>";
+                } else {
+                    echo "<script>
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Error!',
+                                text: '" . addslashes($stmt->error) . "',
+                                confirmButtonColor: '#d33'
+                            });
+                        </script>";
+                }
+                $stmt->close();
+                $conn->close();
+            } else {
+                echo "<script>alert('Database connection failed');</script>";
+            }
+        }
         ?>
 
         <div class="row">
@@ -334,7 +375,7 @@ include '../includes/activity_logger.php';
                 <div class="card-body p-4">
                     <!-- Nav tabs -->
                     <div class="row">
-                        <div class="col-12 col-md-6">
+                        <div class="col-12 col-md-8">
                             <ul class="nav nav-tabs mb-4" id="myTab" role="tablist">
                                 <li class="nav-item" role="presentation">
                                     <button class="nav-link active text-black" id="students-tab" data-bs-toggle="tab" data-bs-target="#students" type="button" role="tab" aria-selected="true">
@@ -347,13 +388,18 @@ include '../includes/activity_logger.php';
                                     </button>
                                 </li>
                                 <li class="nav-item" role="presentation">
+                                    <button class="nav-link text-black" id="registrars-tab" data-bs-toggle="tab" data-bs-target="#registrars" type="button" role="tab" aria-selected="false">
+                                        <i class="bi bi-file-person"></i>Registrars
+                                    </button>
+                                </li>
+                                <li class="nav-item" role="presentation">
                                     <button class="nav-link text-black" id="subjects-tab" data-bs-toggle="tab" data-bs-target="#subjects" type="button" role="tab" aria-selected="false">
                                         <i class="bi bi-journal-bookmark"></i>Subjects
                                     </button>
                                 </li>
                             </ul>
                         </div>
-                        <div class="col-12 col-md-6">
+                        <div class="col-12 col-md-4">
                             <div class="input-group mb-3">
                                 <input type="text" class="form-control" id="searchInput" placeholder="Search...">
                                 <span class="input-group-text bg-primary"><i class="fas fa-search text-white"></i></span>
@@ -511,6 +557,52 @@ include '../includes/activity_logger.php';
                                             echo "<i class='fas fa-search mb-2' style='font-size: 2em; opacity: 0.5;'></i>";
                                             echo "<br>";
                                             echo "No subject found matching your search";
+                                            echo "</td>";
+                                        }
+                                        ?>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Registrars Tab -->
+                        <div class="tab-pane fade" id="registrars" role="tabpanel" aria-labelledby="registrars-tab">
+                            <div class="table-responsive">
+                                <table class="table table-striped table-hover">
+                                    <thead class="table-dark">
+                                        <tr>
+                                            <th scope="col">RegistrarID</th>
+                                            <th scope="col">Name</th>
+                                            <th scope="col">Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <?php
+                                        $conn = connectToDB();
+                                        $sql = "SELECT * FROM registrars WHERE status = '0'";
+                                        $result = $conn->query($sql);
+
+                                        if ($result && $result->num_rows > 0) {
+                                            // output data of each row
+                                            while ($row = $result->fetch_assoc()) {
+                                                echo "<tr>";
+                                                echo "<td>" . $row["registrar_id"] . "</td>";
+                                                echo "<td>" . $row["lastname"] . ", " . $row["firstname"] . "</td>";
+                                                echo "<td>
+                                                <a class='btn btn-sm btn-outline-success me-1 restore-registrar-btn'
+                                                data-id='" . $row["registrar_id"] . "'
+                                                data-bs-toggle='modal' 
+                                                data-bs-target='#restoreRegistrarModal'>
+                                                    <i class='fa fa-refresh'></i>
+                                                </a>
+                                                  </td>";
+                                                echo "</tr>";
+                                            }
+                                        } else {
+                                            echo "<td colspan='5' class='text-center py-4' style='color: #6c757d;'>";
+                                            echo "<i class='fas fa-search mb-2' style='font-size: 2em; opacity: 0.5;'></i>";
+                                            echo "<br>";
+                                            echo "No registrar found matching your search";
                                             echo "</td>";
                                         }
                                         ?>
@@ -703,6 +795,28 @@ include '../includes/activity_logger.php';
             </div>
         </div>
 
+        <!-- Restore Registrar Modal -->
+        <div class="modal fade" id="restoreRegistrarModal" tabindex="-1" role="dialog" aria-labelledby="restoreRegistrar" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="restoreSubjectModal">Confirm Restore</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        Restore this Registrar?
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">No</button>
+                        <form action="<?php htmlspecialchars($_SERVER['PHP_SELF']) ?>" method="post">
+                            <input type="hidden" name="registrarId" id="registrarId">
+                            <button type="submit" class="btn btn-success" name="btnRestore3">Yes</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- AUTHENTICATION MODAL -->
         <div class="modal fade" id="authModal" tabindex="-1" aria-hidden="true">
             <div class="modal-dialog modal-dialog-centered">
@@ -795,6 +909,11 @@ include '../includes/activity_logger.php';
                 document.getElementById('subjectId').value = btn.getAttribute('data-id');
             });
         });
+        document.querySelectorAll('.restore-registrar-btn').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                document.getElementById('registrarId').value = btn.getAttribute('data-id');
+            });
+        });
         document.querySelectorAll('.delete-schoolyear-btn').forEach(function(btn) {
             btn.addEventListener('click', function() {
                 document.getElementById('id').value = btn.getAttribute('data-id');
@@ -806,6 +925,7 @@ include '../includes/activity_logger.php';
             const studentRows = document.querySelectorAll('#students tbody tr');
             const teacherRows = document.querySelectorAll('#teachers tbody tr');
             const subjectRows = document.querySelectorAll('#subjects tbody tr');
+            const registrarRows = document.querySelectorAll('#registrars tbody tr');
 
             // Convert search term to lowercase for case-insensitive search
             const searchText = searchTerm.toLowerCase().trim();
@@ -844,11 +964,13 @@ include '../includes/activity_logger.php';
             const hasStudentResults = searchTable(studentRows, searchText);
             const hasTeacherResults = searchTable(teacherRows, searchText);
             const hasSubjectResults = searchTable(subjectRows, searchText);
+            const hasRegistrarResults = searchTable(registrarRows, searchText);
 
             // Handle empty states for each table
             handleEmptyState('students', hasStudentResults, searchText);
             handleEmptyState('teachers', hasTeacherResults, searchText);
             handleEmptyState('subjects', hasSubjectResults, searchText);
+            handleEmptyState('registrars', hasRegistrarResults, searchText);
         }
 
         // Function to handle empty state display
@@ -881,7 +1003,8 @@ include '../includes/activity_logger.php';
             const tableNames = {
                 'students': 'students',
                 'teachers': 'teachers',
-                'subjects': 'subjects'
+                'subjects': 'subjects',
+                'registrars': 'registrars'
             };
             return tableNames[tableId] || 'records';
         }
