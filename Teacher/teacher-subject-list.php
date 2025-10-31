@@ -27,7 +27,7 @@ include '../includes/activity_logger.php';
 <body>
     <!-- Sidebar -->
     <?php
-    include('sidebar.php');
+    include('includes/sidebar.php');
 
     //Fetch subjects
     $conn = connectToDB();
@@ -125,7 +125,7 @@ include '../includes/activity_logger.php';
                 $stmt = $conn->prepare("UPDATE subjects
                                         SET subject = ?, yearlevel = ?, subject_code = ?
                                         WHERE subject_id = ?");
-                $stmt->bind_param("sssi", $subjectname, $yearlevel, $subjectcode ,$subject_id);
+                $stmt->bind_param("sssi", $subjectname, $yearlevel, $subjectcode, $subject_id);
 
                 if ($stmt->execute()) {
 

@@ -41,16 +41,34 @@ include '../includes/activity_logger.php';
             $status = '1';
 
             if ($conn) {
-                $stmt = $conn->prepare("INSERT INTO registrars (firstname, lastname, email, username, password, status) 
-                                            VALUES (?, ?, ?, ?, ?, ?)");
-                $stmt->bind_param("ssssss", $firstname, $lastname, $email, $username, $password, $status);
 
-                if ($stmt->execute()) {
+                $checkStmt = $conn->prepare("SELECT * FROM registrars WHERE firstname = ? AND lastname = ?");
+                $checkStmt->bind_param("ss", $firstname, $lastname);
+                $checkStmt->execute();
+                $result = $checkStmt->get_result();
 
-                    $registrarName = $lastname . ', ' . $firstname;
-                    logActivity($conn, $_SESSION['id'], $_SESSION['user_type'], 'CREATE_REGISTRAR', "Created registrar account: $registrarName");
-
+                if ($result->num_rows > 0) {
                     echo "<script>
+                            document.addEventListener('DOMContentLoaded', function() {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Error!',
+                                    text: 'Registrar already exists!',
+                                    confirmButtonColor: '#d33'
+                                });
+                            });
+                        </script>";
+                } else {
+                    $stmt = $conn->prepare("INSERT INTO registrars (firstname, lastname, email, username, password, status) 
+                                            VALUES (?, ?, ?, ?, ?, ?)");
+                    $stmt->bind_param("ssssss", $firstname, $lastname, $email, $username, $password, $status);
+
+                    if ($stmt->execute()) {
+
+                        $registrarName = $lastname . ', ' . $firstname;
+                        logActivity($conn, $_SESSION['id'], $_SESSION['user_type'], 'CREATE_REGISTRAR', "Created registrar account: $registrarName");
+
+                        echo "<script>
                             document.addEventListener('DOMContentLoaded', function() {
                                 Swal.fire({
                                     icon: 'success',
@@ -61,8 +79,8 @@ include '../includes/activity_logger.php';
                                 });
                             });
                         </script>";
-                } else {
-                    echo "<script>
+                    } else {
+                        echo "<script>
                             Swal.fire({
                                 icon: 'error',
                                 title: 'Error!',
@@ -70,13 +88,14 @@ include '../includes/activity_logger.php';
                                 confirmButtonColor: '#d33'
                             });
                         </script>";
+                    }
+                    $stmt->close();
                 }
-
-                $stmt->close();
-                $conn->close();
+                $checkStmt->close();
             } else {
                 echo "<script>alert('Database connection failed');</script>";
             }
+            $conn->close();
         }
 
         //UPDATE QUERY
@@ -87,25 +106,47 @@ include '../includes/activity_logger.php';
             $lastname = $_POST['editLname'];
             $email = $_POST['editEmail'];
             $username = $_POST['editUsername'];
-            $password = $_POST['editPassword'];
+
+            $hasPassword = !empty($_POST['editPassword']);
+            if ($hasPassword) {
+                $password = password_hash($_POST['editPassword'], PASSWORD_DEFAULT);
+            }
 
             if ($conn) {
+                // Check for existing email and username (excluding current student)
+                $checkStmt = $conn->prepare("SELECT registrar_id FROM registrars WHERE (firstname = ? AND lastname = ?) AND registrar_id != ?");
+                $checkStmt->bind_param("ssi", $firstname, $lastname, $registrar_id);
+                $checkStmt->execute();
+                $checkStmt->store_result();
 
-                $hashed_password = password_hash($password, PASSWORD_DEFAULT);
-                $stmt = $conn->prepare("UPDATE registrars 
+                if ($checkStmt->num_rows > 0) {
+                    echo "<script>
+                            document.addEventListener('DOMContentLoaded', function() {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Error!',
+                                    text: 'Registrar already exists!',
+                                    confirmButtonColor: '#d33'
+                                });
+                            });
+                        </script>";
+                } else {
+
+                    if ($hasPassword) {
+                        $stmt = $conn->prepare("UPDATE registrars 
                                         SET firstname=?,
                                             lastname=?,
                                             email=?,
                                             username=?,
                                             password=?
                                         WHERE registrar_id=?");
-                $stmt->bind_param("sssssi", $firstname, $lastname, $email, $username, $hashed_password, $registrar_id);
+                        $stmt->bind_param("sssssi", $firstname, $lastname, $email, $username, $password, $registrar_id);
 
-                if ($stmt->execute()) {
+                        if ($stmt->execute()) {
 
-                    logActivity($conn, $_SESSION['id'], $_SESSION['user_type'], 'UPDATE_REGISTRAR', "Updated registrar account: Registrar ID = $registrar_id");
+                            logActivity($conn, $_SESSION['id'], $_SESSION['user_type'], 'UPDATE_REGISTRAR', "Updated registrar account: Registrar ID = $registrar_id");
 
-                    echo "<script>
+                            echo "<script>
                             document.addEventListener('DOMContentLoaded', function() {
                                 Swal.fire({
                                     icon: 'success',
@@ -116,8 +157,8 @@ include '../includes/activity_logger.php';
                                 });
                             });
                         </script>";
-                } else {
-                    echo "<script>
+                        } else {
+                            echo "<script>
                             Swal.fire({
                                 icon: 'error',
                                 title: 'Error!',
@@ -125,10 +166,48 @@ include '../includes/activity_logger.php';
                                 confirmButtonColor: '#d33'
                             });
                         </script>";
+                        }
+                        $stmt->close();
+                    } else {
+                        $stmt = $conn->prepare("UPDATE registrars 
+                                        SET firstname=?,
+                                            lastname=?,
+                                            email=?,
+                                            username=?
+                                        WHERE registrar_id=?");
+                        $stmt->bind_param("ssssi", $firstname, $lastname, $email, $username, $registrar_id);
+
+                        if ($stmt->execute()) {
+
+                            logActivity($conn, $_SESSION['id'], $_SESSION['user_type'], 'UPDATE_REGISTRAR', "Updated registrar account: Registrar ID = $registrar_id");
+
+                            echo "<script>
+                            document.addEventListener('DOMContentLoaded', function() {
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Success!',
+                                    text: 'Registrar Updated Successfully!',
+                                    timer: 2000,
+                                    showConfirmButton: false
+                                });
+                            });
+                        </script>";
+                        } else {
+                            echo "<script>
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Error!',
+                                text: '" . addslashes($stmt->error) . "',
+                                confirmButtonColor: '#d33'
+                            });
+                        </script>";
+                        }
+                        $stmt->close();
+                    }
                 }
-                $stmt->close();
-                $conn->close();
+                $checkStmt->close();
             }
+            $conn->close();
         }
 
         //DROP QUERY
@@ -166,10 +245,10 @@ include '../includes/activity_logger.php';
                         </script>";
                 }
                 $stmt->close();
-                $conn->close();
             } else {
                 echo "<script>alert('Database connection failed');</script>";
             }
+            $conn->close();
         }
 
         ?>
@@ -231,7 +310,6 @@ include '../includes/activity_logger.php';
                                                 data-lname='" . $row["lastname"] . "'
                                                 data-email='" . $row["email"] . "'
                                                 data-username='" . $row["username"] . "'
-                                                data-password='" . $row["password"] . "'
                                                 data-bs-toggle='modal' 
                                                 data-bs-target='#editRegistrarModal'>
                                                     <i class='fas fa-edit'></i>
@@ -269,7 +347,7 @@ include '../includes/activity_logger.php';
                         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
-                        <form action="<?php htmlspecialchars($_SERVER['PHP_SELF']) ?>" method="POST">
+                        <form action="<?php htmlspecialchars($_SERVER['PHP_SELF']) ?>" method="POST" id="insertForm">
                             <div class="row g-3">
                                 <h4 class="pb-2 border-bottom">Registrar Information</h4>
                                 <div class="col-md-6">
@@ -285,13 +363,13 @@ include '../includes/activity_logger.php';
                                     <input type="email" class="form-control" name="email" id="email" required>
                                 </div>
                                 <h4 class="pb-2 border-bottom">User Account</h4>
-                                <div class="col-md-6">
+                                <div class="col-12">
                                     <div class="input-group">
                                         <span class="input-group-text"><i class="fas fa-user"></i></span>
                                         <input type="text" class="form-control" placeholder="Enter username" name="username" id="username" required>
                                     </div>
                                 </div>
-                                <div class="col-md-6 mb-3">
+                                <div class="col-12">
                                     <div class="input-group">
                                         <span class="input-group-text"><i class="fas fa-lock"></i></span>
                                         <input type="password" class="form-control" placeholder="Enter password" name="password" id="password" required>
@@ -300,6 +378,9 @@ include '../includes/activity_logger.php';
                                             onmouseup="document.getElementById('password').type='password'"
                                             onmouseleave="document.getElementById('password').type='password'">
                                             <i class="fas fa-eye"></i></span>
+                                    </div>
+                                    <div id="insertError">
+
                                     </div>
                                 </div>
                             </div>
@@ -323,7 +404,7 @@ include '../includes/activity_logger.php';
                         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
-                        <form action="<?php htmlspecialchars($_SERVER['PHP_SELF']) ?>" method="POST">
+                        <form action="<?php htmlspecialchars($_SERVER['PHP_SELF']) ?>" method="POST" id="editForm">
                             <input type="hidden" name="editId" id="editId">
                             <div class="row g-3">
                                 <h4 class="pb-2 border-bottom">Registrar Information</h4>
@@ -340,21 +421,24 @@ include '../includes/activity_logger.php';
                                     <input type="email" class="form-control" name="editEmail" id="editEmail" required>
                                 </div>
                                 <h4 class="pb-2 border-bottom">User Account</h4>
-                                <div class="col-md-6">
+                                <div class="col-12">
                                     <div class="input-group">
                                         <span class="input-group-text"><i class="fas fa-user"></i></span>
                                         <input type="text" class="form-control" placeholder="Enter username" name="editUsername" id="editUsername" required>
                                     </div>
                                 </div>
-                                <div class="col-md-6 mb-3">
+                                <div class="col-12">
                                     <div class="input-group">
                                         <span class="input-group-text"><i class="fas fa-lock"></i></span>
-                                        <input type="password" class="form-control" placeholder="Enter password" name="editPassword" id="editPassword" required>
+                                        <input type="password" class="form-control" placeholder="Enter new password" name="editPassword" id="editPassword">
                                         <span class="input-group-text password-toggle" id="password-toggle"
                                             onmousedown="document.getElementById('editPassword').type='text'"
                                             onmouseup="document.getElementById('editPassword').type='password'"
                                             onmouseleave="document.getElementById('editPassword').type='password'">
                                             <i class="fas fa-eye"></i></span>
+                                    </div>
+                                    <div id="editError">
+
                                     </div>
                                 </div>
                             </div>
@@ -419,6 +503,7 @@ include '../includes/activity_logger.php';
     <!-- Bootstrap JS Bundle with Popper -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="js/script.js"></script>
     <script>
         document.querySelectorAll('.view-registrar-btn').forEach(function(btn) {
             btn.addEventListener('click', function() {
@@ -436,7 +521,6 @@ include '../includes/activity_logger.php';
                 document.getElementById('editLname').value = btn.getAttribute('data-lname');
                 document.getElementById('editEmail').value = btn.getAttribute('data-email');
                 document.getElementById('editUsername').value = btn.getAttribute('data-username');
-                document.getElementById('editPassword').value = btn.getAttribute('data-password');
             });
         });
 
@@ -444,115 +528,6 @@ include '../includes/activity_logger.php';
             btn.addEventListener('click', function() {
                 document.getElementById('registrarId').value = btn.getAttribute('data-id');
             });
-        });
-
-        document.addEventListener('DOMContentLoaded', function() {
-            const passwordToggle = document.getElementById('password-toggle');
-            const passwordInput = document.getElementById('editPassword');
-
-            // Touch support for mobile devices
-            passwordToggle.addEventListener('touchstart', function(e) {
-                e.preventDefault();
-                passwordInput.type = 'text';
-            });
-
-            passwordToggle.addEventListener('touchend', function(e) {
-                e.preventDefault();
-                passwordInput.type = 'password';
-            });
-
-            // Change icon when revealing password
-            passwordToggle.addEventListener('mousedown', function() {
-                this.innerHTML = '<i class="fas fa-eye-slash"></i>';
-            });
-
-            passwordToggle.addEventListener('mouseup', function() {
-                this.innerHTML = '<i class="fas fa-eye"></i>';
-            });
-
-            passwordToggle.addEventListener('mouseleave', function() {
-                this.innerHTML = '<i class="fas fa-eye"></i>';
-            });
-        });
-
-        // Real-time search functionality for students table
-        document.addEventListener('DOMContentLoaded', function() {
-            const searchInput = document.getElementById('searchInput');
-            const tableBody = document.querySelector('tbody');
-            const tableRows = Array.from(tableBody.querySelectorAll('tr'));
-
-            // Function to perform the search
-            function performSearch(searchTerm) {
-                const query = searchTerm.toLowerCase().trim();
-                let visibleRows = 0;
-
-                tableRows.forEach(function(row) {
-                    // Get all text content from the row (excluding action buttons)
-                    const cells = row.querySelectorAll('td');
-                    let rowText = '';
-
-                    // Combine text from StudentID, Name, Course, and Email columns (skip Action column)
-                    for (let i = 0; i < cells.length - 1; i++) {
-                        rowText += cells[i].textContent.toLowerCase() + ' ';
-                    }
-
-                    // Check if search term matches any part of the row text
-                    if (query === '' || rowText.includes(query)) {
-                        row.style.display = '';
-                        visibleRows++;
-                    } else {
-                        row.style.display = 'none';
-                    }
-                });
-
-                // Optional: Show/hide "No results" message
-                showNoResultsMessage(visibleRows === 0 && query !== '');
-            }
-
-            // Function to show/hide no results message
-            function showNoResultsMessage(show) {
-                let noResultsRow = document.getElementById('no-results-row');
-
-                if (show && !noResultsRow) {
-                    // Create no results row if it doesn't exist
-                    noResultsRow = document.createElement('tr');
-                    noResultsRow.id = 'no-results-row';
-                    noResultsRow.innerHTML = `
-                <td colspan="5" class="text-center py-4" style="color: #6c757d;">
-                    <i class="fas fa-search mb-2" style="font-size: 2em; opacity: 0.5;"></i>
-                    <br>
-                    No students found matching your search
-                </td>
-            `;
-                    tableBody.appendChild(noResultsRow);
-                } else if (!show && noResultsRow) {
-                    // Remove no results row if it exists
-                    noResultsRow.remove();
-                }
-            }
-
-            // Add event listener for real-time search
-            searchInput.addEventListener('input', function(e) {
-                performSearch(e.target.value);
-            });
-
-            // Add event listener for paste events
-            searchInput.addEventListener('paste', function(e) {
-                // Small delay to ensure pasted content is processed
-                setTimeout(function() {
-                    performSearch(searchInput.value);
-                }, 10);
-            });
-
-
-
-            // Optional: Add search icon click functionality
-            const searchIcon = document.querySelector('#searchInput + .input-group-text');
-            if (searchIcon) {
-                searchIcon.addEventListener('click', function() {
-                    searchInput.focus();
-                });
-            }
         });
     </script>
 </body>

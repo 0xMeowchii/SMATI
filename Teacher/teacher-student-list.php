@@ -92,7 +92,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnDelete'])) {
 <body>
     <!-- Sidebar -->
     <?php
-    include('sidebar.php');
+    include('includes/sidebar.php');
     ?>
 
     <main class="main-content">
@@ -147,8 +147,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnDelete'])) {
                                 echo "<td>" . $row["student_set"] . "</td>";
                                 echo "<td>
                                       <a class='btn btn-sm btn-outline-primary' 
-                                      href='teacher-input-grades.php?student_set=" . $row['student_set'] . "&subject_id=" . $subject . 
-                                      "&sy=".$sy."'>
+                                      href='teacher-input-grades.php?student_set=" . $row['student_set'] . "&subject_id=" . $subject .
+                                    "&sy=" . $sy . "'>
                                           <i class='fas fa-eye me-2'></i>View
                                       </a>
                                       
@@ -235,46 +235,73 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnDelete'])) {
                 document.getElementById('listId').value = btn.getAttribute('data-id');
             });
         });
-        document.addEventListener('DOMContentLoaded', function() {
-            // Select All functionality
-            const selectAllCheckbox = document.getElementById('selectAll');
-            const studentCheckboxes = document.querySelectorAll('.student-checkbox');
 
-            if (selectAllCheckbox) {
-                selectAllCheckbox.addEventListener('change', function() {
-                    studentCheckboxes.forEach(checkbox => {
-                        checkbox.checked = this.checked;
-                    });
-                });
+        function initializeSearchInput() {
+            const searchInput = document.getElementById('searchInput');
+            const tableRows = document.querySelectorAll('tbody tr');
+            const noResultsRow = document.getElementById('noResults') || createNoResultsRow();
+
+            if (!searchInput) return;
+
+            function createNoResultsRow() {
+                const tbody = document.querySelector('tbody');
+                const row = document.createElement('tr');
+                row.id = 'noResults';
+                row.style.display = 'none';
+                row.innerHTML = `<td colspan="2" class="text-center text-muted py-4">No results found</td>`;
+                tbody.appendChild(row);
+                return row;
             }
 
-            // Search functionality
-            const searchInput = document.getElementById('studentSearch');
-            const studentItems = document.querySelectorAll('.student-item');
+            function performSearch() {
+                const searchTerm = searchInput.value.toLowerCase().trim();
+                let hasVisibleRows = false;
 
-            if (searchInput) {
-                searchInput.addEventListener('input', function() {
-                    const searchTerm = this.value.toLowerCase();
+                tableRows.forEach(row => {
+                    if (row.id === 'noResults') return;
 
-                    studentItems.forEach(item => {
-                        const text = item.textContent.toLowerCase();
-                        if (text.includes(searchTerm)) {
-                            item.style.display = 'block';
-                        } else {
-                            item.style.display = 'none';
-                        }
-                    });
+                    const schoolYearText = row.cells[0].textContent.toLowerCase();
+                    const isVisible = schoolYearText.includes(searchTerm);
+
+                    row.style.display = isVisible ? '' : 'none';
+                    if (isVisible) hasVisibleRows = true;
                 });
+
+                // Show/hide no results message
+                if (searchTerm && !hasVisibleRows) {
+                    noResultsRow.style.display = '';
+                } else {
+                    noResultsRow.style.display = 'none';
+                }
             }
 
-            // Update Select All when individual checkboxes change
-            studentCheckboxes.forEach(checkbox => {
-                checkbox.addEventListener('change', function() {
-                    const allChecked = Array.from(studentCheckboxes).every(cb => cb.checked);
-                    selectAllCheckbox.checked = allChecked;
-                });
+            // Debounced search to improve performance
+            let timeoutId;
+            searchInput.addEventListener('input', function() {
+                clearTimeout(timeoutId);
+                timeoutId = setTimeout(performSearch, 300);
             });
-        });
+
+            // Enter key support
+            searchInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    clearTimeout(timeoutId);
+                    performSearch();
+                }
+            });
+
+            // Clear search on escape
+            searchInput.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    this.value = '';
+                    performSearch();
+                }
+            });
+        }
+
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', initializeSearchInput);
     </script>
 </body>
 

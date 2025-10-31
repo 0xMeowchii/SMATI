@@ -13,7 +13,7 @@ include '../database.php';
 <body>
     <!-- Sidebar -->
     <?php
-    include('sidebar.php');
+    include('includes/sidebar.php');
     ?>
 
     <main class="main-content">
@@ -29,52 +29,95 @@ include '../database.php';
             $conn = connectToDB();
             $admin_id = $_POST['editId'];
             $email = $_POST['editEmail'];
-            $password = $_POST['editPassword'];
+            $hasPassword = !empty($_POST['editPassword']);
+            if ($hasPassword) {
+                $password = password_hash($_POST['editPassword'], PASSWORD_DEFAULT);
+            }
 
             if ($conn) {
-                // Check if password field is not empty (user wants to change password)
-                if (!empty($password)) {
-                    // Hash the new password
-                    $hashed_password = password_hash($password, PASSWORD_DEFAULT);
+                // Check for existing email and username (excluding current student)
+                $checkStmt = $conn->prepare("SELECT admin_id FROM admin WHERE (email = ?) AND admin_id != ?");
+                $checkStmt->bind_param("si", $email, $admin_id);
+                $checkStmt->execute();
+                $checkStmt->store_result();
 
-                    $stmt = $conn->prepare("UPDATE admin 
+                if ($checkStmt->num_rows > 0) {
+                    echo "<script>
+                            document.addEventListener('DOMContentLoaded', function() {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Error!',
+                                    text: 'Email already exists!',
+                                    confirmButtonColor: '#d33'
+                                });
+                            });
+                        </script>";
+                } else {
+
+                    if ($hasPassword) {
+                        $stmt = $conn->prepare("UPDATE admin 
                                     SET email=?,
                                         password=?
                                     WHERE admin_id=?");
-                    $stmt->bind_param("ssi", $email, $hashed_password, $admin_id);
-                } else {
-                    // If password is empty, only update email
-                    $stmt = $conn->prepare("UPDATE admin 
+                        $stmt->bind_param("ssi", $email, $password, $admin_id);
+
+                        if ($stmt->execute()) {
+                            echo "<script>
+                                    document.addEventListener('DOMContentLoaded', function() {
+                                        Swal.fire({
+                                            icon: 'success',
+                                            title: 'Success!',
+                                            text: 'Admin Updated Successfully!',
+                                            timer: 2000,
+                                            showConfirmButton: false
+                                        });
+                                    });
+                                </script>";
+                        } else {
+                            echo "<script>
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Error!',
+                                    text: '" . addslashes($stmt->error) . "',
+                                    confirmButtonColor: '#d33'
+                                });
+                            </script>";
+                        }
+                        $stmt->close();
+                    } else {
+                        $stmt = $conn->prepare("UPDATE admin 
                                     SET email=?
                                     WHERE admin_id=?");
-                    $stmt->bind_param("si", $email, $admin_id);
-                }
+                        $stmt->bind_param("si", $email, $admin_id);
 
-                if ($stmt->execute()) {
-                    echo "<script>
-                    document.addEventListener('DOMContentLoaded', function() {
-                        Swal.fire({
-                            icon: 'success',
-                            title: 'Success!',
-                            text: 'Admin Updated Successfully!',
-                            timer: 2000,
-                            showConfirmButton: false
-                        });
-                    });
-                </script>";
-                } else {
-                    echo "<script>
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Error!',
-                        text: '" . addslashes($stmt->error) . "',
-                        confirmButtonColor: '#d33'
-                    });
-                </script>";
+                        if ($stmt->execute()) {
+                            echo "<script>
+                                    document.addEventListener('DOMContentLoaded', function() {
+                                        Swal.fire({
+                                            icon: 'success',
+                                            title: 'Success!',
+                                            text: 'Admin Updated Successfully!',
+                                            timer: 2000,
+                                            showConfirmButton: false
+                                        });
+                                    });
+                                </script>";
+                        } else {
+                            echo "<script>
+                                    Swal.fire({
+                                        icon: 'error',
+                                        title: 'Error!',
+                                        text: '" . addslashes($stmt->error) . "',
+                                        confirmButtonColor: '#d33'
+                                    });
+                                </script>";
+                        }
+                        $stmt->close();
+                    }
                 }
-                $stmt->close();
-                $conn->close();
+                $checkStmt->close();
             }
+            $conn->close();
         }
 
         ?>
@@ -120,7 +163,6 @@ include '../database.php';
                                     <a class='btn btn-sm btn-outline-primary me-1 edit-admin-btn'
                                     data-id='" . $row["admin_id"] . "'
                                     data-email='" . $row["email"] . "'
-                                    data-password='" . $row["password"] . "'
                                     data-bs-toggle='modal' 
                                     data-bs-target='#edit-admin-modal'>
                                          <i class='fas fa-edit me-1'></i>Edit
@@ -146,7 +188,7 @@ include '../database.php';
                         <h3 class="modal-title">Account Details</h3>
                     </div>
                     <div class="modal-body">
-                        <form action="<?php echo htmlspecialchars($_SERVER['PHP_SELF']) ?>" method="post">
+                        <form action="<?php echo htmlspecialchars($_SERVER['PHP_SELF']) ?>" method="post" id="editForm">
                             <div class="input-group mb-4">
                                 <input type="hidden" id="editId" name="editId">
                                 <span class="input-group-text fw-semibold">Email:</span>
@@ -154,12 +196,15 @@ include '../database.php';
                             </div>
                             <div class="input-group">
                                 <span class="input-group-text fw-semibold">Password:</span>
-                                <input type="password" class="form-control" placeholder="Enter password" name="editPassword" id="editPassword" required>
+                                <input type="password" class="form-control" placeholder="Enter new password" name="editPassword" id="editPassword">
                                 <span class="input-group-text password-toggle" id="password-toggle"
                                     onmousedown="document.getElementById('editPassword').type='text'"
                                     onmouseup="document.getElementById('editPassword').type='password'"
                                     onmouseleave="document.getElementById('editPassword').type='password'">
                                     <i class="fas fa-eye"></i></span>
+                            </div>
+                            <div id="editError">
+
                             </div>
                     </div>
                     <div class="modal-footer">
@@ -174,7 +219,15 @@ include '../database.php';
     <!-- Bootstrap JS Bundle with Popper -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script src="js/script.js"></script>
+    <script src="js/script1.js"></script>
+    <script>
+        document.querySelectorAll('.edit-admin-btn').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                document.getElementById('editId').value = btn.getAttribute('data-id');
+                document.getElementById('editEmail').value = btn.getAttribute('data-email');
+            });
+        });
+    </script>
 </body>
 
 </html>

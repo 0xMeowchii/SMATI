@@ -2,6 +2,39 @@
 require_once 'includes/session.php';
 include('../database.php');
 include '../includes/activity_logger.php';
+
+
+// Initialize login attempt tracking in session if not exists
+if (!isset($_SESSION['login_attempts'])) {
+    $_SESSION['login_attempts'] = 0;
+    $_SESSION['lockout_time'] = null;
+}
+
+// Check if account is locked out
+function isLockedOut()
+{
+    if (isset($_SESSION['lockout_time']) && $_SESSION['lockout_time'] !== null) {
+        $now = time();
+        if ($now < $_SESSION['lockout_time']) {
+            return true;
+        } else {
+            // Lockout expired, reset
+            $_SESSION['login_attempts'] = 0;
+            $_SESSION['lockout_time'] = null;
+            return false;
+        }
+    }
+    return false;
+}
+
+// Get remaining lockout time in seconds
+function getRemainingLockoutTime()
+{
+    if (isset($_SESSION['lockout_time']) && $_SESSION['lockout_time'] !== null) {
+        return max(0, $_SESSION['lockout_time'] - time());
+    }
+    return 0;
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -15,87 +48,180 @@ include '../includes/activity_logger.php';
     $errors = [];
     $showSuccess = false;
 
-    // LOGIN QUERY
+    // Replace your LOGIN QUERY section with this:
     if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnLogin'])) {
         $conn = connectToDB();
         $email = trim($_POST['email'] ?? '');
         $password = $_POST['password'] ?? '';
 
-        if (isset($_POST['g-recaptcha-response']) && !empty($_POST['g-recaptcha-response'])) {
+        // Check if locked out
+        if (isLockedOut()) {
+            $remainingTime = getRemainingLockoutTime();
+            $minutes = floor($remainingTime / 60);
+            $seconds = $remainingTime % 60;
 
-            $secret_key = "6LdxyvQrAAAAAFje30yKm8Zyt_d3lrJv7wjzcZP1";
-            $captcha_response = $_POST['g-recaptcha-response'] ?? '';
+            echo "<script>
+            document.addEventListener('DOMContentLoaded', function() {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Account Locked',
+                    text: 'Too many failed attempts. Please wait {$minutes} minutes and {$seconds} seconds before trying again.',
+                    confirmButtonColor: '#0d6efd',
+                    confirmButtonText: 'OK'
+                });
+                
+                // Set client-side lockout
+                sessionStorage.setItem('loginLockoutEnd', '" . ($_SESSION['lockout_time'] * 1000) . "');
+                sessionStorage.setItem('loginAttempts', '3');
+            });
+        </script>";
+        } else {
+            if (isset($_POST['g-recaptcha-response']) && !empty($_POST['g-recaptcha-response'])) {
 
-            $verify_response = file_get_contents("https://www.google.com/recaptcha/api/siteverify?secret={$secret_key}&response={$captcha_response}");
-            $response_data = json_decode($verify_response);
+                $secret_key = "6LdxyvQrAAAAAFje30yKm8Zyt_d3lrJv7wjzcZP1";
+                $captcha_response = $_POST['g-recaptcha-response'] ?? '';
 
-            if ($response_data->success) {
-                // Validate inputs
-                if (empty($email)) {
-                    $errors[] = "email is required.";
-                }
+                $verify_response = file_get_contents("https://www.google.com/recaptcha/api/siteverify?secret={$secret_key}&response={$captcha_response}");
+                $response_data = json_decode($verify_response);
 
-                if (empty($password)) {
-                    $errors[] = "Password is required.";
-                }
-
-                if (empty($errors)) {
-
-                    $stmt = $conn->prepare("SELECT * FROM admin WHERE email = ?");
-                    $stmt->bind_param("s", $email);
-                    $stmt->execute();
-                    $result = $stmt->get_result();
-                    $user = $result->fetch_assoc();
-
-                    if ($user) {
-                        if (password_verify($password, $user['password'])) {
-
-                            $_SESSION['id'] = $user['admin_id'];
-                            $_SESSION['username'] = $user['username'];
-                            $_SESSION['user_type'] = 'admin';
-
-                            $date = new DateTime();
-                            $_SESSION['last_login'] = $date->format('m-d-Y h:i A');
-
-                            logActivity($conn, $user['admin_id'], 'admin', 'LOGIN', "logged in to the system.");
-
-                            $showSuccess = true;
-                        } else {
-                            // Failed login
-                            $errors[] = "Invalid email or password.";
-                        }
-                    } else {
-                        $errors[] = "Invalid email or password.";
+                if ($response_data->success) {
+                    // Validate inputs
+                    if (empty($email)) {
+                        $errors[] = "Email is required.";
                     }
-                }
-            } else {
-                echo "<script>
+
+                    if (empty($password)) {
+                        $errors[] = "Password is required.";
+                    }
+
+                    if (empty($errors)) {
+
+                        $stmt = $conn->prepare("SELECT * FROM admin WHERE email = ?");
+                        $stmt->bind_param("s", $email);
+                        $stmt->execute();
+                        $result = $stmt->get_result();
+                        $user = $result->fetch_assoc();
+
+                        if ($user) {
+                            if (password_verify($password, $user['password'])) {
+
+                                // Successful login - reset attempts
+                                $_SESSION['login_attempts'] = 0;
+                                $_SESSION['lockout_time'] = null;
+
+                                $_SESSION['id'] = $user['admin_id'];
+                                $_SESSION['username'] = $user['username'];
+                                $_SESSION['user_type'] = 'admin';
+
+                                $date = new DateTime();
+                                $_SESSION['last_login'] = $date->format('m-d-Y h:i A');
+
+                                logActivity($conn, $user['admin_id'], 'admin', 'LOGIN', "logged in to the system.");
+
+                                $showSuccess = true;
+
+                                echo "<script>
+                                // Clear client-side lockout on success
+                                sessionStorage.removeItem('loginLockoutEnd');
+                                sessionStorage.removeItem('loginAttempts');
+                            </script>";
+                            } else {
+                                // Failed login - increment attempts
+                                $_SESSION['login_attempts']++;
+
+                                if ($_SESSION['login_attempts'] >= 3) {
+                                    // Lock account for 3 minutes
+                                    $_SESSION['lockout_time'] = time() + (3 * 60);
+
+                                    echo "<script>
+                                    document.addEventListener('DOMContentLoaded', function() {
+                                        Swal.fire({
+                                            icon: 'error',
+                                            title: 'Too Many Attempts',
+                                            text: 'You have exceeded the maximum login attempts. Your account is locked for 3 minutes.',
+                                            confirmButtonColor: '#0d6efd',
+                                            confirmButtonText: 'OK'
+                                        });
+                                        
+                                        // Trigger client-side lockout
+                                        sessionStorage.setItem('loginLockoutEnd', '" . ($_SESSION['lockout_time'] * 1000) . "');
+                                        sessionStorage.setItem('loginAttempts', '3');
+                                        
+                                        // Call the tracking function
+                                        if (typeof trackLoginAttempt === 'function') {
+                                            window.location.reload();
+                                        }
+                                    });
+                                </script>";
+                                } else {
+                                    $remainingAttempts = 3 - $_SESSION['login_attempts'];
+                                    $errors[] = "Invalid email or password. {$remainingAttempts} attempt(s) remaining.";
+
+                                    echo "<script>
+                                    sessionStorage.setItem('loginAttempts', '{$_SESSION['login_attempts']}');
+                                </script>";
+                                }
+                            }
+                        } else {
+                            // User not found - treat as failed attempt
+                            $_SESSION['login_attempts']++;
+
+                            if ($_SESSION['login_attempts'] >= 3) {
+                                $_SESSION['lockout_time'] = time() + (3 * 60);
+
+                                echo "<script>
                                 document.addEventListener('DOMContentLoaded', function() {
                                     Swal.fire({
                                         icon: 'error',
-                                        title: 'Verification Failed',
-                                        text: 'reCAPTCHA verification failed. Please try again.',
+                                        title: 'Too Many Attempts',
+                                        text: 'You have exceeded the maximum login attempts. Your account is locked for 3 minutes.',
                                         confirmButtonColor: '#0d6efd',
-                                        confirmButtonText: 'Try Again'
+                                        confirmButtonText: 'OK'
                                     });
+                                    
+                                    sessionStorage.setItem('loginLockoutEnd', '" . ($_SESSION['lockout_time'] * 1000) . "');
+                                    sessionStorage.setItem('loginAttempts', '3');
+                                    window.location.reload();
                                 });
                             </script>";
+                            } else {
+                                $remainingAttempts = 3 - $_SESSION['login_attempts'];
+                                $errors[] = "Invalid email or password. {$remainingAttempts} attempt(s) remaining.";
+
+                                echo "<script>
+                                sessionStorage.setItem('loginAttempts', '{$_SESSION['login_attempts']}');
+                            </script>";
+                            }
+                        }
+                    }
+                } else {
+                    echo "<script>
+                    document.addEventListener('DOMContentLoaded', function() {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Verification Failed',
+                            text: 'reCAPTCHA verification failed. Please try again.',
+                            confirmButtonColor: '#0d6efd',
+                            confirmButtonText: 'Try Again'
+                        });
+                    });
+                </script>";
+                }
+            } else {
+                echo "<script>
+                document.addEventListener('DOMContentLoaded', function() {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Verification Required',
+                        text: 'Please complete the reCAPTCHA verification.',
+                        confirmButtonColor: '#0d6efd',
+                        confirmButtonText: 'Try Again'
+                    });
+                });
+            </script>";
             }
-        } else {
-            echo "<script>
-                            document.addEventListener('DOMContentLoaded', function() {
-                                Swal.fire({
-                                    icon: 'error',
-                                    title: 'Verification Required',
-                                    text: 'Please complete the reCAPTCHA verification.',
-                                    confirmButtonColor: '#0d6efd',
-                                    confirmButtonText: 'Try Again'
-                                });
-                            });
-                        </script>";
         }
     }
-
 
     //CREATE ACCOUNT
     if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['form_action']) &&  $_POST['form_action'] === "create_account") {
@@ -899,7 +1025,7 @@ include '../includes/activity_logger.php';
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <!-- jsPDF Autotable plugin for better table formatting -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
-    <script src="login.js"></script>
+    <script src="login1.js"></script>
     <script>
         function generatePasswordPDF(email, password) {
             // Create new jsPDF instance
@@ -1011,7 +1137,8 @@ include '../includes/activity_logger.php';
         }
 
         document.addEventListener('DOMContentLoaded', function() {
-
+            // Check initial lockout state
+            checkLoginLockout();
 
             const registerForm = document.getElementById('registerForm1');
             const forgotForm = document.getElementById('forgotPasswordFormInner1');
@@ -1032,8 +1159,6 @@ include '../includes/activity_logger.php';
                 }
             });
 
-
-
             registerForm.addEventListener("submit", function(e) {
                 e.preventDefault();
 
@@ -1051,7 +1176,6 @@ include '../includes/activity_logger.php';
                 document.getElementById('recaptchaResponse').value = registerCaptchaResponse;
 
                 authModal.show();
-
             });
 
             forgotForm.addEventListener("submit", function(e) {
@@ -1069,7 +1193,6 @@ include '../includes/activity_logger.php';
                 document.getElementById('recaptchaResponse').value = forgotCaptchaResponse;
 
                 authModal.show();
-
             });
 
             <?php if ($showSuccess): ?>
@@ -1083,7 +1206,6 @@ include '../includes/activity_logger.php';
                         window.location.href = 'admin-dashboard.php';
                     }
                 });
-
             <?php elseif (!empty($errors)): ?>
                 Swal.fire({
                     icon: 'error',

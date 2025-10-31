@@ -26,7 +26,6 @@ include '../includes/activity_logger.php';
             $conn = connectToDB();
             $subject_id = $_POST['editId'];
             $subjectname = $_POST['editName'];
-            $course = $_POST['editCourse'];
             $teacher_id = $_POST['editTeacher'];
             $yearlevel = $_POST['editYearlevel'];
             $schoolyear_id = $_POST['editSchoolyear'];
@@ -175,7 +174,6 @@ include '../includes/activity_logger.php';
                                 data-id='" . $row['subject_id'] . "'
                                 data-name='" . $row['subject'] . "'
                                 data-teacher='" . $row['teacher_id'] . "'
-                                data-course='" . $row['course'] . "'
                                 data-yearlevel='" . $row['yearlevel'] . "'
                                 data-schoolyear='" . $row['schoolyear_id'] . "'
                                 data-bs-toggle='modal' 
@@ -220,14 +218,6 @@ include '../includes/activity_logger.php';
                                 <div class="col-md-6">
                                     <label class="form-label">Subject Name</label>
                                     <input type="text" class="form-control" id="editName" name="editName" required>
-                                </div>
-                                <div class="col-md-6">
-                                    <label class="form-label">Course</label>
-                                    <select class="form-select" id="editCourse" name="editCourse" required>
-                                        <option value="">Select Course</option>
-                                        <option value="BSIT">BSIT</option>
-                                        <option value="BSHM">BSHM</option>
-                                    </select>
                                 </div>
                                 <div>
                                     <label class="form-label">Assign a Teacher</label>
@@ -361,7 +351,6 @@ include '../includes/activity_logger.php';
                 document.getElementById('editId').value = btn.getAttribute('data-id');
                 document.getElementById('editName').value = btn.getAttribute('data-name');
                 document.getElementById('editTeacher').value = btn.getAttribute('data-teacher');
-                document.getElementById('editCourse').value = btn.getAttribute('data-course');
 
                 // Fixed: Properly set radio button value
                 const yearLevel = btn.getAttribute('data-yearlevel');

@@ -16,13 +16,34 @@ while ($row = $result->fetch_assoc()) {
 ?>
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <?php include 'includes/header.php' ?>
+    <style>
+        .btn-export {
+            background-color: #198754;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            transition: all 0.3s;
+        }
+
+        .btn-export:hover {
+            background-color: #157347;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+    </style>
 </head>
 
 <body>
     <!-- Sidebar -->
-    <?php include('includes/sidebar.php'); ?>
+    <?php
+
+    include('includes/sidebar.php');
+
+    ?>
 
     <main class="main-content">
         <div class="page-header">
@@ -35,6 +56,11 @@ while ($row = $result->fetch_assoc()) {
                 <div class="row align-items-center">
                     <div class="col-md-6">
                         <h5>All Grades</h5>
+                    </div>
+                    <div class="col-md-6 text-end">
+                        <button id="exportPdf" class="btn-export">
+                            <i class="fas fa-file-pdf me-2"></i>Export to PDF
+                        </button>
                     </div>
                 </div>
             </div>
@@ -200,6 +226,164 @@ while ($row = $result->fetch_assoc()) {
             if (searchIcon) {
                 searchIcon.addEventListener('click', function() {
                     searchInput.focus();
+                });
+            }
+        });
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize jsPDF
+            const {
+                jsPDF
+            } = window.jspdf;
+
+            // Export to PDF function
+            document.getElementById('exportPdf').addEventListener('click', function() {
+                generatePDF();
+            });
+
+            function generatePDF() {
+                // Create new PDF document
+                const doc = new jsPDF({
+                    orientation: 'portrait',
+                    unit: 'mm',
+                    format: 'a4'
+                });
+
+                // Student information
+                const studentName = "<?php foreach ($students as $student) {
+                                            echo $student['lastname'] . ", " . $student['firstname'];
+                                        } ?>";
+                const studentId = "<?php foreach ($students as $student) {
+                                        echo $student['student_id'];
+                                    } ?>";
+                const currentDate = new Date().toLocaleDateString();
+
+                // Set document properties
+                doc.setProperties({
+                    title: `Student Grades - ${studentName}`,
+                    subject: 'Academic Transcript',
+                    author: 'School Management System',
+                    keywords: 'grades, transcript, academic',
+                    creator: 'School Management System'
+                });
+
+                // Add header
+                doc.setFontSize(20);
+                doc.setTextColor(40, 40, 40);
+                doc.text('ACADEMIC TRANSCRIPT', 105, 20, {
+                    align: 'center'
+                });
+
+                // Add school information
+                doc.setFontSize(12);
+                doc.setTextColor(100, 100, 100);
+                doc.text('St. Michael Technological Institute, Inc.', 105, 30, {
+                    align: 'center'
+                });
+                doc.text('101 Rodriguez St. Santulan Rd., Malabon, Philippines', 105, 36, {
+                    align: 'center'
+                });
+
+                // Add student information
+                doc.setFontSize(10);
+                doc.setTextColor(60, 60, 60);
+                doc.text(`Student: ${studentName}`, 20, 50);
+                doc.text(`Student ID: ${studentId}`, 20, 56);
+                doc.text(`Date Generated: ${currentDate}`, 20, 62);
+
+                // Process each school year table
+                let yPosition = 80;
+                const tables = document.querySelectorAll('.table');
+
+                tables.forEach((table, index) => {
+                    // Get school year from the card header
+                    const cardHeader = table.closest('.custom-card').querySelector('.card-header h4');
+                    const schoolYear = cardHeader ? cardHeader.textContent : `Semester ${index + 1}`;
+
+                    // Add school year header
+                    if (yPosition > 250) {
+                        doc.addPage();
+                        yPosition = 20;
+                    }
+
+                    doc.setFontSize(14);
+                    doc.setTextColor(40, 40, 40);
+                    doc.text(schoolYear, 20, yPosition);
+                    yPosition += 10;
+
+                    // Extract table data
+                    const headers = [];
+                    const rows = [];
+
+                    // Get table headers
+                    const headerCells = table.querySelectorAll('thead th');
+                    headerCells.forEach(cell => {
+                        headers.push(cell.textContent.trim());
+                    });
+
+                    // Get table rows
+                    const tableRows = table.querySelectorAll('tbody tr');
+                    tableRows.forEach(row => {
+                        const rowData = [];
+                        const cells = row.querySelectorAll('td');
+                        cells.forEach(cell => {
+                            rowData.push(cell.textContent.trim());
+                        });
+                        rows.push(rowData);
+                    });
+
+                    // Create table in PDF
+                    doc.autoTable({
+                        head: [headers],
+                        body: rows,
+                        startY: yPosition,
+                        theme: 'grid',
+                        styles: {
+                            fontSize: 8,
+                            cellPadding: 3,
+                            overflow: 'linebreak'
+                        },
+                        headStyles: {
+                            fillColor: [41, 128, 185],
+                            textColor: 255,
+                            fontStyle: 'bold'
+                        },
+                        alternateRowStyles: {
+                            fillColor: [240, 240, 240]
+                        },
+                        margin: {
+                            top: 10
+                        }
+                    });
+
+                    // Update yPosition for next table
+                    yPosition = doc.lastAutoTable.finalY + 15;
+                });
+
+                // Add footer
+                const pageCount = doc.internal.getNumberOfPages();
+                for (let i = 1; i <= pageCount; i++) {
+                    doc.setPage(i);
+                    doc.setFontSize(8);
+                    doc.setTextColor(150, 150, 150);
+                    doc.text(`Page ${i} of ${pageCount}`, 105, 290, {
+                        align: 'center'
+                    });
+                    doc.text('Generated by SMATI - Educational Portal', 105, 293, {
+                        align: 'center'
+                    });
+                }
+
+                // Save the PDF
+                doc.save(`Grades_${studentName.replace(', ', '_')}_${currentDate.replace(/\//g, '-')}.pdf`);
+
+                // Show success message
+                Swal.fire({
+                    icon: 'success',
+                    title: 'PDF Generated',
+                    text: 'Student grades have been exported successfully!',
+                    timer: 4000,
+                    showConfirmButton: false
                 });
             }
         });

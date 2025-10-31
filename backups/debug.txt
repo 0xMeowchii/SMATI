@@ -153,3 +153,23 @@ return_var: 0
 output:
 
 
+2025-10-31 00:52:01 - command: "C:\xampp\mysql\bin\mysqldump.exe" --user="root" --host="localhost" --single-transaction --routines --triggers "dbsmati" > "../backups/dbsmati_backup_2025-10-31_00-52-01.sql" 2>&1
+return_var: 0
+output:
+
+
+2025-10-31 03:22:10 - command: "C:\xampp\mysql\bin\mysqldump.exe" --user="root" --host="localhost" --single-transaction --routines --triggers "dbsmati" > "../backups/dbsmati_backup_2025-10-31_03-22-10.sql" 2>&1
+return_var: 0
+output:
+
+
+2025-10-31 03:22:20 - command: "C:\xampp\mysql\bin\mysqldump.exe" --user="root" --host="localhost" --single-transaction --routines --triggers "dbsmati" > "../backups/dbsmati_backup_2025-10-31_03-22-20.sql" 2>&1
+return_var: 0
+output:
+
+
+2025-10-31 05:39:28 - command: "C:\xampp\mysql\bin\mysqldump.exe" --user="root" --host="localhost" --single-transaction --routines --triggers "dbsmati" > "../backups/dbsmati_backup_2025-10-31_05-39-28.sql" 2>&1
+return_var: 0
+output:
+
+

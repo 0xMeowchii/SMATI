@@ -1,16 +1,16 @@
-<?php 
+<?php
 include 'includes/session.php';
 include('../database.php'); ?>
 <!DOCTYPE html>
 <html lang="en">
 
 <head>
-<?php include 'includes/header.php' ?>
+    <?php include 'includes/header.php' ?>
 </head>
 
 <body>
     <!-- Sidebar -->
-    <?php include('sidebar.php'); ?>
+    <?php include('includes/sidebar.php');; ?>
 
     <main class="main-content">
         <div class="page-header row">
@@ -78,6 +78,8 @@ include('../database.php'); ?>
     <!-- Bootstrap JS Bundle with Popper -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="js/script.js"></script>
+
 </body>
 
 </html>

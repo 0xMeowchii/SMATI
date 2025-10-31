@@ -1,6 +1,7 @@
 <?php
 require_once 'includes/session.php';
 include '../database.php';
+include '../includes/activity_logger.php';
 ?>
 
 <!DOCTYPE html>
@@ -18,7 +19,7 @@ include '../database.php';
 
     <main class="main-content">
         <div class="page-header">
-            <h4><i class="fas fa-users me-2"></i>Teacher</h4>
+            <h4><i class="fas fa-address-book me-2"></i>Registrars Management</h4>
         </div>
 
         <!-- query -->
@@ -27,7 +28,7 @@ include '../database.php';
         //UPDATE QUERY
         if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnEdit'])) {
             $conn = connectToDB();
-            $teacher_id = $_POST['editId'];
+            $registrar_id = $_POST['editId'];
             $email = $_POST['editEmail'];
             $hasPassword = !empty($_POST['editPassword']);
             if ($hasPassword) {
@@ -36,8 +37,8 @@ include '../database.php';
 
             if ($conn) {
                 // Check for existing email and username (excluding current student)
-                $checkStmt = $conn->prepare("SELECT teacher_id FROM teachers WHERE (email = ?) AND teacher_id != ?");
-                $checkStmt->bind_param("si", $email, $teacher_id);
+                $checkStmt = $conn->prepare("SELECT registrar_id FROM registrars WHERE (email = ?) AND registrar_id != ?");
+                $checkStmt->bind_param("si", $email, $registrar_id);
                 $checkStmt->execute();
                 $checkStmt->store_result();
 
@@ -55,11 +56,11 @@ include '../database.php';
                 } else {
 
                     if ($hasPassword) {
-                        $stmt = $conn->prepare("UPDATE teachers 
+                        $stmt = $conn->prepare("UPDATE registrars 
                                         SET email=?,
                                             password=?
-                                        WHERE teacher_id=?");
-                        $stmt->bind_param("ssi", $email, $password, $teacher_id);
+                                        WHERE registrar_id=?");
+                        $stmt->bind_param("ssi", $email, $password, $registrar_id);
 
                         if ($stmt->execute()) {
 
@@ -68,7 +69,7 @@ include '../database.php';
                                 Swal.fire({
                                     icon: 'success',
                                     title: 'Success!',
-                                    text: 'Teacher Updated Successfully!',
+                                    text: 'Registrar Updated Successfully!',
                                     timer: 2000,
                                     showConfirmButton: false
                                 });
@@ -86,10 +87,11 @@ include '../database.php';
                         }
                         $stmt->close();
                     } else {
-                        $stmt = $conn->prepare("UPDATE teachers 
+
+                        $stmt = $conn->prepare("UPDATE registrars 
                                         SET email=?
-                                        WHERE teacher_id=?");
-                        $stmt->bind_param("si", $email, $teacher_id);
+                                        WHERE registrar_id=?");
+                        $stmt->bind_param("si", $email, $registrar_id);
 
                         if ($stmt->execute()) {
 
@@ -98,7 +100,7 @@ include '../database.php';
                                 Swal.fire({
                                     icon: 'success',
                                     title: 'Success!',
-                                    text: 'Teacher Updated Successfully!',
+                                    text: 'Registrar Updated Successfully!',
                                     timer: 2000,
                                     showConfirmButton: false
                                 });
@@ -124,27 +126,27 @@ include '../database.php';
 
         ?>
 
-        <!-- Student Table -->
+        <!-- Registrar Table -->
         <div class="container">
             <div class="table-header">
                 <div class="row align-items-center">
                     <div class="col-md-6">
-                        <h5>Teacher Account</h5>
+                        <h5>Registrar Account</h5>
                     </div>
                     <div class="col-md-6">
                         <div class="input-group mb-3">
-                            <input type="text" class="form-control" id="searchInput" placeholder="Search...">
+                            <input type="text" class="form-control" id="searchInput" placeholder="Search Registrar...">
                             <span class="input-group-text bg-primary"><i class="fas fa-search text-white"></i></span>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div class="table-responsive">
+            <div class="table-responsive flex-grow-1 overflow-auto" style="max-height:600px;">
                 <table class="table table-hover">
                     <thead>
                         <tr>
-                            <th>TeacherID</th>
+                            <th>RegistrarID</th>
                             <th>Email</th>
                             <th>Action</th>
                         </tr>
@@ -152,28 +154,33 @@ include '../database.php';
                     <tbody>
                         <?php
                         $conn = connectToDB();
-                        $sql = "SELECT * FROM teachers";
+                        $sql = "SELECT * FROM registrars WHERE status = '1'";
                         $result = $conn->query($sql);
 
                         if ($result && $result->num_rows > 0) {
                             // output data of each row
                             while ($row = $result->fetch_assoc()) {
                                 echo "<tr>";
-                                echo "<td>" . $row["teacher_id"] . "</td>";
+                                echo "<td>" . $row["registrar_id"] . "</td>";
                                 echo "<td>" . $row["email"] . "</td>";
                                 echo "<td>
-                                    <a class='btn btn-sm btn-outline-primary me-1 edit-teacher-btn'
-                                    data-id='" . $row["teacher_id"] . "'
-                                    data-email='" . $row["email"] . "'
-                                    data-bs-toggle='modal' 
-                                    data-bs-target='#edit-teacher-modal'>
-                                         <i class='fas fa-edit me-1'></i>Edit
-                                    </a>
-                                    </td>";
+
+                                                <a class='btn btn-sm btn-outline-primary me-1 edit-registrar-btn'
+                                                data-id='" . $row["registrar_id"] . "'
+                                                data-email='" . $row["email"] . "'
+                                                data-bs-toggle='modal' 
+                                                data-bs-target='#editRegistrarModal'>
+                                                    <i class='fas fa-edit me-2'></i>Edit
+                                                </a>
+                                              </td>";
                                 echo "</tr>";
                             }
                         } else {
-                            echo "0 results";
+                            echo "<td colspan='5' class='text-center py-4' style='color: #6c757d;'>";
+                            echo "<i class='fas fa-search mb-2' style='font-size: 2em; opacity: 0.5;'></i>";
+                            echo "<br>";
+                            echo "No Registrar found matching your search";
+                            echo "</td>";
                         }
                         ?>
 
@@ -182,15 +189,16 @@ include '../database.php';
             </div>
         </div>
 
-        <!-- Edit Admin Modal -->
-        <div class="modal fade" id="edit-teacher-modal" tabindex="-1" aria-hidden="true">
+        <!-- Edit Registrar Modal -->
+        <div class="modal fade" id="editRegistrarModal" tabindex="-1" aria-hidden="true">
             <div class="modal-dialog">
                 <div class="modal-content">
-                    <div class="modal-header">
-                        <h3 class="modal-title">Account Details</h3>
+                    <div class="modal-header bg-primary text-white">
+                        <h5 class="modal-title" id="ediRegistrarModal">Account Details</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
-                        <form action="<?php echo htmlspecialchars($_SERVER['PHP_SELF']) ?>" method="post" id="editForm">
+                        <form action="<?php htmlspecialchars($_SERVER['PHP_SELF']) ?>" method="POST" id="editForm">
                             <div class="input-group mb-4">
                                 <input type="hidden" id="editId" name="editId">
                                 <span class="input-group-text fw-semibold">Email:</span>
@@ -211,7 +219,7 @@ include '../database.php';
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-primary" name="btnEdit">Update</button>
+                        <button type="submit" class="btn btn-primary" name="btnEdit">Update Registrar</button>
                     </div>
                     </form>
                 </div>
@@ -223,7 +231,7 @@ include '../database.php';
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="js/script1.js"></script>
     <script>
-        document.querySelectorAll('.edit-teacher-btn').forEach(function(btn) {
+        document.querySelectorAll('.edit-registrar-btn').forEach(function(btn) {
             btn.addEventListener('click', function() {
                 document.getElementById('editId').value = btn.getAttribute('data-id');
                 document.getElementById('editEmail').value = btn.getAttribute('data-email');

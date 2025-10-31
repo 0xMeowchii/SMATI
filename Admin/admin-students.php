@@ -2,6 +2,7 @@
 require_once 'includes/session.php';
 include '../database.php';
 include '../includes/activity_logger.php';
+
 ?>
 
 <!DOCTYPE html>
@@ -15,6 +16,432 @@ include '../includes/activity_logger.php';
     <!-- Sidebar -->
     <?php
     include('includes/sidebar.php');
+
+
+    //INSERT QUERY
+    if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnAdd'])) {
+        $conn = connectToDB();
+        $firstname = $_POST['firstname'];
+        $lastname = $_POST['lastname'];
+        $email = $_POST['email'];
+        $course = $_POST['set'];
+        $username = $_POST['username'];
+        $password = password_hash($_POST['password'], PASSWORD_DEFAULT);
+        $status = '1';
+        $student_image = '';
+
+        // File upload handling
+        $uploadDir = '../images/'; // Directory where you want to store images
+        $allowedTypes = ['image/jpeg', 'image/jpg', 'image/png'];
+        $maxFileSize = 5 * 1024 * 1024; // 5MB
+
+        // Create upload directory if it doesn't exist
+        if (!file_exists($uploadDir)) {
+            mkdir($uploadDir, 0777, true);
+        }
+        if ($conn) {
+
+            $checkStmt = $conn->prepare("SELECT * FROM students WHERE firstname = ? AND lastname = ?");
+            $checkStmt->bind_param("ss", $firstname, $lastname);
+            $checkStmt->execute();
+            $result = $checkStmt->get_result();
+
+            if ($result->num_rows > 0) {
+                echo "<script>
+                            document.addEventListener('DOMContentLoaded', function() {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Error!',
+                                    text: 'Student already exists!',
+                                    confirmButtonColor: '#d33'
+                                });
+                            });
+                        </script>";
+            } else {
+
+                // Check if file was uploaded
+                if (isset($_FILES['student_image']) && $_FILES['student_image']['error'] === UPLOAD_ERR_OK) {
+                    $file = $_FILES['student_image'];
+
+                    // Validate file type
+                    $fileType = mime_content_type($file['tmp_name']);
+                    if (!in_array($fileType, $allowedTypes)) {
+                        echo "<script>
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Error!',
+                                    text: 'Invalid file type. Please upload JPEG, JPG, or PNG images only.',
+                                    confirmButtonColor: '#d33'
+                                });
+                            </script>";
+                    } else if ($file['size'] > $maxFileSize) {
+                        echo "<script>
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Error!',
+                                    text: 'File too large. Maximum size is 5MB.',
+                                    confirmButtonColor: '#d33'
+                                });
+                            </script>";
+                    } else {
+                        // Generate unique filename
+                        $fileExtension = pathinfo($file['name'], PATHINFO_EXTENSION);
+                        $newFilename = uniqid() . '_' . preg_replace('/[^a-zA-Z0-9]/', '_', $firstname . '_' . $lastname) . '.' . $fileExtension;
+                        $destination = $uploadDir . $newFilename;
+
+                        // Move uploaded file
+                        if (move_uploaded_file($file['tmp_name'], $destination)) {
+                            $student_image = $destination; // Store the path for database
+                        } else {
+                            echo "<script>
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Error!',
+                                    text: 'Failed to upload image.',
+                                    confirmButtonColor: '#d33'
+                                });
+                            </script>";
+                            return;
+                        }
+
+                        // Prepare and execute the INSERT query
+                        $stmt = $conn->prepare("INSERT INTO students (firstname, lastname, email, course, username, password, status, image) 
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+                        $stmt->bind_param("ssssssss", $firstname, $lastname, $email, $course, $username, $password, $status, $student_image);
+
+                        if ($stmt->execute()) {
+                            $studentName = $lastname . ', ' . $firstname;
+                            logActivity($conn, $_SESSION['id'], $_SESSION['user_type'], 'CREATE_STUDENT', "Created student account: $studentName (Set: $course)");
+
+                            echo "<script>
+                            document.addEventListener('DOMContentLoaded', function() {
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Success!',
+                                    text: 'Student Added Successfully!',
+                                    timer: 2000,
+                                    showConfirmButton: false
+                                });
+                            });
+                        </script>";
+                        } else {
+                            // If database insert fails, delete the uploaded file
+                            if (!empty($student_image) && file_exists($student_image)) {
+                                unlink($student_image);
+                            }
+
+                            echo "<script>
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Error!',
+                                text: '" . addslashes($stmt->error) . "',
+                                confirmButtonColor: '#d33'
+                            });
+                        </script>";
+                        }
+                        $stmt->close();
+                    }
+                } else {
+                    // Prepare and execute the INSERT query
+                    $stmt = $conn->prepare("INSERT INTO students (firstname, lastname, email, course, username, password, status) 
+                        VALUES (?, ?, ?, ?, ?, ?, ?)");
+                    $stmt->bind_param("sssssss", $firstname, $lastname, $email, $course, $username, $password, $status);
+
+                    if ($stmt->execute()) {
+                        $studentName = $lastname . ', ' . $firstname;
+                        logActivity($conn, $_SESSION['id'], $_SESSION['user_type'], 'CREATE_STUDENT', "Created student account: $studentName (Set: $course)");
+
+                        echo "<script>
+                            document.addEventListener('DOMContentLoaded', function() {
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Success!',
+                                    text: 'Student Added Successfully!',
+                                    timer: 2000,
+                                    showConfirmButton: false
+                                });
+                            });
+                        </script>";
+                    } else {
+
+                        echo "<script>
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Error!',
+                                text: '" . addslashes($stmt->error) . "',
+                                confirmButtonColor: '#d33'
+                            });
+                        </script>";
+                    }
+                    $stmt->close();
+                }
+            }
+
+            $checkStmt->close();
+        } else {
+            echo "<script>
+                        document.addEventListener('DOMContentLoaded', function() {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Error!',
+                                text: 'Database connection failed',
+                                confirmButtonColor: '#d33'
+                            });
+                        });
+                    </script>";
+        }
+        $conn->close();
+    }
+
+
+    //UPDATE QUERY
+    if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnEdit'])) {
+        $conn = connectToDB();
+        $student_id = $_POST['editId'];
+        $firstname = $_POST['editFname'];
+        $lastname = $_POST['editLname'];
+        $email = $_POST['editEmail'];
+        $course = $_POST['editCourse'];
+        $username = $_POST['editUsername'];
+        $student_image = ''; // Initialize
+
+        // Check if password field has value
+        $hasPassword = !empty($_POST['editPassword']);
+        if ($hasPassword) {
+            $password = password_hash($_POST['editPassword'], PASSWORD_DEFAULT);
+        }
+
+        // File upload handling for edit
+        $uploadDir = '../images/';
+        $allowedTypes = ['image/jpeg', 'image/jpg', 'image/png'];
+        $maxFileSize = 5 * 1024 * 1024;
+
+        if ($conn) {
+            // Check for existing email
+            $checkStmt = $conn->prepare("SELECT student_id FROM students WHERE (firstname = ? AND lastname = ?) AND student_id != ?");
+            $checkStmt->bind_param("ssi", $firstname, $lastname , $student_id);
+            $checkStmt->execute();
+            $checkStmt->store_result();
+
+            if ($checkStmt->num_rows > 0) {
+                echo "<script>
+                        document.addEventListener('DOMContentLoaded', function() {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Error!',
+                                text: 'Student already exists!',
+                                confirmButtonColor: '#d33'
+                            });
+                        });
+                    </script>";
+            } else {
+                // First, get the current image path
+                $currentImageStmt = $conn->prepare("SELECT image FROM students WHERE student_id = ?");
+                $currentImageStmt->bind_param("i", $student_id);
+                $currentImageStmt->execute();
+                $currentImageStmt->bind_result($currentImagePath);
+                $currentImageStmt->fetch();
+                $currentImageStmt->close();
+
+                // Check if new file was uploaded
+                if (isset($_FILES['edit_student_image']) && $_FILES['edit_student_image']['error'] === UPLOAD_ERR_OK) {
+                    $file = $_FILES['edit_student_image'];
+
+                    // Validate file type
+                    $fileType = mime_content_type($file['tmp_name']);
+                    if (!in_array($fileType, $allowedTypes)) {
+                        echo "<script>
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Error!',
+                                text: 'Invalid file type. Please upload JPEG, JPG, or PNG images only.',
+                                confirmButtonColor: '#d33'
+                            });
+                        </script>";
+                    } else if ($file['size'] > $maxFileSize) {
+                        echo "<script>
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Error!',
+                                text: 'File too large. Maximum size is 5MB.',
+                                confirmButtonColor: '#d33'
+                            });
+                        </script>";
+                    } else {
+                        // Generate unique filename
+                        $fileExtension = pathinfo($file['name'], PATHINFO_EXTENSION);
+                        $newFilename = uniqid() . '_' . preg_replace('/[^a-zA-Z0-9]/', '_', $firstname . '_' . $lastname) . '.' . $fileExtension;
+                        $destination = $uploadDir . $newFilename;
+
+                        // Move uploaded file
+                        if (move_uploaded_file($file['tmp_name'], $destination)) {
+                            $student_image = $destination;
+
+                            // Delete old image if it exists
+                            if (!empty($currentImagePath) && file_exists($currentImagePath)) {
+                                unlink($currentImagePath);
+                            }
+                        }
+
+                        // Build query based on whether password is provided
+                        if ($hasPassword) {
+                            $stmt = $conn->prepare("UPDATE students 
+                            SET firstname=?,
+                                lastname=?,
+                                email=?,
+                                course=?,
+                                username=?,
+                                password=?,
+                                image=?
+                            WHERE student_id=?");
+                            $stmt->bind_param("sssssssi", $firstname, $lastname, $email, $course, $username, $password, $student_image, $student_id);
+                        } else {
+                            $stmt = $conn->prepare("UPDATE students 
+                            SET firstname=?,
+                                lastname=?,
+                                email=?,
+                                course=?,
+                                username=?,
+                                image=?
+                            WHERE student_id=?");
+                            $stmt->bind_param("ssssssi", $firstname, $lastname, $email, $course, $username, $student_image, $student_id);
+                        }
+
+                        if ($stmt->execute()) {
+                            logActivity($conn, $_SESSION['id'], $_SESSION['user_type'], 'UPDATE_STUDENT', "Updated student account: Student ID = $student_id");
+
+                            echo "<script>
+                                    document.addEventListener('DOMContentLoaded', function() {
+                                        Swal.fire({
+                                            icon: 'success',
+                                            title: 'Success!',
+                                            text: 'Student Updated Successfully!',
+                                            timer: 2000,
+                                            showConfirmButton: false
+                                        });
+                                    });
+                                </script>";
+                        } else {
+                            echo "<script>
+                                    Swal.fire({
+                                        icon: 'error',
+                                        title: 'Error!',
+                                        text: '" . addslashes($stmt->error) . "',
+                                        confirmButtonColor: '#d33'
+                                    });
+                                </script>";
+                        }
+                        $stmt->close();
+                    }
+                } else {
+                    // Keep the current image if no new file uploaded
+                    $student_image = $currentImagePath;
+
+                    // Build query based on whether password is provided
+                    if ($hasPassword) {
+                        $stmt = $conn->prepare("UPDATE students 
+                        SET firstname=?,
+                            lastname=?,
+                            email=?,
+                            course=?,
+                            username=?,
+                            password=?
+                        WHERE student_id=?");
+                        $stmt->bind_param("ssssssi", $firstname, $lastname, $email, $course, $username, $password, $student_id);
+                    } else {
+                        $stmt = $conn->prepare("UPDATE students 
+                        SET firstname=?,
+                            lastname=?,
+                            email=?,
+                            course=?,
+                            username=?
+                        WHERE student_id=?");
+                        $stmt->bind_param("sssssi", $firstname, $lastname, $email, $course, $username, $student_id);
+                    }
+
+                    if ($stmt->execute()) {
+                        logActivity($conn, $_SESSION['id'], $_SESSION['user_type'], 'UPDATE_STUDENT', "Updated student account: Student ID = $student_id");
+
+                        echo "<script>
+                        document.addEventListener('DOMContentLoaded', function() {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Success!',
+                                text: 'Student Updated Successfully!',
+                                timer: 2000,
+                                showConfirmButton: false
+                            });
+                        });
+                    </script>";
+                    } else {
+                        echo "<script>
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error!',
+                            text: '" . addslashes($stmt->error) . "',
+                            confirmButtonColor: '#d33'
+                        });
+                    </script>";
+                    }
+                    $stmt->close();
+                }
+            }
+            $checkStmt->close();
+        } else {
+            echo "<script>
+                    document.addEventListener('DOMContentLoaded', function() {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error!',
+                            text: 'Database connection failed',
+                            confirmButtonColor: '#d33'
+                        });
+                    });
+                </script>";
+        }
+        $conn->close();
+    }
+
+    //DROP QUERY
+    if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnDrop'])) {
+        $conn = connectToDB();
+        $student_id = $_POST['studentId'];
+
+        if ($conn) {
+            $stmt = $conn->prepare("UPDATE students SET status = '0' WHERE student_id=?");
+            $stmt->bind_param("i", $student_id);
+
+            if ($stmt->execute()) {
+
+                logActivity($conn, $_SESSION['id'], $_SESSION['user_type'], 'DROP_STUDENT', "Drop Student Account: Student ID = $student_id");
+
+                echo "<script>
+                            document.addEventListener('DOMContentLoaded', function() {
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Success!',
+                                    text: 'Student Drop Successfully!',
+                                    timer: 2000,
+                                    showConfirmButton: false
+                                });
+                            });
+                        </script>";
+            } else {
+                echo "<script>
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Error!',
+                                text: '" . addslashes($stmt->error) . "',
+                                confirmButtonColor: '#d33'
+                            });
+                        </script>";
+            }
+            $stmt->close();
+            $conn->close();
+        } else {
+            echo "<script>alert('Database connection failed');</script>";
+        }
+    }
     ?>
 
     <main class="main-content">
@@ -26,154 +453,6 @@ include '../includes/activity_logger.php';
                 </button>
             </div>
         </div>
-
-        <!-- query -->
-        <?php
-
-        //INSERT QUERY
-        if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnAdd'])) {
-            $conn = connectToDB();
-            $firstname = $_POST['firstname'];
-            $lastname = $_POST['lastname'];
-            $email = $_POST['email'];
-            $course = $_POST['set'];
-            $username = $_POST['username'];
-            $password = $_POST['password'];
-            $status = '1';
-
-            if ($conn) {
-                $stmt = $conn->prepare("INSERT INTO students (firstname, lastname, email, course, username, password, status) 
-                                            VALUES (?, ?, ?, ?, ?, ?,?)");
-                $stmt->bind_param("sssssss", $firstname, $lastname, $email, $course, $username, $password, $status);
-
-                if ($stmt->execute()) {
-
-                    $studentName = $lastname . ', ' . $firstname;
-                    logActivity($conn, $_SESSION['id'], $_SESSION['user_type'], 'CREATE_STUDENT', "Created student account: $studentName (Set: $course)");
-
-                    echo "<script>
-                            document.addEventListener('DOMContentLoaded', function() {
-                                Swal.fire({
-                                    icon: 'success',
-                                    title: 'Success!',
-                                    text: 'Student Added Successfully!',
-                                    timer: 2000,
-                                    showConfirmButton: false
-                                });
-                            });
-                        </script>";
-                } else {
-                    echo "<script>
-                            Swal.fire({
-                                icon: 'error',
-                                title: 'Error!',
-                                text: '" . addslashes($stmt->error) . "',
-                                confirmButtonColor: '#d33'
-                            });
-                        </script>";
-                }
-
-                $stmt->close();
-                $conn->close();
-            } else {
-                echo "<script>alert('Database connection failed');</script>";
-            }
-        }
-
-        //UPDATE QUERY
-        if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnEdit'])) {
-            $conn = connectToDB();
-            $student_id = $_POST['editId'];
-            $firstname = $_POST['editFname'];
-            $lastname = $_POST['editLname'];
-            $email = $_POST['editEmail'];
-            $course = $_POST['editCourse'];
-            $username = $_POST['editUsername'];
-            $password = $_POST['editPassword'];
-
-            if ($conn) {
-                $stmt = $conn->prepare("UPDATE students 
-                                        SET firstname=?,
-                                            lastname=?,
-                                            email=?,
-                                            course=?,
-                                            username=?,
-                                            password=?
-                                        WHERE student_id=?");
-                $stmt->bind_param("ssssssi", $firstname, $lastname, $email, $course, $username, $password, $student_id);
-
-                if ($stmt->execute()) {
-
-                    logActivity($conn, $_SESSION['id'], $_SESSION['user_type'], 'UPDATE_STUDENT', "Updated student account: Student ID = $student_id");
-
-                    echo "<script>
-                            document.addEventListener('DOMContentLoaded', function() {
-                                Swal.fire({
-                                    icon: 'success',
-                                    title: 'Success!',
-                                    text: 'Student Updated Successfully!',
-                                    timer: 2000,
-                                    showConfirmButton: false
-                                });
-                            });
-                        </script>";
-                } else {
-                    echo "<script>
-                            Swal.fire({
-                                icon: 'error',
-                                title: 'Error!',
-                                text: '" . addslashes($stmt->error) . "',
-                                confirmButtonColor: '#d33'
-                            });
-                        </script>";
-                }
-                $stmt->close();
-                $conn->close();
-            }
-        }
-
-        //DROP QUERY
-        if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnDrop'])) {
-            $conn = connectToDB();
-            $student_id = $_POST['studentId'];
-
-            if ($conn) {
-                $stmt = $conn->prepare("UPDATE students SET status = '0' WHERE student_id=?");
-                $stmt->bind_param("i", $student_id);
-
-                if ($stmt->execute()) {
-
-                    logActivity($conn, $_SESSION['id'], $_SESSION['user_type'], 'DROP_STUDENT', "Drop Student Account: Student ID = $student_id");
-
-                    echo "<script>
-                            document.addEventListener('DOMContentLoaded', function() {
-                                Swal.fire({
-                                    icon: 'success',
-                                    title: 'Success!',
-                                    text: 'Student Drop Successfully!',
-                                    timer: 2000,
-                                    showConfirmButton: false
-                                });
-                            });
-                        </script>";
-                } else {
-                    echo "<script>
-                            Swal.fire({
-                                icon: 'error',
-                                title: 'Error!',
-                                text: '" . addslashes($stmt->error) . "',
-                                confirmButtonColor: '#d33'
-                            });
-                        </script>";
-                }
-                $stmt->close();
-                $conn->close();
-            } else {
-                echo "<script>alert('Database connection failed');</script>";
-            }
-        }
-
-        ?>
 
         <!-- Student Table -->
         <div class="container">
@@ -224,6 +503,7 @@ include '../includes/activity_logger.php';
                                                 data-email='" . $row["email"] . "'
                                                 data-username='" . $row["username"] . "'
                                                 data-createdAt='" . $row["createdAt"] . "'
+                                                data-image='" . $row["image"] . "'
                                                 data-bs-toggle='modal' 
                                                 data-bs-target='#viewStudentModal'>
                                                     <i class='fas fa-eye'></i>
@@ -236,7 +516,7 @@ include '../includes/activity_logger.php';
                                                 data-course='" . $row["course"] . "'
                                                 data-email='" . $row["email"] . "'
                                                 data-username='" . $row["username"] . "'
-                                                data-password='" . $row["password"] . "'
+                                                data-image='" . $row["image"] . "'
                                                 data-bs-toggle='modal' 
                                                 data-bs-target='#editStudentModal'>
                                                     <i class='fas fa-edit'></i>
@@ -274,9 +554,37 @@ include '../includes/activity_logger.php';
                         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
-                        <form action="<?php htmlspecialchars($_SERVER['PHP_SELF']) ?>" method="POST">
+                        <form action="<?php htmlspecialchars($_SERVER['PHP_SELF']) ?>" method="POST" enctype="multipart/form-data" id="insertForm">
                             <div class="row g-3">
                                 <h4 class="pb-2 border-bottom">Student Information</h4>
+
+                                <!-- Student Image Upload -->
+                                <div class="col-12">
+                                    <div class="d-flex flex-column align-items-center mb-3">
+                                        <div class="border border-2 border-dashed rounded d-flex align-items-center justify-content-center mb-2" style="width: 150px; height: 150px;">
+                                            <div class="text-center text-muted" id="imagePreview">
+                                                <i class="fas fa-user-graduate fa-3x mb-2"></i>
+                                                <div>Student Photo</div>
+                                            </div>
+                                        </div>
+                                        <div class="position-relative mb-2">
+                                            <button type="button" class="btn btn-primary btn-sm">
+                                                <i class="fas fa-upload me-1"></i> Choose Image
+                                            </button>
+                                            <input type="file" name="student_image" id="student_image" accept="image/*" class="position-absolute top-0 start-0 w-100 h-100 opacity-0">
+                                        </div>
+
+                                        <!-- Image Name Display Input -->
+                                        <div class="w-100">
+                                            <label for="imageName" class="form-label">Selected Image</label>
+                                            <div class="input-group">
+                                                <span class="input-group-text"><i class="fas fa-image"></i></span>
+                                                <input type="text" class="form-control" id="imageName" placeholder="No file selected" readonly>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
                                 <div class="col-md-6">
                                     <label for="firstname" class="form-label">First Name</label>
                                     <input type="text" class="form-control" name="firstname" id="firstname" required>
@@ -290,7 +598,7 @@ include '../includes/activity_logger.php';
                                     <input type="email" class="form-control" name="email" id="email" required>
                                 </div>
                                 <div class="col-md-6 mb-3">
-                                    <label for="course" class="form-label">Set</label>
+                                    <label for="set" class="form-label">Set</label>
                                     <select class="form-select" name="set" id="set" required>
                                         <option value="">Select Set</option>
                                         <option value="A">A</option>
@@ -298,13 +606,13 @@ include '../includes/activity_logger.php';
                                     </select>
                                 </div>
                                 <h4 class="pb-2 border-bottom">User Account</h4>
-                                <div class="col-md-6">
+                                <div class="col-12">
                                     <div class="input-group">
                                         <span class="input-group-text"><i class="fas fa-user"></i></span>
                                         <input type="text" class="form-control" placeholder="Enter username" name="username" id="username" required>
                                     </div>
                                 </div>
-                                <div class="col-md-6 mb-3">
+                                <div class="col-12">
                                     <div class="input-group">
                                         <span class="input-group-text"><i class="fas fa-lock"></i></span>
                                         <input type="password" class="form-control" placeholder="Enter password" name="password" id="password" required>
@@ -314,6 +622,9 @@ include '../includes/activity_logger.php';
                                             onmouseleave="document.getElementById('password').type='password'">
                                             <i class="fas fa-eye"></i></span>
                                     </div>
+                                    <div id="insertError">
+
+                                    </div>
                                 </div>
                             </div>
                             <div class="modal-footer">
@@ -322,7 +633,6 @@ include '../includes/activity_logger.php';
                             </div>
                         </form>
                     </div>
-
                 </div>
             </div>
         </div>
@@ -336,24 +646,56 @@ include '../includes/activity_logger.php';
                         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
-                        <form action="<?php htmlspecialchars($_SERVER['PHP_SELF']) ?>" method="POST">
+                        <form action="<?php htmlspecialchars($_SERVER['PHP_SELF']) ?>" method="POST" enctype="multipart/form-data" id="editForm">
                             <input type="hidden" name="editId" id="editId">
                             <div class="row g-3">
                                 <h4 class="pb-2 border-bottom">Student Information</h4>
+
+                                <!-- Student Image Upload for Edit -->
+                                <div class="col-12">
+                                    <div class="d-flex flex-column align-items-center mb-3">
+                                        <div class="border border-2 border-dashed rounded d-flex align-items-center justify-content-center mb-2" style="width: 150px; height: 150px;">
+                                            <div class="text-center text-muted" id="editImagePreview">
+                                                <i class="fas fa-user-graduate fa-3x mb-2"></i>
+                                                <div>Student Photo</div>
+                                            </div>
+                                        </div>
+                                        <div class="position-relative mb-2">
+                                            <button type="button" class="btn btn-primary btn-sm">
+                                                <i class="fas fa-upload me-1"></i> Change Image
+                                            </button>
+                                            <input type="file" name="edit_student_image" id="edit_student_image" accept="image/*" class="position-absolute top-0 start-0 w-100 h-100 opacity-0">
+                                        </div>
+
+                                        <!-- Image Name Display Input -->
+                                        <div class="w-100">
+                                            <label for="editImageName" class="form-label">Selected Image</label>
+                                            <div class="input-group">
+                                                <span class="input-group-text"><i class="fas fa-image"></i></span>
+                                                <input type="text" class="form-control" id="editImageName" placeholder="No file selected" readonly>
+                                            </div>
+                                        </div>
+                                        <!-- Current Image Info -->
+                                        <div class="w-100 mt-2">
+                                            <small class="text-muted" id="currentImageInfo">No current image</small>
+                                        </div>
+                                    </div>
+                                </div>
+
                                 <div class="col-md-6">
-                                    <label for="firstname" class="form-label">First Name</label>
+                                    <label for="editFname" class="form-label">First Name</label>
                                     <input type="text" class="form-control" name="editFname" id="editFname" required>
                                 </div>
                                 <div class="col-md-6">
-                                    <label for="lastname" class="form-label">Last Name</label>
+                                    <label for="editLname" class="form-label">Last Name</label>
                                     <input type="text" class="form-control" name="editLname" id="editLname" required>
                                 </div>
                                 <div class="col-md-6">
-                                    <label for="email" class="form-label">Email</label>
+                                    <label for="editEmail" class="form-label">Email</label>
                                     <input type="email" class="form-control" name="editEmail" id="editEmail" required>
                                 </div>
                                 <div class="col-md-6 mb-3">
-                                    <label for="course" class="form-label">Set</label>
+                                    <label for="editCourse" class="form-label">Set</label>
                                     <select class="form-select" name="editCourse" id="editCourse" required>
                                         <option value="">Select Set</option>
                                         <option value="A">A</option>
@@ -361,21 +703,24 @@ include '../includes/activity_logger.php';
                                     </select>
                                 </div>
                                 <h4 class="pb-2 border-bottom">User Account</h4>
-                                <div class="col-md-6">
+                                <div class="col-12">
                                     <div class="input-group">
                                         <span class="input-group-text"><i class="fas fa-user"></i></span>
                                         <input type="text" class="form-control" placeholder="Enter username" name="editUsername" id="editUsername" required>
                                     </div>
                                 </div>
-                                <div class="col-md-6 mb-3">
+                                <div class="col-12">
                                     <div class="input-group">
                                         <span class="input-group-text"><i class="fas fa-lock"></i></span>
-                                        <input type="password" class="form-control" placeholder="Enter password" name="editPassword" id="editPassword" required>
-                                        <span class="input-group-text password-toggle" id="password-toggle"
+                                        <input type="password" class="form-control" placeholder="Enter new password" name="editPassword" id="editPassword">
+                                        <span class="input-group-text password-toggle" id="editPasswordToggle"
                                             onmousedown="document.getElementById('editPassword').type='text'"
                                             onmouseup="document.getElementById('editPassword').type='password'"
                                             onmouseleave="document.getElementById('editPassword').type='password'">
                                             <i class="fas fa-eye"></i></span>
+                                    </div>
+                                    <div id="editError">
+
                                     </div>
                                 </div>
                             </div>
@@ -392,22 +737,81 @@ include '../includes/activity_logger.php';
 
         <!-- View Student Modal -->
         <div class="modal fade" id="viewStudentModal" tabindex="-1" aria-labelledby="viewStudentModal" aria-hidden="true">
-            <div class="modal-dialog">
+            <div class="modal-dialog modal-lg">
                 <div class="modal-content">
-                    <div class="modal-header">
+                    <div class="modal-header bg-primary text-white">
                         <h3 class="modal-title" id="viewStudentModal">Student Details</h3>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
-                        <?php
-                        echo "<p><strong>Student ID: </strong><span id='modalStudentId'></span></p>
-                              <p><strong>Name: </strong><span id='modalStudentName'></span></p>
-                              <p><strong>Set: </strong><span id='modalStudentCourse'></span></p>
-                              <p><strong>Email: </strong><span id='modalStudentEmail'></span></p>";
-                        echo "<h3 class='pb-3 pt-3 border-bottom'>User Acccount</h3>
-                              <p><strong>Username: </strong><span id='modalStudentUsername'></span></p>
-                              <p><strong>createdAt: </strong><span id='createdAt'></span></p>";
+                        <div class="row">
+                            <!-- Student Image Column -->
+                            <div class="col-md-4 text-center mb-3">
+                                <div class="student-image-container">
+                                    <div id="modalStudentImage" class="border rounded d-flex align-items-center justify-content-center mx-auto" style="width: 200px; height: 200px; background-color: #f8f9fa;">
+                                        <div class="text-center text-muted">
+                                            <i class="fas fa-user-graduate fa-4x mb-2"></i>
+                                            <div>No Image</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
 
-                        ?>
+                            <!-- Student Details Column -->
+                            <div class="col-md-8">
+                                <h5 class="border-bottom pb-2 mb-3">Personal Information</h5>
+                                <div class="row">
+                                    <div class="col-6">
+                                        <p><strong>Student ID:</strong></p>
+                                    </div>
+                                    <div class="col-6">
+                                        <p id="modalStudentId"></p>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-6">
+                                        <p><strong>Name:</strong></p>
+                                    </div>
+                                    <div class="col-6">
+                                        <p id="modalStudentName"></p>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-6">
+                                        <p><strong>Set:</strong></p>
+                                    </div>
+                                    <div class="col-6">
+                                        <p id="modalStudentCourse"></p>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-6">
+                                        <p><strong>Email:</strong></p>
+                                    </div>
+                                    <div class="col-6">
+                                        <p id="modalStudentEmail"></p>
+                                    </div>
+                                </div>
+
+                                <h5 class="border-bottom pb-2 mb-3 mt-4">User Account</h5>
+                                <div class="row">
+                                    <div class="col-6">
+                                        <p><strong>Username:</strong></p>
+                                    </div>
+                                    <div class="col-6">
+                                        <p id="modalStudentUsername"></p>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-6">
+                                        <p><strong>Created At:</strong></p>
+                                    </div>
+                                    <div class="col-6">
+                                        <p id="createdAt"></p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Close</button>
@@ -441,6 +845,7 @@ include '../includes/activity_logger.php';
     <!-- Bootstrap JS Bundle with Popper -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="js/script.js"></script>
     <script>
         document.querySelectorAll('.view-student-btn').forEach(function(btn) {
             btn.addEventListener('click', function() {
@@ -450,6 +855,21 @@ include '../includes/activity_logger.php';
                 document.getElementById('modalStudentEmail').textContent = btn.getAttribute('data-email');
                 document.getElementById('modalStudentUsername').textContent = btn.getAttribute('data-username');
                 document.getElementById('createdAt').textContent = btn.getAttribute('data-createdAt');
+
+                // Handle student image
+                const imagePath = btn.getAttribute('data-image');
+                const studentImageContainer = document.getElementById('modalStudentImage');
+
+                if (imagePath && imagePath !== '' && imagePath !== 'null') {
+                    studentImageContainer.innerHTML = `<img src="${imagePath}" class="img-fluid rounded" style="width: 100%; height: 100%; object-fit: cover;" alt="Student Photo">`;
+                } else {
+                    studentImageContainer.innerHTML = `
+                <div class="text-center text-muted">
+                    <i class="fas fa-user-graduate fa-4x mb-2"></i>
+                    <div>No Image</div>
+                </div>
+            `;
+                }
             });
         });
         document.querySelectorAll('.edit-student-btn').forEach(function(btn) {
@@ -460,8 +880,62 @@ include '../includes/activity_logger.php';
                 document.getElementById('editEmail').value = btn.getAttribute('data-email');
                 document.getElementById('editCourse').value = btn.getAttribute('data-course');
                 document.getElementById('editUsername').value = btn.getAttribute('data-username');
-                document.getElementById('editPassword').value = btn.getAttribute('data-password');
+
+                // Get the image path from data attribute
+                const imagePath = btn.getAttribute('data-image');
+                const editImagePreview = document.getElementById('editImagePreview');
+                const currentImageInfo = document.getElementById('currentImageInfo');
+
+                // Display current image if exists
+                if (imagePath && imagePath !== '') {
+                    editImagePreview.innerHTML = `<img src="${imagePath}" class="img-fluid h-100" alt="Student Photo">`;
+                    currentImageInfo.textContent = `Current image: ${imagePath.split('/').pop()}`;
+                } else {
+                    editImagePreview.innerHTML = `
+                <i class="fas fa-user-graduate fa-3x mb-2"></i>
+                <div>Student Photo</div>
+            `;
+                    currentImageInfo.textContent = 'No current image';
+                }
+
+                // Reset file input
+                document.getElementById('edit_student_image').value = '';
+                document.getElementById('editImageName').value = '';
             });
+        });
+
+        // Image preview for edit modal
+        document.getElementById('edit_student_image').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            const preview = document.getElementById('editImagePreview');
+            const imageNameInput = document.getElementById('editImageName');
+
+            if (file) {
+                const reader = new FileReader();
+
+                reader.addEventListener('load', function() {
+                    preview.innerHTML = '';
+                    const img = document.createElement('img');
+                    img.src = reader.result;
+                    img.className = 'img-fluid h-100';
+                    preview.appendChild(img);
+                });
+
+                reader.readAsDataURL(file);
+                imageNameInput.value = file.name;
+            } else {
+                // If no file selected, show current image again
+                const currentImagePath = document.querySelector('.edit-student-btn[data-id="' + document.getElementById('editId').value + '"]').getAttribute('data-image');
+                if (currentImagePath && currentImagePath !== '') {
+                    preview.innerHTML = `<img src="${currentImagePath}" class="img-fluid h-100" alt="Student Photo">`;
+                } else {
+                    preview.innerHTML = `
+                <i class="fas fa-user-graduate fa-3x mb-2"></i>
+                <div>Student Photo</div>
+            `;
+                }
+                imageNameInput.value = '';
+            }
         });
 
         document.querySelectorAll('.drop-student-btn').forEach(function(btn) {
@@ -470,112 +944,31 @@ include '../includes/activity_logger.php';
             });
         });
 
-        document.addEventListener('DOMContentLoaded', function() {
-            const passwordToggle = document.getElementById('password-toggle');
-            const passwordInput = document.getElementById('editPassword');
+        // Image preview functionality
+        document.getElementById('student_image').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            const preview = document.getElementById('imagePreview');
+            const imageNameInput = document.getElementById('imageName');
 
-            // Touch support for mobile devices
-            passwordToggle.addEventListener('touchstart', function(e) {
-                e.preventDefault();
-                passwordInput.type = 'text';
-            });
+            if (file) {
+                const reader = new FileReader();
 
-            passwordToggle.addEventListener('touchend', function(e) {
-                e.preventDefault();
-                passwordInput.type = 'password';
-            });
-
-            // Change icon when revealing password
-            passwordToggle.addEventListener('mousedown', function() {
-                this.innerHTML = '<i class="fas fa-eye-slash"></i>';
-            });
-
-            passwordToggle.addEventListener('mouseup', function() {
-                this.innerHTML = '<i class="fas fa-eye"></i>';
-            });
-
-            passwordToggle.addEventListener('mouseleave', function() {
-                this.innerHTML = '<i class="fas fa-eye"></i>';
-            });
-        });
-
-        // Real-time search functionality for students table
-        document.addEventListener('DOMContentLoaded', function() {
-            const searchInput = document.getElementById('searchInput');
-            const tableBody = document.querySelector('tbody');
-            const tableRows = Array.from(tableBody.querySelectorAll('tr'));
-
-            // Function to perform the search
-            function performSearch(searchTerm) {
-                const query = searchTerm.toLowerCase().trim();
-                let visibleRows = 0;
-
-                tableRows.forEach(function(row) {
-                    // Get all text content from the row (excluding action buttons)
-                    const cells = row.querySelectorAll('td');
-                    let rowText = '';
-
-                    // Combine text from StudentID, Name, Course, and Email columns (skip Action column)
-                    for (let i = 0; i < cells.length - 1; i++) {
-                        rowText += cells[i].textContent.toLowerCase() + ' ';
-                    }
-
-                    // Check if search term matches any part of the row text
-                    if (query === '' || rowText.includes(query)) {
-                        row.style.display = '';
-                        visibleRows++;
-                    } else {
-                        row.style.display = 'none';
-                    }
+                reader.addEventListener('load', function() {
+                    preview.innerHTML = '';
+                    const img = document.createElement('img');
+                    img.src = reader.result;
+                    img.className = 'img-fluid h-100';
+                    preview.appendChild(img);
                 });
 
-                // Optional: Show/hide "No results" message
-                showNoResultsMessage(visibleRows === 0 && query !== '');
-            }
-
-            // Function to show/hide no results message
-            function showNoResultsMessage(show) {
-                let noResultsRow = document.getElementById('no-results-row');
-
-                if (show && !noResultsRow) {
-                    // Create no results row if it doesn't exist
-                    noResultsRow = document.createElement('tr');
-                    noResultsRow.id = 'no-results-row';
-                    noResultsRow.innerHTML = `
-                <td colspan="5" class="text-center py-4" style="color: #6c757d;">
-                    <i class="fas fa-search mb-2" style="font-size: 2em; opacity: 0.5;"></i>
-                    <br>
-                    No students found matching your search
-                </td>
-            `;
-                    tableBody.appendChild(noResultsRow);
-                } else if (!show && noResultsRow) {
-                    // Remove no results row if it exists
-                    noResultsRow.remove();
-                }
-            }
-
-            // Add event listener for real-time search
-            searchInput.addEventListener('input', function(e) {
-                performSearch(e.target.value);
-            });
-
-            // Add event listener for paste events
-            searchInput.addEventListener('paste', function(e) {
-                // Small delay to ensure pasted content is processed
-                setTimeout(function() {
-                    performSearch(searchInput.value);
-                }, 10);
-            });
-
-
-
-            // Optional: Add search icon click functionality
-            const searchIcon = document.querySelector('#searchInput + .input-group-text');
-            if (searchIcon) {
-                searchIcon.addEventListener('click', function() {
-                    searchInput.focus();
-                });
+                reader.readAsDataURL(file);
+                imageNameInput.value = file.name;
+            } else {
+                preview.innerHTML = `
+                    <i class="fas fa-user-graduate fa-3x mb-2"></i>
+                    <div>Student Photo</div>
+                `;
+                imageNameInput.value = '';
             }
         });
     </script>

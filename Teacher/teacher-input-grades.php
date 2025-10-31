@@ -1,13 +1,14 @@
 <?php
 include 'includes/session.php';
 include('../database.php');
+include '../includes/activity_logger.php';
 
 //array student informations
 if (isset($_GET['student_set']) && isset($_GET['subject_id'])) {
     $set = $_GET['student_set'];;
     $conn = connectToDB();
 
-    $sql = "SELECT * FROM students WHERE course=?";
+    $sql = "SELECT * FROM students WHERE course=? ORDER BY lastname ASC";
     $stmt = $conn->prepare($sql);
     $stmt->bind_param("s", $set);
     $stmt->execute();
@@ -47,7 +48,7 @@ if ($result->num_rows > 0) {
 
 <body>
     <!-- Sidebar -->
-    <?php include('sidebar.php'); ?>
+    <?php include('includes/sidebar.php'); ?>
 
     <main class="main-content">
         <div class="page-header">
@@ -57,10 +58,10 @@ if ($result->num_rows > 0) {
         <div class="container">
             <div class="table-header">
                 <div class="row align-items-center">
-                    <?php foreach($details as $detail): ?>
-                    <div class="col-md-6">
-                        <h5>All Students > <?php echo $detail['subject']." - " . $detail['schoolyear'] . ", " . $detail['semester'] . " Semester"; ?></h5>
-                    </div>
+                    <?php foreach ($details as $detail): ?>
+                        <div class="col-md-6">
+                            <h5>All Students > <?php echo $detail['subject'] . " - " . $detail['schoolyear'] . ", " . $detail['semester'] . " Semester"; ?></h5>
+                        </div>
                     <?php endforeach; ?>
                     <div class="col-md-6">
                         <div class="input-group mb-3">
@@ -136,6 +137,8 @@ if ($result->num_rows > 0) {
                     }
 
                     if ($success) {
+                        logActivity($conn, $teacher_id, $_SESSION['user_type'], 'SUBMIT_GRADE', "submitted a Grade:" . $detail['subject'] ." S.Y. - ". $detail['schoolyear'] . ", " . $detail['semester'] . " Semester");
+
                         echo "<script>
                 document.addEventListener('DOMContentLoaded', function() {
                     Swal.fire({

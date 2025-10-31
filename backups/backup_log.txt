@@ -149,3 +149,7 @@
 2025-10-28 04:29:16 - Backup created by user ID: 8 - File: dbsmati_backup_2025-10-28_04-29-16.sql
 2025-10-28 04:29:33 - Database restored by user ID: 8 - File: dbsmati_backup_2025-10-28_01-26-09.sql
 2025-10-28 04:36:38 - Database restored by user ID: 8 - File: dbsmati_backup_2025-10-28_04-29-16.sql
+2025-10-31 00:52:01 - Backup created by user ID: 8 - File: dbsmati_backup_2025-10-31_00-52-01.sql
+2025-10-31 03:22:10 - Backup created by user ID: 8 - File: dbsmati_backup_2025-10-31_03-22-10.sql
+2025-10-31 03:22:20 - Backup created by user ID: 8 - File: dbsmati_backup_2025-10-31_03-22-20.sql
+2025-10-31 05:39:28 - Backup created by user ID: 8 - File: dbsmati_backup_2025-10-31_05-39-28.sql

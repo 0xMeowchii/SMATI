@@ -108,8 +108,8 @@ function setupEventListeners() {
 
         $(this).addClass('active');
         $('#teacherBtn').removeClass('active');
-        $('#idLabel').text('Student ID');
-        $('#loginId').attr('placeholder', 'Enter your Student ID');
+        $('#idLabel').text('Student ID or Username');
+        $('#loginId').attr('placeholder', 'Enter your Student ID or Username');
 
         // Clear any stored credentials when switching
         clearFormFields();
@@ -130,8 +130,8 @@ function setupEventListeners() {
 
         $(this).addClass('active');
         $('#studentBtn').removeClass('active');
-        $('#idLabel').text('Teacher ID');
-        $('#loginId').attr('placeholder', 'Enter your Teacher ID');
+        $('#idLabel').text('Teacher ID or Username');
+        $('#loginId').attr('placeholder', 'Enter your Teacher ID or Username');
 
         // Clear any stored credentials when switching
         clearFormFields();
@@ -162,7 +162,7 @@ function setupEventListeners() {
         if (!isOnline) return;
         togglePasswordVisibility('loginPassword', $(this));
     });
-    
+
 
     // Form submission
     $('#loginForm').submit(function (e) {

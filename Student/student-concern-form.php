@@ -373,7 +373,7 @@ function getTodaySubmissionsCount($student_id)
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">
                     <li class="nav-item">
-                        <a class="nav-link active" href="#" id="backLink">
+                        <a class="nav-link active" href="student-grades.php">
                             <i class="fas fa-arrow-left me-2"></i>Go Back
                         </a>
                     </li>
@@ -623,11 +623,6 @@ function getTodaySubmissionsCount($student_id)
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.all.min.js"></script>
     <script>
-        document.getElementById('backLink').addEventListener('click', function(e) {
-            e.preventDefault();
-            history.back();
-        });
-
         // Initialize jsPDF
         const {
             jsPDF

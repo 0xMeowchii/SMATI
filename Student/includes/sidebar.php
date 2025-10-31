@@ -1,10 +1,22 @@
 <?php
-if (!isset($_SESSION['user_type']) || $_SESSION['user_type'] !== 'registrar') {
-    header("Location: login.php");
+if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
+    header("Location: /SMATI/");
     exit();
 }
-
 $current_page = basename($_SERVER['PHP_SELF']);
+// Fetch user image from database
+$conn = connectToDB();
+$user_id = $_SESSION['id']; // Assuming you store user ID in session
+$user_image = '';
+if ($conn) {
+    $stmt = $conn->prepare("SELECT image FROM students WHERE student_id = ?");
+    $stmt->bind_param("i", $user_id);
+    $stmt->execute();
+    $stmt->bind_result($user_image);
+    $stmt->fetch();
+    $stmt->close();
+    $conn->close();
+}
 ?>
 
 <!-- Mobile Menu Toggle Button -->
@@ -18,8 +30,8 @@ $current_page = basename($_SERVER['PHP_SELF']);
 <!-- Sidebar -->
 <div class="sidebar" id="sidebar">
     <div class="sidebar-brand flex-column text-center">
-        <img class="mb-3" src="../images/logo5.png" alt="logo" width="80px" height="80px">
-        <p class="mb-0">Registrar</p>
+        <img class="mb-3 rounded-circle" src="<?php echo $user_image; ?>" alt="Profile" width="80px" height="80px" style="object-fit: cover;">
+        <p class="mb-0"><?php echo $_SESSION['fullname']; ?></p>
     </div>
     
     <!-- Close button for mobile -->
@@ -29,13 +41,13 @@ $current_page = basename($_SERVER['PHP_SELF']);
     
     <ul class="nav flex-column mt-3">
         <li class="nav-item">
-            <a class="nav-link <?php echo ($current_page == 'registrar-dashboard.php') ? 'active' : ''; ?>" href="registrar-dashboard.php">
+            <a class="nav-link <?php echo ($current_page == 'student-dashboard.php') ? 'active' : ''; ?>" href="student-dashboard.php">
                 <i class="fas fa-tachometer-alt"></i>Dashboard
             </a>
         </li>
         <li class="nav-item">
-            <a class="nav-link <?php echo ($current_page == 'registrar-students.php') ? 'active' : ''; ?>" href="registrar-students.php">
-                <i class="fas fa-file"></i>Grades
+            <a class="nav-link <?php echo ($current_page == 'student-grades.php') ? 'active' : ''; ?>" href="student-grades.php">
+                <i class="fa fa-book"></i>My Grades
             </a>
         </li>
         <li class="nav-item mt-3">

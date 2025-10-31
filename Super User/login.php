@@ -211,7 +211,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnLogin'])) {
                 Swal.fire({
                     icon: 'success',
                     title: 'Login Successful!',
-                    text: 'Welcome back, Kupaaal!',
+                    text: 'Welcome back, Dev!',
                     showConfirmButton: false,
                     timer: 1500,
                     willClose: () => {

@@ -4,7 +4,70 @@ let currentRegisterStep = 1;
 // Initialize the application
 $(document).ready(function () {
     setupEventListeners();
+    checkLoginLockout();
 });
+
+// Check if login is currently locked out
+function checkLoginLockout() {
+    const lockoutEnd = sessionStorage.getItem('loginLockoutEnd');
+    
+    if (lockoutEnd) {
+        const now = Date.now();
+        const lockoutTime = parseInt(lockoutEnd);
+        
+        if (now < lockoutTime) {
+            // Still locked out
+            disableLoginForm(lockoutTime - now);
+        } else {
+            // Lockout expired, clear it
+            sessionStorage.removeItem('loginLockoutEnd');
+            sessionStorage.removeItem('loginAttempts');
+        }
+    }
+}
+
+// Disable login form for specified duration
+function disableLoginForm(remainingTime) {
+    const loginBtn = $('button[name="btnLogin"]');
+    const loginEmail = $('#loginEmail');
+    const loginPassword = $('#loginPassword');
+    
+    loginBtn.prop('disabled', true);
+    loginEmail.prop('disabled', true);
+    loginPassword.prop('disabled', true);
+    
+    updateLockoutTimer(remainingTime);
+}
+
+// Update lockout timer display
+function updateLockoutTimer(remainingTime) {
+    const loginBtn = $('button[name="btnLogin"]');
+    
+    const updateTimer = () => {
+        const lockoutEnd = sessionStorage.getItem('loginLockoutEnd');
+        const now = Date.now();
+        const remaining = parseInt(lockoutEnd) - now;
+        
+        if (remaining <= 0) {
+            // Lockout expired
+            loginBtn.prop('disabled', false);
+            $('#loginEmail').prop('disabled', false);
+            $('#loginPassword').prop('disabled', false);
+            loginBtn.html('Sign In');
+            sessionStorage.removeItem('loginLockoutEnd');
+            sessionStorage.removeItem('loginAttempts');
+            return;
+        }
+        
+        const minutes = Math.floor(remaining / 60000);
+        const seconds = Math.floor((remaining % 60000) / 1000);
+        loginBtn.html(`Locked (${minutes}:${seconds.toString().padStart(2, '0')})`);
+        
+        setTimeout(updateTimer, 1000);
+    };
+    
+    updateTimer();
+}
 
 // Set up all event listeners
 function setupEventListeners() {
@@ -45,7 +108,7 @@ function setupEventListeners() {
     });
 
     // Caps lock detection
-    $('#registerPassword, #recoverPassword').keyup(function (e) {
+    $('#registerPassword, #recoverPassword, #loginPassword').keyup(function (e) {
         checkCapsLock(e);
     });
 
@@ -81,8 +144,9 @@ function setupEventListeners() {
     $('#backToStep2').click(backToStep2);
 
     // Form submissions
-    $('#registerForm').submit(handleRegistration);
-    $('#forgotPasswordFormInner').submit(handlePasswordRecovery);
+    $('#registerForm1').submit(handleRegistration);
+    $('#forgotPasswordFormInner1').submit(handlePasswordRecovery);
+    $('#loginForm').submit(handleLoginSubmit);
 
     // Tab change event
     $('#authTabs button').click(function () {
@@ -92,6 +156,25 @@ function setupEventListeners() {
             showRegisterForm();
         }
     });
+}
+
+// Handle login form submission
+function handleLoginSubmit(e) {
+    // Check if locked out
+    const lockoutEnd = sessionStorage.getItem('loginLockoutEnd');
+    if (lockoutEnd && Date.now() < parseInt(lockoutEnd)) {
+        e.preventDefault();
+        Swal.fire({
+            icon: 'error',
+            title: 'Account Locked',
+            text: 'Please wait before attempting to login again.',
+            confirmButtonColor: '#0d6efd'
+        });
+        return false;
+    }
+    
+    // Form will submit normally, PHP will handle validation
+    return true;
 }
 
 // Validate input in real-time
@@ -237,6 +320,8 @@ function checkCapsLock(e) {
         $('#registerCapsWarning').toggle(isCapsLockOn);
     } else if (fieldId === 'recoverPassword') {
         $('#recoverCapsWarning').toggle(isCapsLockOn);
+    } else if (fieldId === 'loginPassword') {
+        $('#loginCapsWarning').toggle(isCapsLockOn);
     }
 }
 
@@ -257,6 +342,7 @@ function togglePasswordVisibility(fieldId, toggleElement) {
 // Show register form
 function showRegisterForm(e) {
     if (e) e.preventDefault();
+    
     // Hide login form and show register form using Bootstrap classes
     $('#login').removeClass('show active');
     $('#register').addClass('show active');
@@ -265,7 +351,7 @@ function showRegisterForm(e) {
 
     // Show registration step 1
     $('.form-section').removeClass('active');
-    $('#registerForm').addClass('active');
+    $('#registerForm1').addClass('active');
     $('#registerStep1').addClass('active');
     $('#forgotPasswordForm').removeClass('active');
     currentRegisterStep = 1;
@@ -289,6 +375,7 @@ function showForgotPasswordForm(e) {
 // Show login form
 function showLoginForm(e) {
     if (e) e.preventDefault();
+    
     // Show login form and hide register form using Bootstrap classes
     $('#login').addClass('show active');
     $('#register').removeClass('show active');
@@ -386,9 +473,6 @@ function handleRegistration(e) {
         Swal.fire('Error', 'You must agree to the terms and conditions', 'error');
         return;
     }
-
-    // Submit form to PHP backend
-    this.submit();
 }
 
 // Handle password recovery
@@ -413,9 +497,6 @@ function handlePasswordRecovery(e) {
         Swal.fire('Error', 'Please provide an answer to the security question', 'error');
         return;
     }
-
-    // Submit form to PHP backend
-    this.submit();
 }
 
 // Validate email format

@@ -296,7 +296,7 @@ $todayActivitylogs = $result->num_rows;
         </div>
 
         <!-- Recent Activities -->
-        <div class="row mt-5">
+        <div class="row mt-5 g-4">
             <!-- Activity Logs Card -->
             <div class="col-12 col-lg-4">
                 <div class="card rounded-4 bg-white shadow h-100">

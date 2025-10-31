@@ -1,0 +1,249 @@
+/* Mobile Menu Toggle Button */
+.mobile-menu-toggle {
+  display: none;
+  position: fixed;
+  top: 1rem;
+  left: 1rem;
+  z-index: 999; /* REDUCED from 1100 to be below main content */
+  background: var(--primary-color);
+  border: none;
+  border-radius: 8px;
+  width: 45px;
+  height: 45px;
+  color: white;
+  font-size: 1.25rem;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(67, 97, 238, 0.3);
+  transition: all 0.3s ease;
+}
+
+.mobile-menu-toggle:hover {
+  background: var(--secondary-color);
+  transform: scale(1.05);
+}
+
+.mobile-menu-toggle:active {
+  transform: scale(0.95);
+}
+
+/* Mobile Close Button inside Sidebar */
+.mobile-close-btn {
+  display: none;
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  border-radius: 8px;
+  width: 40px;
+  height: 40px;
+  color: white;
+  font-size: 1.25rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  z-index: 1001;
+}
+
+.mobile-close-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: rotate(90deg);
+}
+
+/* Sidebar Overlay */
+.sidebar-overlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 998; /* REDUCED to be below sidebar but above content */
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none; /* Don't block clicks when hidden */
+}
+
+.sidebar-overlay.active {
+  opacity: 1;
+  pointer-events: auto; /* Allow clicks only when active */
+}
+
+/* Main content should have higher z-index than toggle button */
+.main-content {
+  position: relative;
+  z-index: 1; /* Default z-index for content */
+}
+
+/* Ensure modals, dropdowns, and interactive elements stay on top */
+.modal,
+.dropdown-menu,
+.swal2-container {
+  z-index: 9999 !important;
+}
+
+/* Buttons and inputs in main content */
+.main-content button,
+.main-content input,
+.main-content select,
+.main-content textarea,
+.main-content .btn,
+.main-content a {
+  position: relative;
+  z-index: 2; /* Above main content base */
+}
+
+/* Responsive Styles */
+@media (max-width: 992px) {
+  /* Show mobile menu toggle */
+  .mobile-menu-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* Show close button in sidebar */
+  .mobile-close-btn {
+    display: block;
+  }
+
+  /* Hide sidebar by default on mobile */
+  .sidebar {
+    transform: translateX(-100%);
+    z-index: 1000; /* Above overlay */
+  }
+
+  /* Show sidebar when active */
+  .sidebar.active {
+    transform: translateX(0);
+  }
+
+  /* Show overlay when sidebar is active */
+  .sidebar-overlay {
+    display: block;
+  }
+
+  /* Remove left margin from main content */
+  .main-content {
+    margin-left: 0;
+    padding: 5rem 1rem 2rem; /* Add top padding to prevent overlap with toggle button */
+  }
+
+  /* Adjust page header for mobile */
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+
+  .page-header .d-flex {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  /* Make stat cards stack better on mobile */
+  .stat-card {
+    margin-bottom: 1rem;
+  }
+
+  /* Adjust table for mobile */
+  .table-responsive {
+    border-radius: 8px;
+    overflow-x: auto;
+  }
+}
+
+@media (max-width: 768px) {
+  /* Further adjustments for smaller screens */
+  .sidebar {
+    width: 280px;
+  }
+
+  .main-content {
+    padding: 5rem 0.75rem 1rem;
+  }
+
+  .page-title {
+    font-size: 1.5rem;
+  }
+
+  /* Stack action buttons vertically on small screens */
+  .action-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    width: 100%;
+  }
+
+  .action-buttons .btn {
+    margin-left: 0;
+    width: 100%;
+  }
+}
+
+@media (max-width: 576px) {
+  /* Adjustments for extra small screens */
+  .sidebar {
+    width: 260px;
+  }
+
+  .mobile-menu-toggle {
+    top: 0.75rem;
+    left: 0.75rem;
+    width: 40px;
+    height: 40px;
+    font-size: 1.1rem;
+  }
+
+  .main-content {
+    padding: 4.5rem 0.5rem 1rem;
+  }
+
+  .page-title {
+    font-size: 1.25rem;
+  }
+
+  /* Adjust sidebar brand for smaller screens */
+  .sidebar-brand img {
+    width: 60px;
+    height: 60px;
+  }
+
+  .sidebar-brand p {
+    font-size: 0.9rem;
+  }
+
+  /* Adjust nav links for smaller screens */
+  .nav-link {
+    padding: 0.6rem 1rem;
+    font-size: 0.9rem;
+  }
+
+  .nav-link i {
+    width: 20px;
+    font-size: 0.9rem;
+  }
+}
+
+/* Animation for sidebar */
+.sidebar {
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Prevent body scroll when mobile menu is open */
+body.menu-open {
+  overflow: hidden;
+}
+
+/* Dark mode toggle and other fixed elements should be above toggle */
+.dark-mode-toggle {
+  z-index: 1000 !important;
+}
+
+/* Ensure cards and interactive elements are clickable */
+.card,
+.table,
+form {
+  position: relative;
+  z-index: 2;
+}

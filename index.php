@@ -66,8 +66,8 @@ session_start();
                     $conn = connectToDB();
                     if ($userType === 'student') {
                         // Student login query
-                        $stmt = $conn->prepare("SELECT * FROM students WHERE student_id = ?");
-                        $stmt->bind_param("i", $id);
+                        $stmt = $conn->prepare("SELECT * FROM students WHERE student_id = ? OR username = ?");
+                        $stmt->bind_param("is", $id , $id);
                         $stmt->execute();
                         $result = $stmt->get_result();
                         $user = $result->fetch_assoc();
@@ -76,8 +76,8 @@ session_start();
                         $dashboard = './Student/student-dashboard.php';
                     } else {
                         // Teacher login query
-                        $stmt = $conn->prepare("SELECT * FROM teachers WHERE teacher_id = ?");
-                        $stmt->bind_param("i", $id);
+                        $stmt = $conn->prepare("SELECT * FROM teachers WHERE teacher_id = ? OR username = ?");
+                        $stmt->bind_param("is", $id, $id);
                         $stmt->execute();
                         $result = $stmt->get_result();
                         $user = $result->fetch_assoc();
@@ -87,7 +87,7 @@ session_start();
                     }
 
                     if ($user) {
-                        if ($password === $user['password']) {
+                        if (password_verify($password, $user['password'])) {
                             $_SESSION['id'] = $user[$id_field];
                             $_SESSION['username'] = $user['username'];
                             $_SESSION['firstname'] = $user['firstname'];
@@ -253,10 +253,10 @@ session_start();
             <form id="loginForm" method="POST" action="<?php echo htmlspecialchars($_SERVER['PHP_SELF']) ?>">
                 <input type="hidden" id="userType" name="user_type" value="student">
                 <div class="mb-3 input-icon">
-                    <label for="loginId" class="form-label" id="idLabel">Student ID</label>
+                    <label for="loginId" class="form-label" id="idLabel">Student ID or Username</label>
                     <div class="input-group">
                         <span class="input-group-text"><i class="bi bi-person-vcard"></i></span>
-                        <input type="text" class="form-control" id="loginId" name="loginId" placeholder="Enter your ID" required oncopy="return false" onpaste="return false">
+                        <input type="text" class="form-control" id="loginId" name="loginId" placeholder="Enter your ID or Username" required oncopy="return false" onpaste="return false">
                     </div>
                     <i class="bi bi-check-circle-fill validation-icon" id="loginIdValid"></i>
                     <i class="bi bi-exclamation-circle-fill validation-icon" id="loginIdInvalid"></i>
@@ -360,7 +360,7 @@ session_start();
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
     <!-- SweetAlert2 JS -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.all.min.js"></script>
-    <script src="script.js"></script>
+    <script src="script1.js"></script>
 </body>
 
 </html>

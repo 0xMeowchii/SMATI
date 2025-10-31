@@ -1,5 +1,4 @@
 <?php
-
 if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
     header("Location: /SMATI/Super User/login.php");
     exit();
@@ -8,18 +7,33 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
 $current_page = basename($_SERVER['PHP_SELF']);
 ?>
 
-<div class="sidebar">
+<!-- Mobile Menu Toggle Button -->
+<button class="mobile-menu-toggle" id="mobileMenuToggle" aria-label="Toggle Menu">
+    <i class="fas fa-bars"></i>
+</button>
+
+<!-- Sidebar Overlay for Mobile -->
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<!-- Sidebar -->
+<div class="sidebar" id="sidebar">
     <div class="sidebar-brand flex-column text-center">
         <img class="mb-3" src="../images/logo5.png" alt="logo" width="80px" height="80px">
         <p class="mb-0">Super User</p>
     </div>
+    
+    <!-- Close button for mobile -->
+    <button class="mobile-close-btn" id="mobileCloseBtn" aria-label="Close Menu">
+        <i class="fas fa-times"></i>
+    </button>
+    
     <ul class="nav flex-column mt-3">
         <li class="nav-item">
             <a class="nav-link <?php echo ($current_page == 'admin-list.php') ? 'active' : ''; ?>" href="admin-list.php">
                 <i class="fas fa-universal-access"></i>Admin
             </a>
         </li>
-         <li class="nav-item">
+        <li class="nav-item">
             <a class="nav-link <?php echo ($current_page == 'teacher-list.php') ? 'active' : ''; ?>" href="teacher-list.php">
                 <i class="fa fa-users"></i>Teacher
             </a>
@@ -27,6 +41,11 @@ $current_page = basename($_SERVER['PHP_SELF']);
         <li class="nav-item">
             <a class="nav-link <?php echo ($current_page == 'student-list.php') ? 'active' : ''; ?>" href="student-list.php">
                 <i class="fa fa-user"></i>Student
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link <?php echo ($current_page == 'registrar-list.php') ? 'active' : ''; ?>" href="registrar-list.php">
+                <i class="fa fa-address-book"></i>Registrar
             </a>
         </li>
         <li class="nav-item">
@@ -46,6 +65,50 @@ $current_page = basename($_SERVER['PHP_SELF']);
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.3/dist/sweetalert2.all.min.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // Mobile menu toggle functionality
+    const mobileMenuToggle = document.getElementById('mobileMenuToggle');
+    const mobileCloseBtn = document.getElementById('mobileCloseBtn');
+    const sidebar = document.getElementById('sidebar');
+    const sidebarOverlay = document.getElementById('sidebarOverlay');
+    
+    // Function to open sidebar
+    function openSidebar() {
+        sidebar.classList.add('active');
+        sidebarOverlay.classList.add('active');
+        document.body.style.overflow = 'hidden';
+    }
+    
+    // Function to close sidebar
+    function closeSidebar() {
+        sidebar.classList.remove('active');
+        sidebarOverlay.classList.remove('active');
+        document.body.style.overflow = '';
+    }
+    
+    // Event listeners
+    if (mobileMenuToggle) {
+        mobileMenuToggle.addEventListener('click', openSidebar);
+    }
+    
+    if (mobileCloseBtn) {
+        mobileCloseBtn.addEventListener('click', closeSidebar);
+    }
+    
+    if (sidebarOverlay) {
+        sidebarOverlay.addEventListener('click', closeSidebar);
+    }
+    
+    // Close sidebar when clicking on nav links (mobile only)
+    const navLinks = document.querySelectorAll('.sidebar .nav-link');
+    navLinks.forEach(link => {
+        link.addEventListener('click', function() {
+            if (window.innerWidth <= 992) {
+                closeSidebar();
+            }
+        });
+    });
+    
+    // Logout functionality
     const logoutBtn = document.getElementById('logoutBtn');
     
     if (logoutBtn) {
@@ -69,7 +132,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 buttonsStyling: false
             }).then((result) => {
                 if (result.isConfirmed) {
-                    // Redirect to logout.php
                     window.location.href = 'logout.php';
                 }
             });

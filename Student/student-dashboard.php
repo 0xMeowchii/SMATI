@@ -32,7 +32,7 @@ include('../database.php');
     <!-- Sidebar -->
     <?php
 
-    include('sidebar.php');
+    include('includes/sidebar.php');
 
     //Fetch Announcements
     $conn = connectToDB();

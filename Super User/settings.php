@@ -31,7 +31,7 @@ include '../database.php';
 
 <body>
     <!-- Sidebar -->
-    <?php include('sidebar.php'); ?>
+    <?php include('includes/sidebar.php'); ?>
 
     <main class="main-content">
         <div class="page-header">
@@ -71,7 +71,7 @@ include '../database.php';
                     <div class="card-body p-4">
                         <div class="mb-4">
                             <label class="form-label">System Version</label>
-                            <input type="text" class="form-control" value="EduExam v1.0.0" readonly>
+                            <input type="text" class="form-control" value="SMATI - EduPortal v1.0.0" readonly>
                         </div>
                         <div class="mb-4">
                             <label class="form-label">Last Backup</label>
