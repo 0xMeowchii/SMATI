@@ -1,8 +1,8 @@
 <?php
 require_once 'includes/session.php';
 
-// Check if user is admin
-if ($_SESSION['user_type'] !== 'superuser') {
+
+if (!isset($_SESSION['user_type']) || $_SESSION['user_type'] !== 'superuser') {
     die(json_encode(['success' => false, 'message' => 'Unauthorized']));
 }
 

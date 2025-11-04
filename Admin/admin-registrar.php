@@ -1,5 +1,4 @@
 <?php
-require_once 'includes/session.php';
 include '../database.php';
 include '../includes/activity_logger.php';
 ?>
@@ -282,7 +281,7 @@ include '../includes/activity_logger.php';
                     <tbody>
                         <?php
                         $conn = connectToDB();
-                        $sql = "SELECT * FROM registrars WHERE status = '1'";
+                        $sql = "SELECT * FROM registrars WHERE status = '1' ORDER BY lastname ASC";
                         $result = $conn->query($sql);
 
                         if ($result && $result->num_rows > 0) {

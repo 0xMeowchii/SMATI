@@ -1,35 +1,22 @@
 <?php
-include 'database.php';
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnLogin'])) {
-    $userType = $_POST['user_type'] ?? 'student';
-    session_name($userType);
-}
 
-session_start();
+include 'database.php';
 ?>
 <!DOCTYPE html>
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SMATI - Education Portal Login</title>
-    <!-- Bootstrap 5 CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Bootstrap Icons -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.3/font/bootstrap-icons.css">
-    <!-- Poppins Font -->
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <!-- SweetAlert2 CSS -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
-    <!-- Add reCAPTCHA script -->
-    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
-    <link rel="stylesheet" href="style.css">
+    <?php include 'header.php'; ?>
 </head>
 
 <body class="student-mode animated-background">
 
     <?php
+
+    require_once 'session.php';
+    require_once 'LoginSecurity.php';
+
+    initGuestSession();
 
     // Initialize variables
     $showSuccess = false;
@@ -40,117 +27,140 @@ session_start();
     if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnLogin'])) {
         $id = $_POST['loginId'] ?? '';
         $password = $_POST['loginPassword'] ?? '';
-        $userType = $_POST['user_type'] ?? 'student';
+        $loginType = $_POST['user_type'] ?? 'student';
 
-        // Check if reCAPTCHA response exists
         if (isset($_POST['g-recaptcha-response']) && !empty($_POST['g-recaptcha-response'])) {
-
             $secret_key = "6LdxyvQrAAAAAFje30yKm8Zyt_d3lrJv7wjzcZP1";
             $captcha_response = $_POST['g-recaptcha-response'] ?? '';
 
             $verify_response = file_get_contents("https://www.google.com/recaptcha/api/siteverify?secret={$secret_key}&response={$captcha_response}");
             $response_data = json_decode($verify_response);
 
-            // FIX: Changed $response_data->$success to $response_data->success
             if ($response_data->success) {
-                // Validate inputs
-                if (empty($id)) {
-                    $errors[] = "ID is required.";
-                }
+                $conn = connectToDB();
+                $loginSecurity = new LoginSecurity($conn);
 
-                if (empty($password)) {
-                    $errors[] = "Password is required.";
-                }
+                // Check if user is locked out
+                $lockoutStatus = $loginSecurity->checkLockout($id);
 
-                if (empty($errors)) {
-                    $conn = connectToDB();
-                    if ($userType === 'student') {
-                        // Student login query
-                        $stmt = $conn->prepare("SELECT * FROM students WHERE student_id = ? OR username = ?");
-                        $stmt->bind_param("is", $id , $id);
-                        $stmt->execute();
-                        $result = $stmt->get_result();
-                        $user = $result->fetch_assoc();
-
-                        $id_field = 'student_id';
-                        $dashboard = './Student/student-dashboard.php';
-                    } else {
-                        // Teacher login query
-                        $stmt = $conn->prepare("SELECT * FROM teachers WHERE teacher_id = ? OR username = ?");
-                        $stmt->bind_param("is", $id, $id);
-                        $stmt->execute();
-                        $result = $stmt->get_result();
-                        $user = $result->fetch_assoc();
-
-                        $id_field = 'teacher_id';
-                        $dashboard = './Teacher/teacher-dashboard.php';
+                if ($lockoutStatus['locked']) {
+                    // User is locked out - don't process login, just show lockout message
+                    $lockoutMessage = true;
+                } else {
+                    // Validate inputs
+                    if (empty($id)) {
+                        $errors[] = "ID or Username is required.";
                     }
 
-                    if ($user) {
-                        if (password_verify($password, $user['password'])) {
-                            $_SESSION['id'] = $user[$id_field];
-                            $_SESSION['username'] = $user['username'];
-                            $_SESSION['firstname'] = $user['firstname'];
-                            $_SESSION['fullname'] = $user['lastname'] . ", " . $user['firstname'];
-                            $_SESSION['user_type'] = $userType;
-                            $_SESSION['logged_in'] = true;
-                            $showSuccess = true;
+                    if (empty($password)) {
+                        $errors[] = "Password is required.";
+                    }
 
-                            echo "<script>
-                            document.addEventListener('DOMContentLoaded', function() {
-                                Swal.fire({
-                                    icon: 'success',
-                                    title: 'Login Successful!',
-                                    text: 'Welcome back, $userType!',
-                                    showConfirmButton: false,
-                                    timer: 1500,
-                                    willClose: () => {
-                                        window.location.href = '$dashboard';
-                                    }
-                                });
-                            });
-                        </script>";
+                    if (empty($errors)) {
+                        if ($loginType === 'student') {
+                            $stmt = $conn->prepare("SELECT * FROM students WHERE (student_id = ? OR username = ?)");
+                            $stmt->bind_param("ss", $id, $id);
+                            $stmt->execute();
+                            $result = $stmt->get_result();
+                            $user = $result->fetch_assoc();
+                            $dashboard = './Student/student-dashboard.php';
                         } else {
-                            $errors[] = "Invalid ID or password.";
+
+                            $stmt = $conn->prepare("SELECT * FROM teachers WHERE (teacher_id = ? OR username = ?)");
+                            $stmt->bind_param("ss", $id, $id);
+                            $stmt->execute();
+                            $result = $stmt->get_result();
+                            $user = $result->fetch_assoc();
+                            $dashboard = './Teacher/teacher-dashboard.php';
                         }
-                    } else {
-                        $errors[] = "Invalid ID or password.";
+
+                        if ($user) {
+                            // Check if account is active (status = 1)
+                            if ($user['status'] == '0') {
+                                // Account is disabled
+                                $errors[] = "Your account has been disabled. Please contact the administrator for assistance.";
+                            } else if (password_verify($password, $user['password'])) {
+                                // Successful login - clear attempts
+                                $loginSecurity->clearAttempts($id);
+
+                                session_destroy();
+
+                                $userType = ($loginType === 'student') ? 'student' : 'teacher';
+
+                                // Get the user's unique ID
+                                $userId = ($loginType === 'student') ? $user['student_id'] : $user['teacher_id'];
+
+                                // Start unique session for this specific user
+                                startUniqueSession($userType, $userId);
+
+                                $_SESSION['username'] = $user['username'];
+                                $_SESSION['firstname'] = $user['firstname'];
+                                $_SESSION['fullname'] = $user['lastname'] . ", " . $user['firstname'];
+                                $_SESSION['user_type'] = $loginType;
+                                $_SESSION['logged_in'] = true;
+
+                                $showSuccess = true;
+
+                                echo "<script>
+                                    document.addEventListener('DOMContentLoaded', function() {
+                                        Swal.fire({
+                                            icon: 'success',
+                                            title: 'Login Successful!',
+                                            text: 'Welcome back, $loginType!',
+                                            showConfirmButton: false,
+                                            timer: 1500,
+                                            willClose: () => {
+                                                window.location.href = '$dashboard';
+                                            }
+                                        });
+                                    });
+                                    </script>";
+                            } else {
+                                // Failed login - record attempt
+                                $loginSecurity->recordFailedAttempt($id);
+                                $lockoutStatus = $loginSecurity->checkLockout($id);
+                                $errors[] = "Incorrect ID/Username or password. {$lockoutStatus['remaining_attempts']} attempt(s) remaining.";
+                            }
+                        } else {
+                            // User not found - record attempt
+                            $loginSecurity->recordFailedAttempt($id);
+                            $lockoutStatus = $loginSecurity->checkLockout($id);
+                            $errors[] = "User not found. {$lockoutStatus['remaining_attempts']} attempt(s) remaining.";
+                        }
+
+                        $conn->close();
                     }
 
-                    $conn->close();
-                }
-
-                // Show errors if any
-                if (!empty($errors)) {
-                    $errorMessages = implode('<br>', array_map('htmlspecialchars', $errors));
-                    echo "<script>
-                document.addEventListener('DOMContentLoaded', function() {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Login Failed',
-                        html: '$errorMessages',
-                        confirmButtonColor: '#0d6efd',
-                        confirmButtonText: 'Try Again'
-                    });
-                });
-            </script>";
+                    // Show errors if any
+                    if (!empty($errors)) {
+                        $errorMessages = implode('<br>', array_map('htmlspecialchars', $errors));
+                        echo "<script>
+                        document.addEventListener('DOMContentLoaded', function() {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Login Failed',
+                                html: '$errorMessages',
+                                confirmButtonColor: '#0d6efd',
+                                confirmButtonText: 'Try Again'
+                            });
+                        });
+                        </script>";
+                    }
                 }
             } else {
-                // reCAPTCHA verification failed
                 echo "<script>
-                document.addEventListener('DOMContentLoaded', function() {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Verification Failed',
-                        text: 'reCAPTCHA verification failed. Please try again.',
-                        confirmButtonColor: '#0d6efd',
-                        confirmButtonText: 'Try Again'
+                    document.addEventListener('DOMContentLoaded', function() {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Verification Failed',
+                            text: 'reCAPTCHA verification failed. Please try again.',
+                            confirmButtonColor: '#0d6efd',
+                            confirmButtonText: 'Try Again'
+                        });
                     });
-                });
-            </script>";
+                    </script>";
             }
         } else {
-            // No reCAPTCHA response received
             echo "<script>
             document.addEventListener('DOMContentLoaded', function() {
                 Swal.fire({
@@ -161,7 +171,7 @@ session_start();
                     confirmButtonText: 'Try Again'
                 });
             });
-        </script>";
+            </script>";
         }
     }
     ?>
@@ -310,57 +320,65 @@ session_start();
 
     </form>
 
-    <!-- Elegant Account Recovery Modal -->
-    <div class="recovery-modal" id="recoveryModal">
-        <div class="recovery-content">
-            <div class="recovery-header">
-                <h3>Account Recovery</h3>
-                <div class="recovery-close" id="closeRecoveryModal">
-                    <i class="bi bi-x"></i>
-                </div>
-            </div>
-            <div class="recovery-body">
-                <p class="text-center mb-4">Select your preferred recovery method</p>
-
-                <div class="recovery-option" id="emailRecovery">
-                    <div class="recovery-icon">
-                        <i class="bi bi-envelope"></i>
-                    </div>
-                    <div class="recovery-details">
-                        <h5>Email Recovery</h5>
-                        <p>Receive recovery instructions via email</p>
-                    </div>
-                </div>
-
-                <div class="recovery-option" id="phoneRecovery">
-                    <div class="recovery-icon">
-                        <i class="bi bi-phone"></i>
-                    </div>
-                    <div class="recovery-details">
-                        <h5>SMS Recovery</h5>
-                        <p>Get a verification code via SMS</p>
-                    </div>
-                </div>
-
-                <div class="recovery-option" id="adminRecovery">
-                    <div class="recovery-icon">
-                        <i class="bi bi-person-gear"></i>
-                    </div>
-                    <div class="recovery-details">
-                        <h5>Contact Administrator</h5>
-                        <p>Direct assistance from the admin office</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <!-- Bootstrap & jQuery JS -->
     <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
     <!-- SweetAlert2 JS -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.all.min.js"></script>
-    <script src="script1.js"></script>
+    <script src="script.js"></script>
+    <script>
+        <?php if (isset($lockoutStatus) && $lockoutStatus['locked']): ?>
+            document.addEventListener('DOMContentLoaded', function() {
+                const remainingTime = <?php echo $lockoutStatus['remaining_time']; ?>;
+
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Account Locked',
+                    html: `Too many failed attempts.<br>Please wait <b></b> to try again.`,
+                    timer: remainingTime * 1000,
+                    timerProgressBar: true,
+                    allowOutsideClick: false,
+                    allowEscapeKey: false,
+                    showConfirmButton: false,
+                    didOpen: () => {
+                        const b = Swal.getHtmlContainer().querySelector('b');
+                        const startTime = Date.now();
+                        const endTime = startTime + (remainingTime * 1000);
+
+                        const timerInterval = setInterval(() => {
+                            const now = Date.now();
+                            const timeLeft = Math.max(0, endTime - now);
+                            const secondsLeft = Math.ceil(timeLeft / 1000);
+
+                            const mins = Math.floor(secondsLeft / 60);
+                            const secs = secondsLeft % 60;
+                            b.textContent = `${mins}:${secs.toString().padStart(2, '0')}`;
+
+                            if (timeLeft <= 0) {
+                                clearInterval(timerInterval);
+                            }
+                        }, 100);
+
+                        // Store interval for cleanup
+                        Swal.getTimerInterval = () => timerInterval;
+                    },
+                    willClose: () => {
+                        // Clear interval
+                        if (Swal.getTimerInterval) {
+                            clearInterval(Swal.getTimerInterval());
+                        }
+                        Swal.fire({
+                            icon: 'info',
+                            title: 'Lockout Expired',
+                            text: 'You can now try logging in again.',
+                            timer: 2000,
+                            showConfirmButton: false
+                        });
+                    }
+                });
+            });
+        <?php endif; ?>
+    </script>
 </body>
 
 </html>

@@ -69,29 +69,6 @@
   pointer-events: auto; /* Allow clicks only when active */
 }
 
-/* Main content should have higher z-index than toggle button */
-.main-content {
-  position: relative;
-  z-index: 1; /* Default z-index for content */
-}
-
-/* Ensure modals, dropdowns, and interactive elements stay on top */
-.modal,
-.dropdown-menu,
-.swal2-container {
-  z-index: 9999 !important;
-}
-
-/* Buttons and inputs in main content */
-.main-content button,
-.main-content input,
-.main-content select,
-.main-content textarea,
-.main-content .btn,
-.main-content a {
-  position: relative;
-  z-index: 2; /* Above main content base */
-}
 
 /* Responsive Styles */
 @media (max-width: 992px) {

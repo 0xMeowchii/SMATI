@@ -1,5 +1,4 @@
 <?php
-include 'includes/session.php';
 include '../database.php';
 ?>
 <!DOCTYPE html>
@@ -39,7 +38,7 @@ include '../database.php';
             <div class="card-body py-4">
                 <div class="row align-items-center">
                     <div class="col-12">
-                        <h1 class="card-title h2 mb-2 fw-bold">Welcome back, <?php echo $_SESSION['username'] ?>!</h1>
+                        <h1 class="card-title h2 mb-2 fw-bold">Welcome back, Registrar!</h1>
                         <p class="card-text mb-1 opacity-75 fw-semibold">Education is the most powerful weapon which you can use to change the world.” — Nelson Mandela</p>
                         <p class="card-text mb-0 opacity-50 fst-italic">Good morning! Believe in your goals today — every class, every effort counts toward your dream.</p>
                     </div>

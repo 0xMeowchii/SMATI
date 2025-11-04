@@ -1,5 +1,4 @@
 <?php
-require_once 'includes/session.php';
 include '../database.php';
 
 //ACTIVE STUDENTS
@@ -28,6 +27,16 @@ $stmt->execute();
 $result = $stmt->get_result();
 
 $activeTeachers = $result->num_rows;
+
+//ACTIVE REGISTRARS
+$conn = connectToDB();
+$sql = "SELECT * FROM registrars WHERE status = '1'";
+$stmt = $conn->prepare($sql);
+$stmt->execute();
+$result = $stmt->get_result();
+
+$activeRegistrars = $result->num_rows;
+
 
 //TOTAL TEACHERS
 $conn = connectToDB();
@@ -375,7 +384,7 @@ $todayActivitylogs = $result->num_rows;
             </div>
 
             <!-- Activity Logs Modal -->
-            <div class="modal modal-lg fade" id="view-activitylogs-modal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+            <div class="modal modal-lg" id="view-activitylogs-modal">
                 <div class="modal-dialog">
                     <div class="modal-content">
                         <div class="modal-header">
@@ -494,6 +503,12 @@ $todayActivitylogs = $result->num_rows;
                     data: [<?php echo $activeTeachers ?>],
                     backgroundColor: 'rgba(0, 255, 30, 0.3)',
                     borderColor: 'rgba(13, 115, 6, 1)',
+                    borderWidth: 2
+                },{
+                    label: 'Registrars',
+                    data: [<?php echo $activeRegistrars ?>],
+                    backgroundColor: 'rgba(242, 255, 0, 0.51)',
+                    borderColor: 'rgba(155, 159, 34, 1)',
                     borderWidth: 2
                 }]
             },

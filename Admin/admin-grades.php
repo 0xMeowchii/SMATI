@@ -1,5 +1,4 @@
 <?php 
-require_once 'includes/session.php';
 include('../database.php'); ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -44,7 +43,7 @@ include('../database.php'); ?>
                     <tbody>
                         <?php
                         $conn = connectToDB();
-                        $sql = "SELECT * FROM students ORDER BY lastname, firstname ASC";
+                        $sql = "SELECT * FROM students ORDER BY lastname ASC";
                         $result = $conn->query($sql);
 
                         if ($result && $result->num_rows > 0) {

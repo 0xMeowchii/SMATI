@@ -1,5 +1,4 @@
 <?php
-require_once 'includes/session.php';
 include '../database.php';
 include '../includes/activity_logger.php';
 
@@ -219,7 +218,7 @@ include '../includes/activity_logger.php';
         if ($conn) {
             // Check for existing email
             $checkStmt = $conn->prepare("SELECT student_id FROM students WHERE (firstname = ? AND lastname = ?) AND student_id != ?");
-            $checkStmt->bind_param("ssi", $firstname, $lastname , $student_id);
+            $checkStmt->bind_param("ssi", $firstname, $lastname, $student_id);
             $checkStmt->execute();
             $checkStmt->store_result();
 
@@ -484,7 +483,7 @@ include '../includes/activity_logger.php';
                     <tbody>
                         <?php
                         $conn = connectToDB();
-                        $sql = "SELECT * FROM students WHERE status = '1'";
+                        $sql = "SELECT * FROM students WHERE status = '1' ORDER BY lastname ASC";
                         $result = $conn->query($sql);
 
                         if ($result && $result->num_rows > 0) {
@@ -970,6 +969,159 @@ include '../includes/activity_logger.php';
                 `;
                 imageNameInput.value = '';
             }
+        });
+
+        // Function to create image popup when clicking on uploaded images
+        function initializeImagePopup() {
+            // Add click event to view modal image
+            document.addEventListener('click', function(e) {
+                // Check if clicked element is an image inside the modal student image container
+                if (e.target.closest('#modalStudentImage img')) {
+                    const img = e.target.closest('#modalStudentImage img');
+                    showImagePopup(img.src);
+                }
+
+                // Check if clicked element is an image in the edit modal preview
+                if (e.target.closest('#editImagePreview img')) {
+                    const img = e.target.closest('#editImagePreview img');
+                    showImagePopup(img.src);
+                }
+
+                // Check if clicked element is an image in the add modal preview
+                if (e.target.closest('#imagePreview img')) {
+                    const img = e.target.closest('#imagePreview img');
+                    showImagePopup(img.src);
+                }
+            });
+        }
+
+        // Function to show image in popup
+        function showImagePopup(imageSrc) {
+            // Create popup overlay
+            const popupOverlay = document.createElement('div');
+            popupOverlay.className = 'image-popup-overlay';
+            popupOverlay.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.9);
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                z-index: 9999;
+                cursor: zoom-out;
+            `;
+
+            // Create popup content
+            const popupContent = document.createElement('div');
+            popupContent.style.cssText = `
+                position: relative;
+                max-width: 90%;
+                max-height: 90%;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+            `;
+
+            // Create image element
+            const popupImage = document.createElement('img');
+            popupImage.src = imageSrc;
+            popupImage.style.cssText = `
+                max-width: 100%;
+                max-height: 100%;
+                object-fit: contain;
+                border-radius: 8px;
+                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            `;
+
+            // Create close button
+            const closeButton = document.createElement('button');
+            closeButton.innerHTML = '&times;';
+            closeButton.style.cssText = `
+                position: absolute;
+                top: -40px;
+                right: -40px;
+                background: rgba(255, 255, 255, 0.2);
+                border: none;
+                color: white;
+                font-size: 30px;
+                width: 40px;
+                height: 40px;
+                border-radius: 50%;
+                cursor: pointer;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                transition: background 0.3s ease;
+            `;
+
+            // Add hover effect to close button
+            closeButton.addEventListener('mouseenter', function() {
+                this.style.background = 'rgba(255, 255, 255, 0.3)';
+            });
+            closeButton.addEventListener('mouseleave', function() {
+                this.style.background = 'rgba(255, 255, 255, 0.2)';
+            });
+
+            // Close popup function
+            function closePopup() {
+                document.body.removeChild(popupOverlay);
+                document.removeEventListener('keydown', handleKeyPress);
+            }
+
+            // Handle keyboard events
+            function handleKeyPress(e) {
+                if (e.key === 'Escape') {
+                    closePopup();
+                }
+            }
+
+            // Add event listeners
+            closeButton.addEventListener('click', closePopup);
+            popupOverlay.addEventListener('click', function(e) {
+                if (e.target === popupOverlay) {
+                    closePopup();
+                }
+            });
+            document.addEventListener('keydown', handleKeyPress);
+
+            // Assemble and append to body
+            popupContent.appendChild(popupImage);
+            popupContent.appendChild(closeButton);
+            popupOverlay.appendChild(popupContent);
+            document.body.appendChild(popupOverlay);
+
+            // Add animation
+            popupOverlay.style.opacity = '0';
+            popupOverlay.style.transition = 'opacity 0.3s ease';
+
+            setTimeout(() => {
+                popupOverlay.style.opacity = '1';
+            }, 10);
+        }
+
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeImagePopup();
+
+            // Also add cursor pointer to clickable images
+            const style = document.createElement('style');
+            style.textContent = `
+                #modalStudentImage img,
+                #editImagePreview img,
+                #imagePreview img {
+                    cursor: zoom-in;
+                    transition: transform 0.2s ease;
+                }
+                #modalStudentImage img:hover,
+                #editImagePreview img:hover,
+                #imagePreview img:hover {
+                    transform: scale(1.02);
+                }
+            `;
+            document.head.appendChild(style);
         });
     </script>
 </body>

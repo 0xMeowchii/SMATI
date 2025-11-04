@@ -1,5 +1,4 @@
 <?php
-require_once 'includes/session.php';
 include('../database.php');
 include '../includes/activity_logger.php';
 ?>
@@ -69,90 +68,6 @@ include '../includes/activity_logger.php';
 
         <!--- query -->
         <?php
-
-        //INSERT QUERY
-        if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnAdd'])) {
-            $conn = connectToDB();
-            $schoolyear = $_POST['schoolyear'];
-            $semester = $_POST['semester'];
-
-            if ($conn) {
-                $stmt = $conn->prepare("INSERT INTO schoolyear (schoolyear, semester) VALUES (?, ?)");
-                $stmt->bind_param("ss", $schoolyear, $semester);
-
-                if ($stmt->execute()) {
-
-                    logActivity($conn, $_SESSION['id'], $_SESSION['user_type'], 'CREATE_SCHOOLYEAR', "created new Schoolyear & Semester: $schoolyear, $semester Semester");
-
-                    echo "<script>
-                            document.addEventListener('DOMContentLoaded', function() {
-                                Swal.fire({
-                                    icon: 'success',
-                                    title: 'Success!',
-                                    text: 'S.Y. Added Successfully!',
-                                    timer: 2000,
-                                    showConfirmButton: false
-                                });
-                            });
-                        </script>";
-                } else {
-                    echo "<script>
-                            Swal.fire({
-                                icon: 'error',
-                                title: 'Error!',
-                                text: '" . addslashes($stmt->error) . "',
-                                confirmButtonColor: '#d33'
-                            });
-                        </script>";
-                }
-
-                $stmt->close();
-                $conn->close();
-            } else {
-                echo "<script>alert('Database connection failed');</script>";
-            }
-        }
-        //DELETE QUERY
-        if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnDelete'])) {
-            $conn = connectToDB();
-            $schoolyear_id = $_POST['id'];
-
-            if ($conn) {
-                $stmt = $conn->prepare("DELETE FROM schoolyear WHERE schoolyear_id=?");
-                $stmt->bind_param("i", $schoolyear_id);
-
-                if ($stmt->execute()) {
-
-                    logActivity($conn, $_SESSION['id'], $_SESSION['user_type'], 'DELETE_SCHOOLYEAR', "deleted schoolyear & semester.");
-
-                    echo "<script>
-                            document.addEventListener('DOMContentLoaded', function() {
-                                Swal.fire({
-                                    icon: 'success',
-                                    title: 'Success!',
-                                    text: 'S.Y. Deleted Successfully!',
-                                    timer: 2000,
-                                    showConfirmButton: false
-                                });
-                            });
-                        </script>";
-                } else {
-                    echo "<script>
-                            Swal.fire({
-                                icon: 'error',
-                                title: 'Error!',
-                                text: '" . addslashes($stmt->error) . "',
-                                confirmButtonColor: '#d33'
-                            });
-                        </script>";
-                }
-
-                $stmt->close();
-                $conn->close();
-            } else {
-                echo "<script>alert('Database connection failed');</script>";
-            }
-        }
 
         //RESTORE STUDENT QUERY
         if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnRestore'])) {
@@ -277,7 +192,7 @@ include '../includes/activity_logger.php';
             }
         }
 
-         //RESTORE REGISTRAR QUERY
+        //RESTORE REGISTRAR QUERY
         if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnRestore3'])) {
             $conn = connectToDB();
             $registrar_id = $_POST['registrarId'];
@@ -296,6 +211,47 @@ include '../includes/activity_logger.php';
                                     icon: 'success',
                                     title: 'Success!',
                                     text: 'Registrar Restored Successfully!',
+                                    timer: 2000,
+                                    showConfirmButton: false
+                                });
+                            });
+                        </script>";
+                } else {
+                    echo "<script>
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Error!',
+                                text: '" . addslashes($stmt->error) . "',
+                                confirmButtonColor: '#d33'
+                            });
+                        </script>";
+                }
+                $stmt->close();
+                $conn->close();
+            } else {
+                echo "<script>alert('Database connection failed');</script>";
+            }
+        }
+
+        //RESTORE SY QUERY
+        if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnRestore4'])) {
+            $conn = connectToDB();
+            $schoolyear_id = $_POST['syId'];
+
+            if ($conn) {
+                $stmt = $conn->prepare("UPDATE schoolyear SET status = '1' WHERE schoolyear_id=?");
+                $stmt->bind_param("i", $schoolyear_id);
+
+                if ($stmt->execute()) {
+
+                    logActivity($conn, $_SESSION['id'], $_SESSION['user_type'], 'RETREIVE_SY', "retrieved schoolyear from the archive.");
+
+                    echo "<script>
+                            document.addEventListener('DOMContentLoaded', function() {
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Success!',
+                                    text: 'S.Y. Restored Successfully!',
                                     timer: 2000,
                                     showConfirmButton: false
                                 });
@@ -374,36 +330,40 @@ include '../includes/activity_logger.php';
                 </div>
                 <div class="card-body p-4">
                     <!-- Nav tabs -->
-                    <div class="row">
-                        <div class="col-12 col-md-8">
-                            <ul class="nav nav-tabs mb-4" id="myTab" role="tablist">
-                                <li class="nav-item" role="presentation">
-                                    <button class="nav-link active text-black" id="students-tab" data-bs-toggle="tab" data-bs-target="#students" type="button" role="tab" aria-selected="true">
-                                        <i class="bi bi-person me-1"></i>Students
-                                    </button>
-                                </li>
-                                <li class="nav-item" role="presentation">
-                                    <button class="nav-link text-black" id="teachers-tab" data-bs-toggle="tab" data-bs-target="#teachers" type="button" role="tab" aria-selected="false">
-                                        <i class="bi bi-people me-1"></i>Teachers
-                                    </button>
-                                </li>
-                                <li class="nav-item" role="presentation">
-                                    <button class="nav-link text-black" id="registrars-tab" data-bs-toggle="tab" data-bs-target="#registrars" type="button" role="tab" aria-selected="false">
-                                        <i class="bi bi-file-person"></i>Registrars
-                                    </button>
-                                </li>
-                                <li class="nav-item" role="presentation">
-                                    <button class="nav-link text-black" id="subjects-tab" data-bs-toggle="tab" data-bs-target="#subjects" type="button" role="tab" aria-selected="false">
-                                        <i class="bi bi-journal-bookmark"></i>Subjects
-                                    </button>
-                                </li>
-                            </ul>
-                        </div>
-                        <div class="col-12 col-md-4">
-                            <div class="input-group mb-3">
-                                <input type="text" class="form-control" id="searchInput" placeholder="Search...">
-                                <span class="input-group-text bg-primary"><i class="fas fa-search text-white"></i></span>
-                            </div>
+
+                    <div class="col-12">
+                        <ul class="nav nav-tabs mb-4" id="myTab" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active text-black" id="students-tab" data-bs-toggle="tab" data-bs-target="#students" type="button" role="tab" aria-selected="true">
+                                    <i class="bi bi-person me-1"></i>Students
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link text-black" id="teachers-tab" data-bs-toggle="tab" data-bs-target="#teachers" type="button" role="tab" aria-selected="false">
+                                    <i class="bi bi-people me-1"></i>Teachers
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link text-black" id="registrars-tab" data-bs-toggle="tab" data-bs-target="#registrars" type="button" role="tab" aria-selected="false">
+                                    <i class="bi bi-file-person"></i>Registrars
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link text-black" id="subjects-tab" data-bs-toggle="tab" data-bs-target="#subjects" type="button" role="tab" aria-selected="false">
+                                    <i class="bi bi-journal-bookmark"></i>Subjects
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link text-black" id="sy-tab" data-bs-toggle="tab" data-bs-target="#sy" type="button" role="tab" aria-selected="false">
+                                    <i class="bi bi-gear"></i>SY & Semester
+                                </button>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="col-12">
+                        <div class="input-group mb-3">
+                            <input type="text" class="form-control" id="searchInput" placeholder="Search...">
+                            <span class="input-group-text bg-primary"><i class="fas fa-search text-white"></i></span>
                         </div>
                     </div>
 
@@ -439,9 +399,7 @@ include '../includes/activity_logger.php';
                                                 echo "<td>" . $row["email"] . "</td>";
                                                 echo "<td>
                                                 <a class='btn btn-sm btn-outline-success me-1 restore-student-btn'
-                                                data-id='" . $row["student_id"] . "'
-                                                data-bs-toggle='modal' 
-                                                data-bs-target='#restoreStudentModal'>
+                                                data-id='" . $row["student_id"] . "'>
                                                     <i class='fa fa-refresh'></i>
                                                 </a>
                                                   </td>";
@@ -489,9 +447,7 @@ include '../includes/activity_logger.php';
                                                 echo "<td>" . $row["email"] . "</td>";
                                                 echo "<td>
                                                 <a class='btn btn-sm btn-outline-success me-1 restore-teacher-btn'
-                                                data-id='" . $row["teacher_id"] . "'
-                                                data-bs-toggle='modal' 
-                                                data-bs-target='#restoreTeacherModal'>
+                                                data-id='" . $row["teacher_id"] . "'>
                                                     <i class='fa fa-refresh'></i>
                                                 </a>
                                                   </td>";
@@ -544,9 +500,7 @@ include '../includes/activity_logger.php';
                                                 echo "<td>" . $row["schoolyear"] . ", " . $row["semester"] . " Semester" . "</td>";
                                                 echo "<td>
                                                 <a class='btn btn-sm btn-outline-success me-1 restore-subject-btn'
-                                                data-id='" . $row["subject_id"] . "'
-                                                data-bs-toggle='modal' 
-                                                data-bs-target='#restoreSubjectModal'>
+                                                data-id='" . $row["subject_id"] . "'>
                                                     <i class='fa fa-refresh'></i>
                                                 </a>
                                                   </td>";
@@ -590,9 +544,7 @@ include '../includes/activity_logger.php';
                                                 echo "<td>" . $row["lastname"] . ", " . $row["firstname"] . "</td>";
                                                 echo "<td>
                                                 <a class='btn btn-sm btn-outline-success me-1 restore-registrar-btn'
-                                                data-id='" . $row["registrar_id"] . "'
-                                                data-bs-toggle='modal' 
-                                                data-bs-target='#restoreRegistrarModal'>
+                                                data-id='" . $row["registrar_id"] . "'>
                                                     <i class='fa fa-refresh'></i>
                                                 </a>
                                                   </td>";
@@ -610,120 +562,50 @@ include '../includes/activity_logger.php';
                                 </table>
                             </div>
                         </div>
-                    </div>
-                </div>
-            </div>
-        </div>
 
-        <!-- schoolyear & semester -->
-        <div class="col mt-3 ">
-            <div class="page-header">
-                <h4><i class="fas fa-cog me-2"></i>School Year & Semester</h4>
-                <div class="action-buttons">
-                    <button class="btn btn-primary" id="add-schoolyear-btn" data-bs-toggle="modal" data-bs-target="#add-schoolyear-modal">
-                        <i class="fas fa-plus me-1"></i>Add S.Y. & Sem
-                    </button>
-                </div>
-            </div>
-            <div class="table-responsive flex-grow-1 overflow-auto" style="max-height: 300px;">
-                <table class="table table-hover">
-                    <thead>
-                        <tr>
-                            <th>School Year</th>
-                            <th>Semester</th>
-                            <th>Action</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php
-                        $conn = connectToDB();
-                        $sql = "SELECT * FROM schoolyear";
-                        $result = $conn->query($sql);
+                        <!-- SY Tab -->
+                        <div class="tab-pane fade" id="sy" role="tabpanel" aria-labelledby="sy-tab">
+                            <div class="table-responsive">
+                                <table class="table table-striped table-hover">
+                                    <thead class="table-dark">
+                                        <tr>
+                                            <th scope="col">RegistrarID</th>
+                                            <th scope="col">Name</th>
+                                            <th scope="col">Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <?php
+                                        $conn = connectToDB();
+                                        $sql = "SELECT * FROM schoolyear WHERE status = '0'";
+                                        $result = $conn->query($sql);
 
-                        if ($result && $result->num_rows > 0) {
-                            // output data of each row
-                            while ($row = $result->fetch_assoc()) {
-                                echo "<tr>";
-                                echo "<td>" . $row["schoolyear"] . "</td>";
-                                echo "<td>" . $row["semester"] . "</td>";
-                                echo "<td>
-                                                <a class='btn btn-sm btn-outline-danger me-1 delete-schoolyear-btn'
-                                                data-id='" . $row["schoolyear_id"] . "'
-                                                data-bs-toggle='modal' 
-                                                data-bs-target='#deleteSchoolyearModal'>
-                                                    <i class='fa fa-trash'></i>
-                                                </a>
+                                        if ($result && $result->num_rows > 0) {
+                                            // output data of each row
+                                            while ($row = $result->fetch_assoc()) {
+                                                echo "<tr>";
+                                                echo "<td>" . $row["schoolyear"] . "</td>";
+                                                echo "<td>" . $row["semester"] . "</td>";
+                                                echo "<td>
+                                                    <a class='btn btn-sm btn-outline-success me-1 restore-sy-btn'
+                                                    data-id='" . $row["schoolyear_id"] . "'>
+                                                        <i class='fa fa-refresh'></i>
+                                                    </a>
                                                   </td>";
-                                echo "</tr>";
-                            }
-                        } else {
-                            echo "0 results";
-                        }
-                        ?>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-        <!-- Add SchoolYear Modal -->
-        <div class="modal fade" id="add-schoolyear-modal" tabindex="-1" aria-hidden="true">
-            <div class="modal-dialog modal-lg">
-                <div class="modal-content">
-                    <div class="modal-header bg-primary text-white">
-                        <h5 class="modal-title">Add School Year</h5>
-                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body">
-                        <form action="<?php htmlspecialchars($_SERVER['PHP_SELF']) ?>" method="POST">
-                            <div class="row g-3">
-                                <h4 class="pb-2 border-bottom">School Year</h4>
-                                <div class="col-md-6 mb-3">
-                                    <label for="course" class="form-label">School Year</label>
-                                    <select class="form-select" name="schoolyear" id="schoolyear" required>
-                                        <option value="">Select School Year</option>
-                                        <option value="2025-2026">2025-2026</option>
-                                        <option value="2026-2027">2026-2027</option>
-                                        <option value="2027-2028">2027-2028</option>
-                                        <option value="2028-2029">2028-2029</option>
-                                    </select>
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <label for="course" class="form-label">Semester</label>
-                                    <select class="form-select" name="semester" id="semester" required>
-                                        <option value="">Select Semester</option>
-                                        <option value="1st">1st</option>
-                                        <option value="2nd">2nd</option>
-                                    </select>
-                                </div>
+                                                echo "</tr>";
+                                            }
+                                        } else {
+                                            echo "<td colspan='5' class='text-center py-4' style='color: #6c757d;'>";
+                                            echo "<i class='fas fa-search mb-2' style='font-size: 2em; opacity: 0.5;'></i>";
+                                            echo "<br>";
+                                            echo "No school year found matching your search";
+                                            echo "</td>";
+                                        }
+                                        ?>
+                                    </tbody>
+                                </table>
                             </div>
-                            <div class="modal-footer">
-                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                                <button type="submit" class="btn btn-primary" name="btnAdd">Save</button>
-                            </div>
-                        </form>
-                    </div>
-
-                </div>
-            </div>
-        </div>
-
-        <!-- Delete Schoolyear Modal -->
-        <div class="modal fade" id="deleteSchoolyearModal" tabindex="-1" role="dialog" aria-labelledby="deleteSchoolyearModal" aria-hidden="true">
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="deleteSchoolyearModal">Confirm Delete</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body">
-                        Are you sure you want to delete this SchoolYear?
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">No</button>
-                        <form action="<?php htmlspecialchars($_SERVER['PHP_SELF']) ?>" method="post">
-                            <input type="hidden" name="id" id="id">
-                            <button type="submit" class="btn btn-danger" name="btnDelete">Yes</button>
-                        </form>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -817,6 +699,62 @@ include '../includes/activity_logger.php';
             </div>
         </div>
 
+        <!-- Restore schoolyear Modal -->
+        <div class="modal fade" id="restoreSYmodal" tabindex="-1" role="dialog" aria-labelledby="restoreSYmodal" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="restoreSYmodal">Confirm Restore</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        Restore this Schoolyear & Semester?
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">No</button>
+                        <form action="<?php htmlspecialchars($_SERVER['PHP_SELF']) ?>" method="post">
+                            <input type="hidden" name="syId" id="syId">
+                            <button type="submit" class="btn btn-success" name="btnRestore4">Yes</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- DOWNLOAD BACKUP MODAL -->
+        <div class="modal fade" id="downloadBackupModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header bg-success text-white">
+                        <h5 class="modal-title">
+                            <i class="fas fa-check-circle me-2"></i>Backup Created Successfully!
+                        </h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="text-center mb-4">
+                            <i class="fas fa-database text-success" style="font-size: 3rem;"></i>
+                        </div>
+                        <div class="backup-details">
+                            <p><strong>Filename:</strong> <span id="backup-filename"></span></p>
+                            <p><strong>Size:</strong> <span id="backup-size"></span></p>
+                            <p><strong>Created:</strong> <span id="backup-date"></span></p>
+                        </div>
+                        <div class="alert alert-info mt-3">
+                            <i class="fas fa-info-circle me-2"></i>
+                            Your backup has been saved to the server and is ready for download.
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="button" class="btn btn-success" id="downloadBackupBtn">
+                            <i class="fas fa-download me-2"></i>Download Backup
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- AUTHENTICATION MODAL -->
         <div class="modal fade" id="authModal" tabindex="-1" aria-hidden="true">
             <div class="modal-dialog modal-dialog-centered">
@@ -894,240 +832,300 @@ include '../includes/activity_logger.php';
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
-        document.querySelectorAll('.restore-student-btn').forEach(function(btn) {
-            btn.addEventListener('click', function() {
-                document.getElementById('studentId').value = btn.getAttribute('data-id');
-            });
-        });
-        document.querySelectorAll('.restore-teacher-btn').forEach(function(btn) {
-            btn.addEventListener('click', function() {
-                document.getElementById('teacherId').value = btn.getAttribute('data-id');
-            });
-        });
-        document.querySelectorAll('.restore-subject-btn').forEach(function(btn) {
-            btn.addEventListener('click', function() {
-                document.getElementById('subjectId').value = btn.getAttribute('data-id');
-            });
-        });
-        document.querySelectorAll('.restore-registrar-btn').forEach(function(btn) {
-            btn.addEventListener('click', function() {
-                document.getElementById('registrarId').value = btn.getAttribute('data-id');
-            });
-        });
-        document.querySelectorAll('.delete-schoolyear-btn').forEach(function(btn) {
-            btn.addEventListener('click', function() {
-                document.getElementById('id').value = btn.getAttribute('data-id');
-            });
-        });
-
-        function searchTables(searchTerm) {
-            // Get all table rows from all three tables
-            const studentRows = document.querySelectorAll('#students tbody tr');
-            const teacherRows = document.querySelectorAll('#teachers tbody tr');
-            const subjectRows = document.querySelectorAll('#subjects tbody tr');
-            const registrarRows = document.querySelectorAll('#registrars tbody tr');
-
-            // Convert search term to lowercase for case-insensitive search
-            const searchText = searchTerm.toLowerCase().trim();
-
-            // Function to search within a table
-            function searchTable(rows, searchText) {
-                let hasVisibleRows = false;
-
-                rows.forEach(row => {
-                    // Skip if this is the "no results" row
-                    if (row.querySelector('td[colspan]')) {
-                        row.style.display = 'none';
-                        return;
-                    }
-
-                    let rowText = '';
-                    // Get all text content from the row (excluding action buttons)
-                    const cells = row.querySelectorAll('td:not(:last-child)');
-                    cells.forEach(cell => {
-                        rowText += ' ' + cell.textContent.toLowerCase();
-                    });
-
-                    // Show or hide row based on search match
-                    if (searchText === '' || rowText.includes(searchText)) {
-                        row.style.display = '';
-                        hasVisibleRows = true;
-                    } else {
-                        row.style.display = 'none';
-                    }
-                });
-
-                return hasVisibleRows;
-            }
-
-            // Search each table
-            const hasStudentResults = searchTable(studentRows, searchText);
-            const hasTeacherResults = searchTable(teacherRows, searchText);
-            const hasSubjectResults = searchTable(subjectRows, searchText);
-            const hasRegistrarResults = searchTable(registrarRows, searchText);
-
-            // Handle empty states for each table
-            handleEmptyState('students', hasStudentResults, searchText);
-            handleEmptyState('teachers', hasTeacherResults, searchText);
-            handleEmptyState('subjects', hasSubjectResults, searchText);
-            handleEmptyState('registrars', hasRegistrarResults, searchText);
-        }
-
-        // Function to handle empty state display
-        function handleEmptyState(tableId, hasResults, searchText) {
-            const tableBody = document.querySelector(`#${tableId} tbody`);
-            const existingEmptyRow = tableBody.querySelector('tr.empty-search-row');
-
-            // Remove existing empty row if it exists
-            if (existingEmptyRow) {
-                existingEmptyRow.remove();
-            }
-
-            // If no results and there's a search term, show empty state
-            if (!hasResults && searchText !== '') {
-                const emptyRow = document.createElement('tr');
-                emptyRow.className = 'empty-search-row';
-                emptyRow.innerHTML = `
-            <td colspan="6" class="text-center py-4" style="color: #6c757d;">
-                <i class="fas fa-search mb-2" style="font-size: 2em; opacity: 0.5;"></i>
-                <br>
-                No ${getTableName(tableId)} found matching "${searchText}"
-            </td>
-        `;
-                tableBody.appendChild(emptyRow);
-            }
-        }
-
-        // Helper function to get table name for empty state message
-        function getTableName(tableId) {
-            const tableNames = {
-                'students': 'students',
-                'teachers': 'teachers',
-                'subjects': 'subjects',
-                'registrars': 'registrars'
-            };
-            return tableNames[tableId] || 'records';
-        }
-
-        // Debounce function for better performance
-        function debounce(func, wait) {
-            let timeout;
-            return function executedFunction(...args) {
-                const later = () => {
-                    clearTimeout(timeout);
-                    func(...args);
-                };
-                clearTimeout(timeout);
-                timeout = setTimeout(later, wait);
-            };
-        }
-
-        // Event listener for search input with debouncing
+        // Search functionality for archives across all tabs
         document.addEventListener('DOMContentLoaded', function() {
             const searchInput = document.getElementById('searchInput');
 
             if (searchInput) {
-                // Debounced search (300ms delay)
-                const debouncedSearch = debounce(function(value) {
-                    searchTables(value);
-                }, 300);
-
-                // Search on input with debouncing
                 searchInput.addEventListener('input', function() {
-                    debouncedSearch(this.value);
+                    const searchTerm = this.value.toLowerCase().trim();
+
+                    // Get all active tab content
+                    const tabPanes = document.querySelectorAll('.tab-pane');
+
+                    tabPanes.forEach(tabPane => {
+                        if (tabPane.classList.contains('active')) {
+                            searchInTable(tabPane, searchTerm);
+                        }
+                    });
                 });
 
-                // Also search on Enter key (immediately)
-                searchInput.addEventListener('keypress', function(e) {
-                    if (e.key === 'Enter') {
-                        searchTables(this.value);
-                    }
-                });
+                // Also search when switching tabs
+                const tabButtons = document.querySelectorAll('[data-bs-toggle="tab"]');
+                tabButtons.forEach(tabButton => {
+                    tabButton.addEventListener('shown.bs.tab', function() {
+                        const searchTerm = searchInput.value.toLowerCase().trim();
+                        const targetId = this.getAttribute('data-bs-target');
+                        const targetPane = document.querySelector(targetId);
 
-                // Clear search when Escape key is pressed
-                searchInput.addEventListener('keydown', function(e) {
-                    if (e.key === 'Escape') {
-                        this.value = '';
-                        searchTables('');
-                    }
+                        if (targetPane) {
+                            searchInTable(targetPane, searchTerm);
+                        }
+                    });
                 });
             }
         });
 
-        document.addEventListener('DOMContentLoaded', function() {
-            const backupBtn = document.getElementById('backup-btn');
-            const restoreBtn = document.getElementById('restore-btn');
-            const authForm = document.getElementById('authForm');
-            const authMethod = document.getElementById('authMethod');
-            const pinInput = document.querySelector('input[name="authPIN"]');
+        function searchInTable(tabPane, searchTerm) {
+            const table = tabPane.querySelector('table');
+            if (!table) return;
 
-            let currentAction = null; // Track whether it's backup or restore
+            const tbody = table.querySelector('tbody');
+            if (!tbody) return;
 
-            // Prevent non-numeric input
-            pinInput.addEventListener('input', function(e) {
-                this.value = this.value.replace(/[^0-9]/g, '');
-            });
+            const rows = tbody.querySelectorAll('tr');
+            let hasVisibleRows = false;
 
-            // Also prevent paste of non-numeric content
-            pinInput.addEventListener('paste', function(e) {
-                const pasteData = e.clipboardData.getData('text');
-                if (!/^\d+$/.test(pasteData)) {
-                    e.preventDefault();
+            rows.forEach(row => {
+                // Skip the "no results" row if it exists
+                if (row.querySelector('td[colspan]')) {
+                    row.style.display = 'none';
+                    return;
+                }
+
+                const cells = row.querySelectorAll('td');
+                let rowContainsSearchTerm = false;
+
+                cells.forEach(cell => {
+                    const cellText = cell.textContent.toLowerCase();
+                    if (cellText.includes(searchTerm)) {
+                        rowContainsSearchTerm = true;
+
+                        // Highlight the matching text
+                        if (searchTerm && searchTerm.length > 0) {
+                            highlightText(cell, searchTerm);
+                        }
+                    }
+                });
+
+                if (rowContainsSearchTerm || searchTerm === '') {
+                    row.style.display = '';
+                    hasVisibleRows = true;
+                    // Remove highlights when showing all or no search
+                    if (searchTerm === '') {
+                        removeHighlights(row);
+                    }
+                } else {
+                    row.style.display = 'none';
+                    removeHighlights(row);
                 }
             });
 
+            // Show/hide "no results" message
+            showNoResultsMessage(tbody, hasVisibleRows, searchTerm);
+        }
+
+        function highlightText(element, searchTerm) {
+            // First remove any existing highlights
+            removeHighlights(element);
+
+            const text = element.textContent;
+            const regex = new RegExp(`(${escapeRegExp(searchTerm)})`, 'gi');
+            const newText = text.replace(regex, '<mark class="bg-warning">$1</mark>');
+            element.innerHTML = newText;
+        }
+
+        function removeHighlights(element) {
+            const marks = element.querySelectorAll('mark');
+            marks.forEach(mark => {
+                const parent = mark.parentNode;
+                parent.replaceChild(document.createTextNode(mark.textContent), mark);
+                parent.normalize();
+            });
+        }
+
+        function showNoResultsMessage(tbody, hasVisibleRows, searchTerm) {
+            // Remove existing no results message
+            const existingMessage = tbody.querySelector('.no-results-message');
+            if (existingMessage) {
+                existingMessage.remove();
+            }
+
+            // Add new message if no results and search term is not empty
+            if (!hasVisibleRows && searchTerm !== '') {
+                const noResultsRow = document.createElement('tr');
+                noResultsRow.className = 'no-results-message';
+                noResultsRow.innerHTML = `
+            <td colspan="100" class="text-center py-4" style="color: #6c757d;">
+                <i class="fas fa-search mb-2" style="font-size: 2em; opacity: 0.5;"></i>
+                <br>
+                No results found for "${searchTerm}"
+            </td>
+        `;
+                tbody.appendChild(noResultsRow);
+            }
+        }
+
+        function escapeRegExp(string) {
+            return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        }
+
+        // Clear search when changing tabs (optional)
+        document.addEventListener('DOMContentLoaded', function() {
+            const tabButtons = document.querySelectorAll('[data-bs-toggle="tab"]');
+            tabButtons.forEach(tabButton => {
+                tabButton.addEventListener('click', function() {
+                    const searchInput = document.getElementById('searchInput');
+                    if (searchInput) {
+                        searchInput.value = '';
+                        // Trigger search to reset all tables
+                        searchInput.dispatchEvent(new Event('input'));
+                    }
+                });
+            });
+        });
+
+        // Add this script to replace the existing restore button event listeners
+        document.addEventListener('DOMContentLoaded', function() {
+            let currentRestoreData = {
+                type: null,
+                id: null,
+                modalId: null
+            };
+
+            // Authentication form elements
+            const authForm = document.getElementById('authForm');
+            const authModal = document.getElementById('authModal');
+            const backupBtn = document.getElementById('backup-btn');
+            const restoreBtn = document.getElementById('restore-btn');
 
             // Function to switch authentication methods
             window.switchAuthMethod = function(method) {
-                // Update tabs
                 document.getElementById('password-tab').classList.toggle('active', method === 'password');
                 document.getElementById('pin-tab').classList.toggle('active', method === 'pin');
-
-                // Update form fields
                 document.getElementById('authPassword').classList.toggle('d-none', method !== 'password');
                 document.getElementById('authPassword').classList.toggle('d-block', method === 'password');
                 document.getElementById('authPIN').classList.toggle('d-none', method !== 'pin');
                 document.getElementById('authPIN').classList.toggle('d-block', method === 'pin');
-
-                // Update hidden field
                 document.getElementById('authMethod').value = method;
-
-                // Clear fields when switching
                 document.getElementById('authKey').value = '';
                 document.querySelector('input[name="authPIN"]').value = '';
             };
 
-            // Backup button click - show auth modal
-            backupBtn.addEventListener('click', function() {
-                currentAction = 'backup';
-                const authModal = new bootstrap.Modal(document.getElementById('authModal'));
-                authModal.show();
+            // Handle all restore button clicks - STUDENTS
+            document.querySelectorAll('.restore-student-btn').forEach(function(btn) {
+                btn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
 
-                // Reset to default method when modal opens
-                switchAuthMethod('password');
+                    currentRestoreData = {
+                        type: 'student',
+                        id: btn.getAttribute('data-id'),
+                        modalId: 'restoreStudentModal'
+                    };
+
+                    // Show authentication modal
+                    const modal = new bootstrap.Modal(authModal);
+                    modal.show();
+                    switchAuthMethod('password');
+                });
             });
 
-            // Restore button click - show auth modal
-            restoreBtn.addEventListener('click', function() {
-                const fileInput = document.getElementById('restore-file');
+            // Handle all restore button clicks - TEACHERS
+            document.querySelectorAll('.restore-teacher-btn').forEach(function(btn) {
+                btn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
 
-                if (!fileInput.files || fileInput.files.length === 0) {
-                    Swal.fire({
-                        icon: 'warning',
-                        title: 'No File Selected',
-                        text: 'Please select a backup file first',
-                        confirmButtonColor: '#0d6efd'
-                    });
-                    return;
-                }
+                    currentRestoreData = {
+                        type: 'teacher',
+                        id: btn.getAttribute('data-id'),
+                        modalId: 'restoreTeacherModal'
+                    };
 
-                currentAction = 'restore';
-                const authModal = new bootstrap.Modal(document.getElementById('authModal'));
-                authModal.show();
-
-                // Reset to default method when modal opens
-                switchAuthMethod('password');
+                    const modal = new bootstrap.Modal(authModal);
+                    modal.show();
+                    switchAuthMethod('password');
+                });
             });
+
+            // Handle all restore button clicks - SUBJECTS
+            document.querySelectorAll('.restore-subject-btn').forEach(function(btn) {
+                btn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+
+                    currentRestoreData = {
+                        type: 'subject',
+                        id: btn.getAttribute('data-id'),
+                        modalId: 'restoreSubjectModal'
+                    };
+
+                    const modal = new bootstrap.Modal(authModal);
+                    modal.show();
+                    switchAuthMethod('password');
+                });
+            });
+
+            // Handle all restore button clicks - REGISTRARS
+            document.querySelectorAll('.restore-registrar-btn').forEach(function(btn) {
+                btn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+
+                    currentRestoreData = {
+                        type: 'registrar',
+                        id: btn.getAttribute('data-id'),
+                        modalId: 'restoreRegistrarModal'
+                    };
+
+                    const modal = new bootstrap.Modal(authModal);
+                    modal.show();
+                    switchAuthMethod('password');
+                });
+            });
+
+            // Handle all restore button clicks - SCHOOL YEAR
+            document.querySelectorAll('.restore-sy-btn').forEach(function(btn) {
+                btn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+
+                    currentRestoreData = {
+                        type: 'schoolyear',
+                        id: btn.getAttribute('data-id'),
+                        modalId: 'restoreSYmodal'
+                    };
+
+                    const modal = new bootstrap.Modal(authModal);
+                    modal.show();
+                    switchAuthMethod('password');
+                });
+            });
+
+            // Keep backup functionality
+            if (backupBtn) {
+                backupBtn.addEventListener('click', function() {
+                    currentRestoreData = {
+                        type: 'backup'
+                    };
+                    const modal = new bootstrap.Modal(authModal);
+                    modal.show();
+                    switchAuthMethod('password');
+                });
+            }
+
+            // Keep restore backup functionality
+            if (restoreBtn) {
+                restoreBtn.addEventListener('click', function() {
+                    const fileInput = document.getElementById('restore-file');
+                    if (!fileInput.files || fileInput.files.length === 0) {
+                        Swal.fire({
+                            icon: 'warning',
+                            title: 'No File Selected',
+                            text: 'Please select a backup file first',
+                            confirmButtonColor: '#0d6efd'
+                        });
+                        return;
+                    }
+                    currentRestoreData = {
+                        type: 'restore-backup'
+                    };
+                    const modal = new bootstrap.Modal(authModal);
+                    modal.show();
+                    switchAuthMethod('password');
+                });
+            }
 
             // Authentication form submission
             authForm.addEventListener('submit', function(e) {
@@ -1135,9 +1133,9 @@ include '../includes/activity_logger.php';
 
                 const formData = new FormData(this);
                 const submitBtn = document.getElementById('btnAuth');
-
-                // Validate form before submission
                 const currentMethod = document.getElementById('authMethod').value;
+
+                // Validate form
                 if (currentMethod === 'password' && !document.getElementById('authKey').value.trim()) {
                     Swal.fire({
                         icon: 'warning',
@@ -1169,15 +1167,36 @@ include '../includes/activity_logger.php';
                     .then(response => response.json())
                     .then(data => {
                         if (data.success) {
-                            const authModal = bootstrap.Modal.getInstance(document.getElementById('authModal'));
-                            authModal.hide();
+                            // Close auth modal
+                            const authModalInstance = bootstrap.Modal.getInstance(authModal);
+                            authModalInstance.hide();
                             authForm.reset();
 
-                            // Execute the appropriate action based on currentAction
-                            if (currentAction === 'backup') {
+                            // Handle different restore types
+                            if (currentRestoreData.type === 'backup') {
                                 showBackupConfirmation();
-                            } else if (currentAction === 'restore') {
+                            } else if (currentRestoreData.type === 'restore-backup') {
                                 showRestoreConfirmation();
+                            } else if (currentRestoreData.modalId) {
+                                // Set the ID in the hidden input field
+                                const idFieldMap = {
+                                    'restoreStudentModal': 'studentId',
+                                    'restoreTeacherModal': 'teacherId',
+                                    'restoreSubjectModal': 'subjectId',
+                                    'restoreRegistrarModal': 'registrarId',
+                                    'restoreSYmodal': 'syId'
+                                };
+
+                                const fieldId = idFieldMap[currentRestoreData.modalId];
+                                if (fieldId) {
+                                    document.getElementById(fieldId).value = currentRestoreData.id;
+                                }
+
+                                // Show the restore confirmation modal
+                                setTimeout(() => {
+                                    const restoreModal = new bootstrap.Modal(document.getElementById(currentRestoreData.modalId));
+                                    restoreModal.show();
+                                }, 300);
                             }
                         } else {
                             Swal.fire({
@@ -1195,7 +1214,6 @@ include '../includes/activity_logger.php';
                         });
                     })
                     .finally(() => {
-                        // Reset button state
                         submitBtn.disabled = false;
                         submitBtn.innerHTML = 'Authenticate';
                     });
@@ -1245,30 +1263,29 @@ include '../includes/activity_logger.php';
                     didOpen: () => Swal.showLoading()
                 });
 
-                fetch('backup.php', {
+                fetch('backup1.php', {
                         method: 'POST'
                     })
                     .then(response => response.json())
                     .then(data => {
                         Swal.close();
                         if (data.success) {
-                            Swal.fire({
-                                title: 'Backup Created!',
-                                html: `
-                    <div style="text-align: left;">
-                        <p><strong>Status:</strong> ${data.success}</p>
-                        ${data.filename ? `<p><strong>Filename:</strong> ${data.filename}</p>` : ''}
-                        ${data.size ? `<p><strong>Size:</strong> ${data.size}</p>` : ''}
-                    </div>
-                `,
-                                icon: 'success',
-                                confirmButtonText: 'OK',
-                                confirmButtonColor: '#3085d6'
-                            }).then(() => {
-                                if (typeof loadLastBackup === 'function') {
-                                    loadLastBackup();
-                                }
-                            });
+                            // Populate modal with backup details
+                            document.getElementById('backup-filename').textContent = data.filename;
+                            document.getElementById('backup-size').textContent = data.size;
+                            document.getElementById('backup-date').textContent = new Date().toLocaleString();
+
+                            // Store filename for download
+                            document.getElementById('downloadBackupBtn').setAttribute('data-filename', data.filename);
+
+                            // Show download modal
+                            const downloadModal = new bootstrap.Modal(document.getElementById('downloadBackupModal'));
+                            downloadModal.show();
+
+                            // Update last backup info
+                            if (typeof loadLastBackup === 'function') {
+                                loadLastBackup();
+                            }
                         } else {
                             Swal.fire({
                                 title: 'Backup Failed',
@@ -1282,12 +1299,39 @@ include '../includes/activity_logger.php';
                         Swal.fire({
                             title: 'Request Failed',
                             text: 'Error creating backup: ' + error,
-                            icon: 'error',
-                            confirmButtonText: 'OK',
-                            confirmButtonColor: '#d33'
+                            icon: 'error'
                         });
                     });
             }
+
+            // Handle download button click
+            document.getElementById('downloadBackupBtn').addEventListener('click', function() {
+                const filename = this.getAttribute('data-filename');
+                if (filename) {
+                    // Create temporary link and trigger download
+                    const link = document.createElement('a');
+                    link.href = 'download_backup.php?file=' + encodeURIComponent(filename);
+                    link.download = filename;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+
+                    // Show success message
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Download Started',
+                        text: 'Your backup file is being downloaded.',
+                        timer: 2000,
+                        showConfirmButton: false
+                    });
+
+                    // Close modal after a short delay
+                    setTimeout(() => {
+                        const modal = bootstrap.Modal.getInstance(document.getElementById('downloadBackupModal'));
+                        if (modal) modal.hide();
+                    }, 1500);
+                }
+            });
 
             function performRestore() {
                 const fileInput = document.getElementById('restore-file');
@@ -1312,9 +1356,7 @@ include '../includes/activity_logger.php';
                                 title: 'Success!',
                                 text: data.message,
                                 confirmButtonColor: '#0d6efd'
-                            }).then(() => {
-                                location.reload();
-                            });
+                            }).then(() => location.reload());
                         } else {
                             Swal.fire({
                                 icon: 'error',
@@ -1339,7 +1381,6 @@ include '../includes/activity_logger.php';
                     });
             }
         });
-
         // Load last backup info when page loads
         document.addEventListener('DOMContentLoaded', function() {
             loadLastBackup();
@@ -1375,14 +1416,14 @@ include '../includes/activity_logger.php';
                         Swal.fire({
                             title: 'Last Backup Details',
                             html: `
-            <div style="text-align: left;">
-                <p><strong>File:</strong> ${data.details.filename}</p>
-                <p><strong>Date:</strong> ${data.details.date}</p>
-                <p><strong>Time:</strong> ${data.details.time}</p>
-                <p><strong>Size:</strong> ${data.details.size}</p>
-                <p><strong>Created by:</strong> ${data.details.username}</p>
-            </div>
-        `,
+                            <div style="text-align: left;">
+                                <p><strong>File:</strong> ${data.details.filename}</p>
+                                <p><strong>Date:</strong> ${data.details.date}</p>
+                                <p><strong>Time:</strong> ${data.details.time}</p>
+                                <p><strong>Size:</strong> ${data.details.size}</p>
+                                <p><strong>Created by:</strong> ${data.details.username}</p>
+                            </div>
+                        `,
                             icon: 'info',
                             confirmButtonText: 'OK'
                         });

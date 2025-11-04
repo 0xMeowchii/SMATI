@@ -1,5 +1,4 @@
 <?php
-include 'includes/session.php';
 include('../database.php'); ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -48,7 +47,7 @@ include('../database.php'); ?>
                     <tbody>
                         <?php
                         $conn = connectToDB();
-                        $sql = "SELECT * FROM schoolyear ORDER BY schoolyear_id DESC";
+                        $sql = "SELECT * FROM schoolyear WHERE status = '1' ORDER BY schoolyear_id DESC";
                         $result = $conn->query($sql);
 
                         if ($result && $result->num_rows > 0) {
@@ -65,7 +64,11 @@ include('../database.php'); ?>
                                 echo "</tr>";
                             }
                         } else {
-                            echo "0 results";
+                            echo "<td colspan='5' class='text-center py-4' style='color: #6c757d;'>";
+                            echo "<i class='fas fa-search mb-2' style='font-size: 2em; opacity: 0.5;'></i>";
+                            echo "<br>";
+                            echo "SChool hasn't started yet.";
+                            echo "</td>";
                         }
                         ?>
                     </tbody>

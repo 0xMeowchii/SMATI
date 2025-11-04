@@ -1,5 +1,4 @@
 <?php
-include 'includes/session.php';
 include '../database.php';
 ?>
 <!DOCTYPE html>
@@ -391,7 +390,7 @@ include '../database.php';
         </div>
 
         <!-- Search and Filter Section -->
-        <div class="row mb-4">
+        <div class="row mb-4 g-4">
             <div class="col-md-8">
                 <div class="input-group input-group-md position-relative">
                     <span class="input-group-text bg-muted border-2">
@@ -429,8 +428,8 @@ include '../database.php';
                         <i class="fas fa-clock me-2"></i> Pending
                     </button>
                     <button class="btn btn-outline-secondary rounded-pill px-3 py-2 d-flex align-items-center filter-btn"
-                        data-filter="resolved">
-                        <i class="fas fa-check-circle me-2"></i> Resolved
+                        data-filter="approved">
+                        <i class="fas fa-check-circle me-2"></i> Approved
                     </button>
                     <button class="btn btn-outline-secondary rounded-pill px-3 py-2 d-flex align-items-center filter-btn"
                         data-filter="closed">
@@ -1246,6 +1245,7 @@ include '../database.php';
             }
         })();
     </script>
+
 </body>
 
 </html>

@@ -1,5 +1,4 @@
 <?php
-require_once 'includes/session.php';
 include('../database.php');
 
 $conn = connectToDB();
@@ -68,7 +67,7 @@ while ($row = $result->fetch_assoc()) {
 
             <?php
             $conn = connectToDB();
-            $sql = "SELECT * FROM schoolyear ORDER BY schoolyear_id DESC";
+            $sql = "SELECT * FROM schoolyear WHERE status = '1' ORDER BY schoolyear_id DESC";
             $stmt = $conn->prepare($sql);
             $stmt->execute();
             $result = $stmt->get_result();
@@ -144,104 +143,106 @@ while ($row = $result->fetch_assoc()) {
                 </div>
             <?php endforeach; ?>
         </div>
-
-
     </main>
+
+    <!-- E-Signature Modal -->
+    <div class="modal fade" id="esignatureModal" tabindex="-1" aria-labelledby="esignatureModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="esignatureModalLabel">Add E-Signature (Optional)</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>You can optionally add an e-signature to the PDF. This is completely optional.</p>
+
+                    <div class="mb-3">
+                        <label for="signatoryName" class="form-label">Signatory Name</label>
+                        <input type="text" class="form-control" id="signatoryName" placeholder="Enter your name">
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="esignatureUpload" class="form-label">E-Signature Image</label>
+                        <input class="form-control" type="file" id="esignatureUpload" accept="image/*">
+                        <div class="form-text">Upload an image of your signature (PNG, JPG, etc.)</div>
+                    </div>
+
+                    <div class="esignature-preview" id="esignaturePreview">
+                        <span class="text-muted">Signature preview will appear here</span>
+                    </div>
+
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" id="includeSignature">
+                        <label class="form-check-label" for="includeSignature">
+                            Include e-signature in PDF
+                        </label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="generatePdf">Generate PDF</button>
+                </div>
+            </div>
+        </div>
+    </div>
     <!-- Bootstrap JS Bundle with Popper -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const searchInput = document.getElementById('searchInput');
-            const tableBody = document.querySelector('tbody');
-            const tableRows = Array.from(tableBody.querySelectorAll('tr'));
-
-            // Function to perform the search
-            function performSearch(searchTerm) {
-                const query = searchTerm.toLowerCase().trim();
-                let visibleRows = 0;
-
-                tableRows.forEach(function(row) {
-                    // Get all text content from the row (excluding action buttons)
-                    const cells = row.querySelectorAll('td');
-                    let rowText = '';
-
-                    // Combine text from StudentID, Name, Course, and Email columns (skip Action column)
-                    for (let i = 0; i < cells.length - 1; i++) {
-                        rowText += cells[i].textContent.toLowerCase() + ' ';
-                    }
-
-                    // Check if search term matches any part of the row text
-                    if (query === '' || rowText.includes(query)) {
-                        row.style.display = '';
-                        visibleRows++;
-                    } else {
-                        row.style.display = 'none';
-                    }
-                });
-
-                // Optional: Show/hide "No results" message
-                showNoResultsMessage(visibleRows === 0 && query !== '');
-            }
-
-            // Function to show/hide no results message
-            function showNoResultsMessage(show) {
-                let noResultsRow = document.getElementById('no-results-row');
-
-                if (show && !noResultsRow) {
-                    // Create no results row if it doesn't exist
-                    noResultsRow = document.createElement('tr');
-                    noResultsRow.id = 'no-results-row';
-                    noResultsRow.innerHTML = `
-                <td colspan="5" class="text-center py-4" style="color: #6c757d;">
-                    <i class="fas fa-search mb-2" style="font-size: 2em; opacity: 0.5;"></i>
-                    <br>
-                    No students found matching your search
-                </td>
-            `;
-                    tableBody.appendChild(noResultsRow);
-                } else if (!show && noResultsRow) {
-                    // Remove no results row if it exists
-                    noResultsRow.remove();
-                }
-            }
-
-            // Add event listener for real-time search
-            searchInput.addEventListener('input', function(e) {
-                performSearch(e.target.value);
-            });
-
-            // Add event listener for paste events
-            searchInput.addEventListener('paste', function(e) {
-                // Small delay to ensure pasted content is processed
-                setTimeout(function() {
-                    performSearch(searchInput.value);
-                }, 10);
-            });
-
-
-
-            // Optional: Add search icon click functionality
-            const searchIcon = document.querySelector('#searchInput + .input-group-text');
-            if (searchIcon) {
-                searchIcon.addEventListener('click', function() {
-                    searchInput.focus();
-                });
-            }
-        });
-
         document.addEventListener('DOMContentLoaded', function() {
             // Initialize jsPDF
             const {
                 jsPDF
             } = window.jspdf;
 
+            // Variables to store signature data
+            let signatoryName = '';
+            let signatureImage = null;
+
             // Export to PDF function
             document.getElementById('exportPdf').addEventListener('click', function() {
-                generatePDF();
+
+                // Reset form
+                document.getElementById('signatoryName').value = '';
+                document.getElementById('esignatureUpload').value = '';
+                document.getElementById('includeSignature').checked = false;
+                document.getElementById('esignaturePreview').innerHTML = '<span class="text-muted">Signature preview will appear here</span>';
+
+                // Show modal
+                const modal = new bootstrap.Modal(document.getElementById('esignatureModal'));
+                modal.show();
             });
 
-            function generatePDF() {
+            document.getElementById('esignatureUpload').addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(event) {
+                        signatureImage = event.target.result;
+                        document.getElementById('esignaturePreview').innerHTML =
+                            `<img src="${signatureImage}" alt="Signature Preview" height='100px' weight='150px'>`;
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+
+            // Generate PDF button in modal
+            document.getElementById('generatePdf').addEventListener('click', function() {
+                // Get signatory name
+                signatoryName = document.getElementById('signatoryName').value.trim();
+
+                // Check if signature should be included
+                const includeSignature = document.getElementById('includeSignature').checked;
+
+                // Close modal
+                const modal = bootstrap.Modal.getInstance(document.getElementById('esignatureModal'));
+                modal.hide();
+
+                // Generate PDF
+                generatePDF(includeSignature);
+            });
+
+            function generatePDF(includeSignature) {
                 // Create new PDF document
                 const doc = new jsPDF({
                     orientation: 'portrait',
@@ -251,7 +252,7 @@ while ($row = $result->fetch_assoc()) {
 
                 // Student information
                 const studentName = "<?php foreach ($students as $student) {
-                                            echo $student['lastname'] . ", " . $student['firstname'];
+                                            echo $student['lastname'] . ', ' . $student['firstname'];
                                         } ?>";
                 const studentId = "<?php foreach ($students as $student) {
                                         echo $student['student_id'];
@@ -267,32 +268,92 @@ while ($row = $result->fetch_assoc()) {
                     creator: 'School Management System'
                 });
 
-                // Add header
+                // Add logo
+                const logoUrl = '../images/logo5.png';
+                try {
+                    // Add logo to the top left and right
+                    doc.addImage(logoUrl, 'PNG', 20, 10, 15, 15);
+                    doc.addImage(logoUrl, 'PNG', 175, 10, 15, 15);
+                } catch (e) {
+                    console.warn('Logo could not be loaded:', e);
+                }
+
+                // Add header - BOLD
                 doc.setFontSize(20);
+                doc.setFont(undefined, 'bold');
                 doc.setTextColor(40, 40, 40);
                 doc.text('ACADEMIC TRANSCRIPT', 105, 20, {
                     align: 'center'
                 });
 
-                // Add school information
+                // Add school information - School name BOLD, address normal
                 doc.setFontSize(12);
+                doc.setFont(undefined, 'bold'); // Bold for school name
                 doc.setTextColor(100, 100, 100);
-                doc.text('St. Michael Technological Institute, Inc.', 105, 30, {
-                    align: 'center'
-                });
-                doc.text('101 Rodriguez St. Santulan Rd., Malabon, Philippines', 105, 36, {
+                doc.text('St. Michael Arcangel Technological Institute, Inc.', 105, 30, {
                     align: 'center'
                 });
 
-                // Add student information
+                doc.setFontSize(10);
+                doc.setFont(undefined, 'normal'); // Normal for address
+                doc.text('101 Rodriguez St. Santulan Rd., Malabon', 105, 36, {
+                    align: 'center'
+                });
+
+                // Add student information - Labels BOLD, values normal
                 doc.setFontSize(10);
                 doc.setTextColor(60, 60, 60);
-                doc.text(`Student: ${studentName}`, 20, 50);
-                doc.text(`Student ID: ${studentId}`, 20, 56);
-                doc.text(`Date Generated: ${currentDate}`, 20, 62);
+
+                // Student name with bold label
+                doc.setFont(undefined, 'bold');
+                doc.text('Student:', 20, 50);
+                doc.setFont(undefined, 'normal');
+                doc.text(studentName, 40, 50);
+
+                // Student ID with bold label
+                doc.setFont(undefined, 'bold');
+                doc.text('Student ID:', 20, 56);
+                doc.setFont(undefined, 'normal');
+                doc.text(studentId, 40, 56);
+
+                // Date generated with bold label
+                doc.setFont(undefined, 'bold');
+                doc.text('Date Generated:', 20, 62);
+                doc.setFont(undefined, 'normal');
+                doc.text(currentDate, 50, 62);
+
+                // Add signature area if requested
+                if (includeSignature && (signatoryName || signatureImage)) {
+                    // Position for signature
+                    let signatureY = 70;
+
+                    // Add signature image if available
+                    if (signatureImage) {
+                        try {
+                            doc.addImage(signatureImage, 'PNG', 20, signatureY, 40, 15);
+                            signatureY += 20;
+                        } catch (e) {
+                            console.error('Error adding signature image:', e);
+                        }
+                    }
+
+                    // Add signatory name if provided
+                    if (signatoryName) {
+                        doc.setFontSize(10);
+                        doc.setTextColor(60, 60, 60);
+
+                        // Bold label
+                        doc.setFont(undefined, 'bold');
+                        doc.text('Signed by:', 20, signatureY);
+                        doc.setFont(undefined, 'normal');
+                        doc.text(signatoryName, 45, signatureY);
+
+                        signatureY += 10;
+                    }
+                }
 
                 // Process each school year table
-                let yPosition = 80;
+                let yPosition = includeSignature && (signatoryName || signatureImage) ? 100 : 80;
                 const tables = document.querySelectorAll('.table');
 
                 tables.forEach((table, index) => {
@@ -300,13 +361,14 @@ while ($row = $result->fetch_assoc()) {
                     const cardHeader = table.closest('.custom-card').querySelector('.card-header h4');
                     const schoolYear = cardHeader ? cardHeader.textContent : `Semester ${index + 1}`;
 
-                    // Add school year header
+                    // Add school year header - BOLD
                     if (yPosition > 250) {
                         doc.addPage();
                         yPosition = 20;
                     }
 
                     doc.setFontSize(14);
+                    doc.setFont(undefined, 'bold'); // Bold for school year headers
                     doc.setTextColor(40, 40, 40);
                     doc.text(schoolYear, 20, yPosition);
                     yPosition += 10;
@@ -341,18 +403,27 @@ while ($row = $result->fetch_assoc()) {
                         styles: {
                             fontSize: 8,
                             cellPadding: 3,
-                            overflow: 'linebreak'
+                            overflow: 'linebreak',
+                            fontStyle: 'normal' // Normal for table content
                         },
                         headStyles: {
                             fillColor: [41, 128, 185],
                             textColor: 255,
-                            fontStyle: 'bold'
+                            fontStyle: 'bold', // Bold for table headers
+                            fontSize: 9
                         },
                         alternateRowStyles: {
                             fillColor: [240, 240, 240]
                         },
                         margin: {
                             top: 10
+                        },
+                        // Optional: Make specific columns bold
+                        didParseCell: function(data) {
+                            // Make first column (Subject) bold
+                            if (data.section === 'body' && data.column.index === 0) {
+                                data.cell.styles.fontStyle = 'bold';
+                            }
                         }
                     });
 
@@ -366,9 +437,13 @@ while ($row = $result->fetch_assoc()) {
                     doc.setPage(i);
                     doc.setFontSize(8);
                     doc.setTextColor(150, 150, 150);
+
+                    // Page number
                     doc.text(`Page ${i} of ${pageCount}`, 105, 290, {
                         align: 'center'
                     });
+
+                    // Footer text
                     doc.text('Generated by SMATI - Educational Portal', 105, 293, {
                         align: 'center'
                     });
@@ -382,7 +457,7 @@ while ($row = $result->fetch_assoc()) {
                     icon: 'success',
                     title: 'PDF Generated',
                     text: 'Student grades have been exported successfully!',
-                    timer: 4000,
+                    timer: 2000,
                     showConfirmButton: false
                 });
             }

@@ -1,5 +1,4 @@
 <?php
-require_once 'includes/session.php';
 include '../database.php';
 include '../includes/activity_logger.php';
 ?>

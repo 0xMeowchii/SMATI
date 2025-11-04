@@ -191,47 +191,13 @@ function setupEventListeners() {
         // If all validations pass, allow form submission to proceed normally
         // No need to prevent default, let the form submit to PHP
     });
-
-    // Forgot password
-    $('#showForgotPassword').click(handleForgotPassword);
-
+    
     // Status close button
     $('#statusClose').click(function () {
         hideConnectionStatus();
     });
 
-    // Account recovery modal
-    $('#closeRecoveryModal').click(function () {
-        $('#recoveryModal').hide();
-    });
-
-    $('#emailRecovery').click(function () {
-        Swal.fire({
-            title: 'Email Recovery',
-            html: 'Recovery instructions will be sent to your registered email address.<br><br>' +
-                '<div class="text-start">' +
-                '<p class="mb-1"><i class="bi bi-envelope me-2"></i><strong>Email:</strong> admin@smati.edu</p>' +
-                '</div>',
-            icon: 'info',
-            confirmButtonColor: '#0A2342',
-            confirmButtonText: 'OK'
-        });
-    });
-
-    $('#phoneRecovery').click(function () {
-        Swal.fire({
-            title: 'SMS Recovery',
-            html: 'A verification code will be sent to your registered mobile number.<br><br>' +
-                '<div class="text-start">' +
-                '<p class="mb-1"><i class="bi bi-telephone me-2"></i><strong>Phone:</strong> (123) 456-7890</p>' +
-                '</div>',
-            icon: 'info',
-            confirmButtonColor: '#0A2342',
-            confirmButtonText: 'OK'
-        });
-    });
-
-    $('#adminRecovery').click(function () {
+    $('#showForgotPassword').click(function () {
         Swal.fire({
             title: 'Contact Administrator',
             html: 'Please contact the administration office for assistance.<br><br>' +
@@ -322,9 +288,6 @@ function handleForgotPassword(e) {
         Swal.fire('No Internet Connection', 'Please check your network connection and try again.', 'warning');
         return;
     }
-
-    // Show the elegant recovery modal
-    $('#recoveryModal').show();
 }
 
 // Hide connection status notification

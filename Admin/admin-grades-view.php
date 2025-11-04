@@ -1,5 +1,4 @@
 <?php
-require_once 'includes/session.php';
 include('../database.php');
 
 $conn = connectToDB();
@@ -42,7 +41,7 @@ while ($row = $result->fetch_assoc()) {
 
             <?php
             $conn = connectToDB();
-            $sql = "SELECT * FROM schoolyear ORDER BY schoolyear_id DESC";
+            $sql = "SELECT * FROM schoolyear WHERE status = '1' ORDER BY schoolyear_id DESC";
             $stmt = $conn->prepare($sql);
             $stmt->execute();
             $result = $stmt->get_result();

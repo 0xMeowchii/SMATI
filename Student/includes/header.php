@@ -9,6 +9,16 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- SweetAlert2 -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    <link rel="stylesheet" href="./css/sidebar1.css">
     <link rel="stylesheet" href="./css/student.css">
-    <link rel="stylesheet" href="./css/sidebar.css">
     <link rel="icon" type="image/png" href="../images/logo5.png">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="js/inactivity-timeout.js"></script>
+    <script>
+        // This ensures it runs after page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            const timeout = new InactivityTimeout({
+                logoutUrl: 'includes/logout.php' // Change per user type
+            });
+        });
+    </script>

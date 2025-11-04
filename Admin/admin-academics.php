@@ -1,5 +1,4 @@
 <?php
-require_once 'includes/session.php';
 include('../database.php');
 include '../includes/activity_logger.php';
 ?>
@@ -21,24 +20,110 @@ include '../includes/activity_logger.php';
 
         <?php
 
+        //INSERT SY QUERY
+        if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnAdd'])) {
+            $conn = connectToDB();
+            $schoolyear = $_POST['schoolyear'];
+            $semester = $_POST['semester'];
+            $status = '1';
+
+            if ($conn) {
+                $stmt = $conn->prepare("INSERT INTO schoolyear (schoolyear, semester, status) VALUES (?, ? , ?)");
+                $stmt->bind_param("sss", $schoolyear, $semester, $status);
+
+                if ($stmt->execute()) {
+
+                    logActivity($conn, $_SESSION['id'], $_SESSION['user_type'], 'CREATE_SCHOOLYEAR', "created new Schoolyear & Semester: $schoolyear, $semester Semester");
+
+                    echo "<script>
+                            document.addEventListener('DOMContentLoaded', function() {
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Success!',
+                                    text: 'S.Y. Added Successfully!',
+                                    timer: 2000,
+                                    showConfirmButton: false
+                                });
+                            });
+                        </script>";
+                } else {
+                    echo "<script>
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Error!',
+                                text: '" . addslashes($stmt->error) . "',
+                                confirmButtonColor: '#d33'
+                            });
+                        </script>";
+                }
+
+                $stmt->close();
+                $conn->close();
+            } else {
+                echo "<script>alert('Database connection failed');</script>";
+            }
+        }
+
+        //DELETE SY QUERY
+        if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnDelete'])) {
+            $conn = connectToDB();
+            $schoolyear_id = $_POST['id'];
+
+            if ($conn) {
+                $stmt = $conn->prepare("UPDATE schoolyear SET status = '0' WHERE schoolyear_id=?");
+                $stmt->bind_param("i", $schoolyear_id);
+
+                if ($stmt->execute()) {
+
+                    logActivity($conn, $_SESSION['id'], $_SESSION['user_type'], 'DROP_SCHOOLYEAR', "drop a schoolyear & semester.");
+
+                    echo "<script>
+                            document.addEventListener('DOMContentLoaded', function() {
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Success!',
+                                    text: 'S.Y. Drop Successfully!',
+                                    timer: 2000,
+                                    showConfirmButton: false
+                                });
+                            });
+                        </script>";
+                } else {
+                    echo "<script>
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Error!',
+                                text: '" . addslashes($stmt->error) . "',
+                                confirmButtonColor: '#d33'
+                            });
+                        </script>";
+                }
+
+                $stmt->close();
+                $conn->close();
+            } else {
+                echo "<script>alert('Database connection failed');</script>";
+            }
+        }
+
         //UPDATE QUERY
         if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnEdit'])) {
             $conn = connectToDB();
             $subject_id = $_POST['editId'];
             $subjectname = $_POST['editName'];
-            $teacher_id = $_POST['editTeacher'];
+            $subjectcode = $_POST['editCode'];
             $yearlevel = $_POST['editYearlevel'];
             $schoolyear_id = $_POST['editSchoolyear'];
 
             if ($conn) {
                 $stmt = $conn->prepare("UPDATE subjects 
-                                        SET subject=?,
+                                        SET subject_code=?, 
+                                            subject=?,
                                             course=?,
-                                            teacher_id=?,
                                             yearlevel=?,
                                             schoolyear_id=?
                                         WHERE subject_id=?");
-                $stmt->bind_param("ssisii", $subjectname, $course, $teacher_id, $yearlevel, $schoolyear_id, $subject_id);
+                $stmt->bind_param("ssssii", $subjectcode, $subjectname, $course, $yearlevel, $schoolyear_id, $subject_id);
 
                 if ($stmt->execute()) {
 
@@ -130,7 +215,7 @@ include '../includes/activity_logger.php';
                 </div>
             </div>
 
-            <div class="table-responsive flex-grow-1 overflow-auto" style="max-height:600px;">
+            <div class="table-responsive flex-grow-1 overflow-auto" style="max-height:500px;">
                 <table class="table table-hover">
                     <thead>
                         <tr>
@@ -147,20 +232,21 @@ include '../includes/activity_logger.php';
                             FROM subjects s
                             INNER JOIN teachers t ON s.teacher_id = t.teacher_id
                             INNER JOIN schoolyear sy ON sy.schoolyear_id = s.schoolyear_id
-                            WHERE s.status='1'";
+                            WHERE s.status='1' ORDER BY s.subject_id ASC";
                         $result = $conn->query($sql);
 
                         if ($result && $result->num_rows > 0) {
                             // output data of each row
                             while ($row = $result->fetch_assoc()) {
                                 echo "<tr>";
-                                echo "<td>" . $row["subject"] . "</td>";
+                                echo "<td>" . $row['subject_code'] . " - " . $row["subject"] . "</td>";
                                 echo "<td>" . $row["lastname"] . ", " . $row["firstname"] . "</td>";
                                 echo "<td>" . $row["yearlevel"] . "</td>";
                                 echo "<td>" . $row["schoolyear"] . ", " . $row["semester"] . " Semester" . "</td>";
                                 echo "<td>
                                 <a class='btn btn-sm btn-outline-primary me-1 view-subject-btn'
                                 data-name='" . $row['subject'] . "'
+                                data-code='" . $row['subject_code'] . "'
                                 data-teacher='" . $row['lastname'] . ", " . $row['firstname'] . "'
                                 data-yearlevel='" . $row['yearlevel'] . "'
                                 data-schoolyear='" . $row['schoolyear'] . ", " . $row['semester'] . " Semester" . "'
@@ -173,7 +259,7 @@ include '../includes/activity_logger.php';
                                 <a class='btn btn-sm btn-outline-secondary me-1 edit-subject-btn'
                                 data-id='" . $row['subject_id'] . "'
                                 data-name='" . $row['subject'] . "'
-                                data-teacher='" . $row['teacher_id'] . "'
+                                data-code='" . $row['subject_code'] . "'
                                 data-yearlevel='" . $row['yearlevel'] . "'
                                 data-schoolyear='" . $row['schoolyear_id'] . "'
                                 data-bs-toggle='modal' 
@@ -203,6 +289,120 @@ include '../includes/activity_logger.php';
 
         </div>
 
+        <!-- Schoolyear and Sem -->
+        <div class="col mt-5 ">
+            <div class="page-header">
+                <h4><i class="fas fa-cog me-2"></i>School Year & Semester</h4>
+                <div class="action-buttons">
+                    <button class="btn btn-primary" id="add-schoolyear-btn" data-bs-toggle="modal" data-bs-target="#add-schoolyear-modal">
+                        <i class="fas fa-plus me-1"></i>Add S.Y. & Sem
+                    </button>
+                </div>
+            </div>
+            <div class="table-responsive flex-grow-1 overflow-auto" style="max-height: 300px;">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>School Year</th>
+                            <th>Semester</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php
+                        $conn = connectToDB();
+                        $sql = "SELECT * FROM schoolyear WHERE status = '1' ORDER BY schoolyear_id DESC";
+                        $result = $conn->query($sql);
+
+                        if ($result && $result->num_rows > 0) {
+                            // output data of each row
+                            while ($row = $result->fetch_assoc()) {
+                                echo "<tr>";
+                                echo "<td>" . $row["schoolyear"] . "</td>";
+                                echo "<td>" . $row["semester"] . "</td>";
+                                echo "<td>
+                                                <a class='btn btn-sm btn-outline-danger me-1 delete-schoolyear-btn'
+                                                data-id='" . $row["schoolyear_id"] . "'
+                                                data-bs-toggle='modal' 
+                                                data-bs-target='#deleteSchoolyearModal'>
+                                                    <i class='fa fa-trash'></i>
+                                                </a>
+                                                  </td>";
+                                echo "</tr>";
+                            }
+                        } else {
+                            echo "0 results";
+                        }
+                        ?>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Add SchoolYear Modal -->
+        <div class="modal fade" id="add-schoolyear-modal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header bg-primary text-white">
+                        <h5 class="modal-title">Add School Year</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form action="<?php htmlspecialchars($_SERVER['PHP_SELF']) ?>" method="POST">
+                            <div class="row g-3">
+                                <h4 class="pb-2 border-bottom">School Year</h4>
+                                <div class="col-md-6 mb-3">
+                                    <label for="course" class="form-label">School Year</label>
+                                    <select class="form-select" name="schoolyear" id="schoolyear" required>
+                                        <option value="">Select School Year</option>
+                                        <option value="2025-2026">2025-2026</option>
+                                        <option value="2026-2027">2026-2027</option>
+                                        <option value="2027-2028">2027-2028</option>
+                                        <option value="2028-2029">2028-2029</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="course" class="form-label">Semester</label>
+                                    <select class="form-select" name="semester" id="semester" required>
+                                        <option value="">Select Semester</option>
+                                        <option value="1st">1st</option>
+                                        <option value="2nd">2nd</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                <button type="submit" class="btn btn-primary" name="btnAdd">Save</button>
+                            </div>
+                        </form>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- Delete Schoolyear Modal -->
+        <div class="modal fade" id="deleteSchoolyearModal" tabindex="-1" role="dialog" aria-labelledby="deleteSchoolyearModal" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="deleteSchoolyearModal">Confirm Delete</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        Are you sure you want to delete this SchoolYear?
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">No</button>
+                        <form action="<?php htmlspecialchars($_SERVER['PHP_SELF']) ?>" method="post">
+                            <input type="hidden" name="id" id="id">
+                            <button type="submit" class="btn btn-danger" name="btnDelete">Yes</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Edit Subject Modal -->
         <div class="modal fade" id="editSubjectModal" tabindex="-1" aria-hidden="true">
             <div class="modal-dialog modal-lg">
@@ -216,29 +416,12 @@ include '../includes/activity_logger.php';
                             <input type="hidden" name="editId" id="editId">
                             <div class="row g-3">
                                 <div class="col-md-6">
+                                    <label class="form-label">Subject Code</label>
+                                    <input type="text" class="form-control" id="editCode" name="editCode" required>
+                                </div>
+                                <div class="col-md-6">
                                     <label class="form-label">Subject Name</label>
                                     <input type="text" class="form-control" id="editName" name="editName" required>
-                                </div>
-                                <div>
-                                    <label class="form-label">Assign a Teacher</label>
-                                    <select class="form-select" id="editTeacher" name="editTeacher" required>
-                                        <option value="">Select Teacher</option>
-                                        <?php
-                                        $conn = connectToDB();
-                                        $sql = "SELECT * FROM teachers WHERE status = '1'";
-                                        $result = $conn->query($sql);
-
-                                        if ($result && $result->num_rows > 0) {
-                                            // output data of each row
-                                            while ($row = $result->fetch_assoc()) {
-                                                $fullname = $row['lastname'] . ", " . $row['firstname'];
-                                                echo "<option value='" . $row['teacher_id'] . "'>" . $fullname . "</option>";
-                                            }
-                                        } else {
-                                            echo "0 results";
-                                        }
-                                        ?>
-                                    </select>
                                 </div>
                                 <div>
                                     <label class="form-label">Year Level</label>
@@ -294,7 +477,7 @@ include '../includes/activity_logger.php';
                     </div>
                     <div class="modal-body">
                         <?php
-                        echo "<p><strong>Subject Name: </strong><span id='modalSubjectName'></span></p>
+                        echo "<p><strong>Subject Name: </strong><span id='modalCode'></span> - <span id='modalSubjectName'></span></p>
                               <p><strong>Teacher: </strong><span id='modalSubjectTeacher'></span></p>
                               <p><strong>Year Level: </strong><span id='modalSubjectYearlevel'></span></p>
                               <p><strong>School Year & Semester: </strong><span id='modalSubjectSchoolyear'></span></p>
@@ -339,6 +522,7 @@ include '../includes/activity_logger.php';
         document.querySelectorAll('.view-subject-btn').forEach(function(btn) {
             btn.addEventListener('click', function() {
                 document.getElementById('modalSubjectName').textContent = btn.getAttribute('data-name');
+                document.getElementById('modalCode').textContent = btn.getAttribute('data-code');
                 document.getElementById('modalSubjectTeacher').textContent = btn.getAttribute('data-teacher');
                 document.getElementById('modalSubjectYearlevel').textContent = btn.getAttribute('data-yearlevel');
                 document.getElementById('modalSubjectSchoolyear').textContent = btn.getAttribute('data-schoolyear');
@@ -350,7 +534,7 @@ include '../includes/activity_logger.php';
             btn.addEventListener('click', function() {
                 document.getElementById('editId').value = btn.getAttribute('data-id');
                 document.getElementById('editName').value = btn.getAttribute('data-name');
-                document.getElementById('editTeacher').value = btn.getAttribute('data-teacher');
+                document.getElementById('editCode').value = btn.getAttribute('data-code');
 
                 // Fixed: Properly set radio button value
                 const yearLevel = btn.getAttribute('data-yearlevel');
@@ -362,11 +546,18 @@ include '../includes/activity_logger.php';
                 document.getElementById('editSchoolyear').value = btn.getAttribute('data-schoolyear');
             });
         });
+
         document.querySelectorAll('.drop-subject-btn').forEach(function(btn) {
             btn.addEventListener('click', function() {
                 document.getElementById('dropSubjectname').value = btn.getAttribute('data-name');
                 document.getElementById('subjectId').value = btn.getAttribute('data-id');
                 document.getElementById('dropSchoolyear').value = btn.getAttribute('data-schoolyear');
+            });
+        });
+
+        document.querySelectorAll('.delete-schoolyear-btn').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                document.getElementById('id').value = btn.getAttribute('data-id');
             });
         });
 

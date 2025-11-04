@@ -1,55 +1,7 @@
 <?php
+include 'includes/session.php';
 include '../database.php';
-session_name('superuser');
-session_start();
 
-$errors = [];
-$showSuccess = false;
-
-// LOGIN QUERY
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnLogin'])) {
-    $method = $_POST['method'];
-    $email = trim($_POST['email'] ?? '');
-    $password = $_POST['password'] ?? '';
-    $pin = $_POST['pin'];
-
-    if (empty($errors)) {
-        $conn = connectToDB();
-        if ($method === 'password') {
-            $stmt = $conn->prepare("SELECT * FROM super_user WHERE email = ?");
-            $stmt->bind_param("s", $email);
-            $stmt->execute();
-            $result = $stmt->get_result();
-            $user = $result->fetch_assoc();
-
-            if ($user) {
-                if ($password === $user['password']) {
-                    $_SESSION['logged_in'] = true;
-                    $_SESSION['user_type'] = 'superuser';
-
-                    $showSuccess = true;
-                } else {
-                    $errors[] = "Invalid email or password.";
-                }
-            }
-        } else {
-            $stmt = $conn->prepare("SELECT * FROM super_user WHERE pin = ?");
-            $stmt->bind_param("s", $pin);
-            $stmt->execute();
-            $result = $stmt->get_result();
-            $user = $result->fetch_assoc();
-
-            if ($user) {
-                $_SESSION['logged_in'] = true;
-                $showSuccess = true;
-            } else {
-                 $errors[] = "Invalid PIN.";
-            }
-        }
-
-        $conn->close();
-    }
-}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -68,10 +20,102 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnLogin'])) {
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <!-- Google reCAPTCHA API -->
     <script src="https://www.google.com/recaptcha/api.js" async defer></script>
-    <link href="style.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+<link href="style.css" rel="stylesheet">
+<link rel="icon" type="image/png" href="../images/logo5.png">
 </head>
 
 <body>
+    <?php
+    require_once '../LoginSecurity.php';
+
+    $errors = [];
+    $showSuccess = false;
+
+    // LOGIN QUERY
+    if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnLogin'])) {
+        $method = $_POST['method'];
+        $email = trim($_POST['email'] ?? '');
+        $password = $_POST['password'] ?? '';
+        $pin = $_POST['pin'] ?? '';
+        $lockout_user = 'superuser';
+
+        if (empty($errors)) {
+            $conn = connectToDB();
+            $loginSecurity = new LoginSecurity($conn);
+
+            // Check if user is locked out
+            $lockoutStatus = $loginSecurity->checkLockout($lockout_user);
+
+            if ($lockoutStatus['locked']) {
+                // User is locked out - don't process login, just show lockout message
+                $lockoutMessage = true;
+            } else {
+                if ($method === 'password') {
+                    $stmt = $conn->prepare("SELECT * FROM super_user WHERE email = ?");
+                    $stmt->bind_param("s", $email);
+                    $stmt->execute();
+                    $result = $stmt->get_result();
+                    $user = $result->fetch_assoc();
+
+                    if ($user) {
+                        if ($password === $user['password']) {
+                            // Successful login - clear attempts
+                            $loginSecurity->clearAttempts($lockout_user);
+
+                            $userId = $user['id'];
+                            $userType = 'superuser';
+
+                            startUniqueSession($userType, $userId);
+
+                            $_SESSION['logged_in'] = true;
+
+                            $showSuccess = true;
+                        } else {
+                            // Failed login - record attempt
+                            $loginSecurity->recordFailedAttempt($lockout_user);
+                            $lockoutStatus = $loginSecurity->checkLockout($lockout_user);
+                            $errors[] = "Invalid email or password. {$lockoutStatus['remaining_attempts']} attempt(s) remaining.";
+                        }
+                    } else {
+                        // User not found - record attempt
+                        $loginSecurity->recordFailedAttempt($lockout_user);
+                        $lockoutStatus = $loginSecurity->checkLockout($lockout_user);
+                        $errors[] = "Invalid email or password. {$lockoutStatus['remaining_attempts']} attempt(s) remaining.";
+                    }
+                } else {
+                    $stmt = $conn->prepare("SELECT * FROM super_user WHERE pin = ?");
+                    $stmt->bind_param("s", $pin);
+                    $stmt->execute();
+                    $result = $stmt->get_result();
+                    $user = $result->fetch_assoc();
+
+                    if ($user) {
+                        // Successful login - clear attempts
+                        $loginSecurity->clearAttempts($lockout_user);
+
+                        $userId = $user['id'];
+                        $userType = 'superuser'; // Use 'admin' as the user type
+
+                        // Start unique session for this admin user
+                        startUniqueSession($userType, $userId);
+
+                        $_SESSION['logged_in'] = true;
+                        $showSuccess = true;
+                    } else {
+                        // Failed login - record attempt
+                        $loginSecurity->recordFailedAttempt($lockout_user);
+                        $lockoutStatus = $loginSecurity->checkLockout($lockout_user);
+                        $errors[] = "Invalid PIN. {$lockoutStatus['remaining_attempts']} attempt(s) remaining.";
+                    }
+                }
+
+                $conn->close();
+            }
+        }
+    }
+    ?>
     <div class="login-container">
         <!-- Header -->
         <div class="login-header">
@@ -174,7 +218,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnLogin'])) {
                         <span class="captcha-title">Security Verification</span>
                     </div>
                     <p class="captcha-description">Please verify you're not a robot</p>
-                    <div class="g-recaptcha" data-sitekey="6LcU8_MrAAAAAOoYAXm9WHudb0FukJ8y2SH3M4fA"></div>
+                    <div class="g-recaptcha" data-sitekey="6LdxyvQrAAAAAMCDZVWlknaTzOMK_q6CT6Wx4min"></div>
                     <div class="captcha-footer">
                         <i class="fas fa-info-circle"></i>
                         <span>This helps prevent automated access</span>
@@ -229,6 +273,58 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnLogin'])) {
                 });
             <?php endif; ?>
         });
+
+        <?php if (isset($lockoutStatus) && $lockoutStatus['locked']): ?>
+            document.addEventListener('DOMContentLoaded', function() {
+                const remainingTime = <?php echo $lockoutStatus['remaining_time']; ?>;
+
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Account Locked',
+                    html: `Too many failed attempts.<br>Please wait <b></b> to try again.`,
+                    timer: remainingTime * 1000,
+                    timerProgressBar: true,
+                    allowOutsideClick: false,
+                    allowEscapeKey: false,
+                    showConfirmButton: false,
+                    didOpen: () => {
+                        const b = Swal.getHtmlContainer().querySelector('b');
+                        const startTime = Date.now();
+                        const endTime = startTime + (remainingTime * 1000);
+
+                        const timerInterval = setInterval(() => {
+                            const now = Date.now();
+                            const timeLeft = Math.max(0, endTime - now);
+                            const secondsLeft = Math.ceil(timeLeft / 1000);
+
+                            const mins = Math.floor(secondsLeft / 60);
+                            const secs = secondsLeft % 60;
+                            b.textContent = `${mins}:${secs.toString().padStart(2, '0')}`;
+
+                            if (timeLeft <= 0) {
+                                clearInterval(timerInterval);
+                            }
+                        }, 100);
+
+                        // Store interval for cleanup
+                        Swal.getTimerInterval = () => timerInterval;
+                    },
+                    willClose: () => {
+                        // Clear interval
+                        if (Swal.getTimerInterval) {
+                            clearInterval(Swal.getTimerInterval());
+                        }
+                        Swal.fire({
+                            icon: 'info',
+                            title: 'Lockout Expired',
+                            text: 'You can now try logging in again.',
+                            timer: 2000,
+                            showConfirmButton: false
+                        });
+                    }
+                });
+            });
+        <?php endif; ?>
     </script>
 </body>
 

@@ -1,5 +1,5 @@
 <?php
-require_once 'includes/session.php';
+
 include('../database.php');
 date_default_timezone_set('Asia/Manila');
 ?>
@@ -19,11 +19,18 @@ date_default_timezone_set('Asia/Manila');
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <!-- Google reCAPTCHA API -->
     <script src="https://www.google.com/recaptcha/api.js" async defer></script>
-
+    <link rel="icon" type="image/png" href="../images/logo5.png">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 
 <body>
     <?php
+    require_once '../session.php';
+    require_once '../LoginSecurity.php';
+
+    initGuestSession();
+
     $errors = [];
     $showSuccess = false;
 
@@ -34,7 +41,6 @@ date_default_timezone_set('Asia/Manila');
         $password = $_POST['password'] ?? '';
 
         if (isset($_POST['g-recaptcha-response']) && !empty($_POST['g-recaptcha-response'])) {
-
             $secret_key = "6LdxyvQrAAAAAFje30yKm8Zyt_d3lrJv7wjzcZP1";
             $captcha_response = $_POST['g-recaptcha-response'] ?? '';
 
@@ -42,64 +48,91 @@ date_default_timezone_set('Asia/Manila');
             $response_data = json_decode($verify_response);
 
             if ($response_data->success) {
-                // Validate inputs
-                if (empty($username)) {
-                    $errors[] = "username is required.";
-                }
+                $loginSecurity = new LoginSecurity($conn);
 
-                if (empty($password)) {
-                    $errors[] = "Password is required.";
-                }
+                // Check if user is locked out - MOVE THIS BEFORE VALIDATION
+                $lockoutStatus = $loginSecurity->checkLockout($username);
 
-                if (empty($errors)) {
+                // CRITICAL FIX: Check lockout before processing login
+                if ($lockoutStatus['locked']) {
+                    // User is locked out - don't process login, just show lockout message
+                    $lockoutMessage = true;
+                } else {
+                    // User is not locked out - proceed with login validation
+                    // Validate inputs
+                    if (empty($username)) {
+                        $errors[] = "Username is required.";
+                    }
 
-                    $stmt = $conn->prepare("SELECT * FROM registrars WHERE username = ?");
-                    $stmt->bind_param("s", $username);
-                    $stmt->execute();
-                    $result = $stmt->get_result();
-                    $user = $result->fetch_assoc();
+                    if (empty($password)) {
+                        $errors[] = "Password is required.";
+                    }
 
-                    if ($user) {
-                        if (password_verify($password, $user['password'])) {
+                    if (empty($errors)) {
+                        $stmt = $conn->prepare("SELECT * FROM registrars WHERE username = ?");
+                        $stmt->bind_param("s", $username);
+                        $stmt->execute();
+                        $result = $stmt->get_result();
+                        $user = $result->fetch_assoc();
 
-                            $_SESSION['id'] = $user['registrar_id'];
-                            $_SESSION['username'] = $user['username'];
-                            $_SESSION['user_type'] = 'registrar';
+                        if ($user) {
 
-                            $showSuccess = true;
+                            if ($user['status'] == '0') {
+                                // Account is disabled
+                                $errors[] = "Your account has been disabled. Please contact the administrator for assistance.";
+                            } else if (password_verify($password, $user['password'])) {
+                                // Successful login - clear attempts
+                                $loginSecurity->clearAttempts($username);
+
+                                session_destroy();
+
+                                $userId = $user['registrar_id'];
+                                $userType = 'registrar'; // Use 'admin' as the user type
+
+                                // Start unique session for this admin user
+                                startUniqueSession($userType, $userId);
+
+                                $_SESSION['username'] = $user['username'];
+                                $showSuccess = true;
+                            } else {
+                                // Failed login - record attempt
+                                $loginSecurity->recordFailedAttempt($username);
+                                $lockoutStatus = $loginSecurity->checkLockout($username);
+                                $errors[] = "Incorrect username or password. {$lockoutStatus['remaining_attempts']} attempt(s) remaining.";
+                            }
                         } else {
-                            // Failed login
-                            $errors[] = "Invalid username or password.";
+                            // User not found - record attempt
+                            $loginSecurity->recordFailedAttempt($username);
+                            $lockoutStatus = $loginSecurity->checkLockout($username);
+                            $errors[] = "Username or password not found. {$lockoutStatus['remaining_attempts']} attempt(s) remaining.";
                         }
-                    } else {
-                        $errors[] = "Invalid username or password.";
                     }
                 }
             } else {
                 echo "<script>
-                                document.addEventListener('DOMContentLoaded', function() {
-                                    Swal.fire({
-                                        icon: 'error',
-                                        title: 'Verification Failed',
-                                        text: 'reCAPTCHA verification failed. Please try again.',
-                                        confirmButtonColor: '#0d6efd',
-                                        confirmButtonText: 'Try Again'
-                                    });
-                                });
-                            </script>";
+        document.addEventListener('DOMContentLoaded', function() {
+            Swal.fire({
+                icon: 'error',
+                title: 'Verification Failed',
+                text: 'reCAPTCHA verification failed. Please try again.',
+                confirmButtonColor: '#0d6efd',
+                confirmButtonText: 'Try Again'
+            });
+        });
+        </script>";
             }
         } else {
             echo "<script>
-                            document.addEventListener('DOMContentLoaded', function() {
-                                Swal.fire({
-                                    icon: 'error',
-                                    title: 'Verification Required',
-                                    text: 'Please complete the reCAPTCHA verification.',
-                                    confirmButtonColor: '#0d6efd',
-                                    confirmButtonText: 'Try Again'
-                                });
-                            });
-                        </script>";
+        document.addEventListener('DOMContentLoaded', function() {
+            Swal.fire({
+                icon: 'error',
+                title: 'Verification Required',
+                text: 'Please complete the reCAPTCHA verification.',
+                confirmButtonColor: '#0d6efd',
+                confirmButtonText: 'Try Again'
+            });
+        });
+        </script>";
         }
     }
     ?>
@@ -265,11 +298,8 @@ date_default_timezone_set('Asia/Manila');
         </div>
     </div>
 
-    <!-- SweetAlert2 -->
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <!-- Bootstrap 5 JS Bundle -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
-
     <script src="script.js"></script>
     <script>
         <?php if ($showSuccess): ?>
@@ -291,6 +321,58 @@ date_default_timezone_set('Asia/Manila');
                 html: '<?php echo implode("<br>", array_map('addslashes', $errors)); ?>',
                 confirmButtonColor: '#0d6efd',
                 confirmButtonText: 'Try Again'
+            });
+        <?php endif; ?>
+
+        <?php if (isset($lockoutStatus) && $lockoutStatus['locked']): ?>
+            document.addEventListener('DOMContentLoaded', function() {
+                const remainingTime = <?php echo $lockoutStatus['remaining_time']; ?>;
+
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Account Locked',
+                    html: `Too many failed attempts.<br>Please wait <b></b> to try again.`,
+                    timer: remainingTime * 1000,
+                    timerProgressBar: true,
+                    allowOutsideClick: false,
+                    allowEscapeKey: false,
+                    showConfirmButton: false,
+                    didOpen: () => {
+                        const b = Swal.getHtmlContainer().querySelector('b');
+                        const startTime = Date.now();
+                        const endTime = startTime + (remainingTime * 1000);
+
+                        const timerInterval = setInterval(() => {
+                            const now = Date.now();
+                            const timeLeft = Math.max(0, endTime - now);
+                            const secondsLeft = Math.ceil(timeLeft / 1000);
+
+                            const mins = Math.floor(secondsLeft / 60);
+                            const secs = secondsLeft % 60;
+                            b.textContent = `${mins}:${secs.toString().padStart(2, '0')}`;
+
+                            if (timeLeft <= 0) {
+                                clearInterval(timerInterval);
+                            }
+                        }, 100);
+
+                        // Store interval for cleanup
+                        Swal.getTimerInterval = () => timerInterval;
+                    },
+                    willClose: () => {
+                        // Clear interval
+                        if (Swal.getTimerInterval) {
+                            clearInterval(Swal.getTimerInterval());
+                        }
+                        Swal.fire({
+                            icon: 'info',
+                            title: 'Lockout Expired',
+                            text: 'You can now try logging in again.',
+                            timer: 2000,
+                            showConfirmButton: false
+                        });
+                    }
+                });
             });
         <?php endif; ?>
     </script>

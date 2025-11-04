@@ -1,5 +1,4 @@
 <?php
-require_once 'includes/session.php';
 include '../database.php';
 include '../includes/activity_logger.php';
 ?>
@@ -283,7 +282,7 @@ include '../includes/activity_logger.php';
 
                         <?php
                         $conn = connectToDB();
-                        $sql = "SELECT * FROM teachers WHERE status = '1'";
+                        $sql = "SELECT * FROM teachers WHERE status = '1' ORDER BY lastname ASC";
                         $result = $conn->query($sql);
 
                         if ($result && $result->num_rows > 0) {
@@ -452,7 +451,7 @@ include '../includes/activity_logger.php';
                                 <div class="col-12">
                                     <div class="input-group">
                                         <span class="input-group-text"><i class="fas fa-lock"></i></span>
-                                        <input type="password" class="form-control" placeholder="Enter password" name="editPassword" id="editPassword">
+                                        <input type="password" class="form-control" placeholder="Enter new password" name="editPassword" id="editPassword">
                                         <span class="input-group-text password-toggle" id="password-toggle"
                                             onmousedown="document.getElementById('editPassword').type='text'"
                                             onmouseup="document.getElementById('editPassword').type='password'"

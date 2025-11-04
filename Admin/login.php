@@ -1,40 +1,71 @@
 <?php
-require_once 'includes/session.php';
+
 include('../database.php');
 include '../includes/activity_logger.php';
 
 
-// Initialize login attempt tracking in session if not exists
-if (!isset($_SESSION['login_attempts'])) {
-    $_SESSION['login_attempts'] = 0;
-    $_SESSION['lockout_time'] = null;
+// Check if user has exceeded password reset limit for this month
+function checkPasswordResetLimit($conn, $email)
+{
+    $currentMonth = date('Y-m');
+
+    // Check if password_reset_log table exists, if not create it
+    $tableCheck = $conn->query("SHOW TABLES LIKE 'password_reset_log'");
+    if ($tableCheck->num_rows == 0) {
+        $createTable = "CREATE TABLE password_reset_log (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            email VARCHAR(255) NOT NULL,
+            reset_date DATETIME NOT NULL,
+            month_year VARCHAR(7) NOT NULL,
+            INDEX idx_email_month (email, month_year)
+        )";
+        $conn->query($createTable);
+    }
+
+    // Count resets for this month
+    $stmt = $conn->prepare("SELECT COUNT(*) as reset_count FROM password_reset_log 
+                           WHERE email = ? AND month_year = ?");
+    $stmt->bind_param("ss", $email, $currentMonth);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $row = $result->fetch_assoc();
+    $stmt->close();
+
+    return $row['reset_count'];
 }
 
-// Check if account is locked out
-function isLockedOut()
+// Log password reset attempt
+function logPasswordReset($conn, $email)
 {
-    if (isset($_SESSION['lockout_time']) && $_SESSION['lockout_time'] !== null) {
-        $now = time();
-        if ($now < $_SESSION['lockout_time']) {
-            return true;
-        } else {
-            // Lockout expired, reset
-            $_SESSION['login_attempts'] = 0;
-            $_SESSION['lockout_time'] = null;
-            return false;
-        }
-    }
-    return false;
+    $currentMonth = date('Y-m');
+    $currentDateTime = date('Y-m-d H:i:s');
+
+    $stmt = $conn->prepare("INSERT INTO password_reset_log (email, reset_date, month_year) 
+                           VALUES (?, ?, ?)");
+    $stmt->bind_param("sss", $email, $currentDateTime, $currentMonth);
+    $stmt->execute();
+    $stmt->close();
 }
 
-// Get remaining lockout time in seconds
-function getRemainingLockoutTime()
+// Get remaining resets for this month
+function getRemainingResets($conn, $email)
 {
-    if (isset($_SESSION['lockout_time']) && $_SESSION['lockout_time'] !== null) {
-        return max(0, $_SESSION['lockout_time'] - time());
-    }
-    return 0;
+    $resetCount = checkPasswordResetLimit($conn, $email);
+    return max(0, 2 - $resetCount);
 }
+
+// Get remaining resets if email is available (for display purposes)
+$displayRemainingResets = null;
+if (isset($_POST['check_reset_limit']) && !empty($_POST['check_email'])) {
+    $conn = connectToDB();
+    $checkEmail = $_POST['check_email'];
+    $displayRemainingResets = getRemainingResets($conn, $checkEmail);
+    $conn->close();
+
+    echo json_encode(['remaining' => $displayRemainingResets]);
+    exit;
+}
+
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -45,6 +76,11 @@ function getRemainingLockoutTime()
 
 <body>
     <?php
+    require_once '../session.php';
+    require_once '../LoginSecurity.php';
+
+    initGuestSession();
+
     $errors = [];
     $showSuccess = false;
 
@@ -54,37 +90,23 @@ function getRemainingLockoutTime()
         $email = trim($_POST['email'] ?? '');
         $password = $_POST['password'] ?? '';
 
-        // Check if locked out
-        if (isLockedOut()) {
-            $remainingTime = getRemainingLockoutTime();
-            $minutes = floor($remainingTime / 60);
-            $seconds = $remainingTime % 60;
+        if (isset($_POST['g-recaptcha-response']) && !empty($_POST['g-recaptcha-response'])) {
+            $secret_key = "6LdxyvQrAAAAAFje30yKm8Zyt_d3lrJv7wjzcZP1";
+            $captcha_response = $_POST['g-recaptcha-response'] ?? '';
 
-            echo "<script>
-            document.addEventListener('DOMContentLoaded', function() {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Account Locked',
-                    text: 'Too many failed attempts. Please wait {$minutes} minutes and {$seconds} seconds before trying again.',
-                    confirmButtonColor: '#0d6efd',
-                    confirmButtonText: 'OK'
-                });
-                
-                // Set client-side lockout
-                sessionStorage.setItem('loginLockoutEnd', '" . ($_SESSION['lockout_time'] * 1000) . "');
-                sessionStorage.setItem('loginAttempts', '3');
-            });
-        </script>";
-        } else {
-            if (isset($_POST['g-recaptcha-response']) && !empty($_POST['g-recaptcha-response'])) {
+            $verify_response = file_get_contents("https://www.google.com/recaptcha/api/siteverify?secret={$secret_key}&response={$captcha_response}");
+            $response_data = json_decode($verify_response);
 
-                $secret_key = "6LdxyvQrAAAAAFje30yKm8Zyt_d3lrJv7wjzcZP1";
-                $captcha_response = $_POST['g-recaptcha-response'] ?? '';
+            if ($response_data->success) {
+                $loginSecurity = new LoginSecurity($conn);
 
-                $verify_response = file_get_contents("https://www.google.com/recaptcha/api/siteverify?secret={$secret_key}&response={$captcha_response}");
-                $response_data = json_decode($verify_response);
+                // Check if user is locked out
+                $lockoutStatus = $loginSecurity->checkLockout($email);
 
-                if ($response_data->success) {
+                if ($lockoutStatus['locked']) {
+                    // User is locked out - don't process login, just show lockout message
+                    $lockoutMessage = true;
+                } else {
                     // Validate inputs
                     if (empty($email)) {
                         $errors[] = "Email is required.";
@@ -95,7 +117,6 @@ function getRemainingLockoutTime()
                     }
 
                     if (empty($errors)) {
-
                         $stmt = $conn->prepare("SELECT * FROM admin WHERE email = ?");
                         $stmt->bind_param("s", $email);
                         $stmt->execute();
@@ -103,15 +124,20 @@ function getRemainingLockoutTime()
                         $user = $result->fetch_assoc();
 
                         if ($user) {
-                            if (password_verify($password, $user['password'])) {
+                            if ($user && password_verify($password, $user['password'])) {
+                                // Successful login - clear attempts
+                                $loginSecurity->clearAttempts($email);
 
-                                // Successful login - reset attempts
-                                $_SESSION['login_attempts'] = 0;
-                                $_SESSION['lockout_time'] = null;
+                                session_destroy();
 
-                                $_SESSION['id'] = $user['admin_id'];
+
+                                $userType = 'admin';
+                                $userId = $user['admin_id'];
+
+                                startUniqueSession($userType, $userId);
+
+                                $_SESSION['email'] = $user['email'];
                                 $_SESSION['username'] = $user['username'];
-                                $_SESSION['user_type'] = 'admin';
 
                                 $date = new DateTime();
                                 $_SESSION['last_login'] = $date->format('m-d-Y h:i A');
@@ -119,83 +145,22 @@ function getRemainingLockoutTime()
                                 logActivity($conn, $user['admin_id'], 'admin', 'LOGIN', "logged in to the system.");
 
                                 $showSuccess = true;
-
-                                echo "<script>
-                                // Clear client-side lockout on success
-                                sessionStorage.removeItem('loginLockoutEnd');
-                                sessionStorage.removeItem('loginAttempts');
-                            </script>";
                             } else {
-                                // Failed login - increment attempts
-                                $_SESSION['login_attempts']++;
-
-                                if ($_SESSION['login_attempts'] >= 3) {
-                                    // Lock account for 3 minutes
-                                    $_SESSION['lockout_time'] = time() + (3 * 60);
-
-                                    echo "<script>
-                                    document.addEventListener('DOMContentLoaded', function() {
-                                        Swal.fire({
-                                            icon: 'error',
-                                            title: 'Too Many Attempts',
-                                            text: 'You have exceeded the maximum login attempts. Your account is locked for 3 minutes.',
-                                            confirmButtonColor: '#0d6efd',
-                                            confirmButtonText: 'OK'
-                                        });
-                                        
-                                        // Trigger client-side lockout
-                                        sessionStorage.setItem('loginLockoutEnd', '" . ($_SESSION['lockout_time'] * 1000) . "');
-                                        sessionStorage.setItem('loginAttempts', '3');
-                                        
-                                        // Call the tracking function
-                                        if (typeof trackLoginAttempt === 'function') {
-                                            window.location.reload();
-                                        }
-                                    });
-                                </script>";
-                                } else {
-                                    $remainingAttempts = 3 - $_SESSION['login_attempts'];
-                                    $errors[] = "Invalid email or password. {$remainingAttempts} attempt(s) remaining.";
-
-                                    echo "<script>
-                                    sessionStorage.setItem('loginAttempts', '{$_SESSION['login_attempts']}');
-                                </script>";
-                                }
+                                // Failed login - record attempt
+                                $loginSecurity->recordFailedAttempt($email);
+                                $lockoutStatus = $loginSecurity->checkLockout($email);
+                                $errors[] = "Incorrect email or password. {$lockoutStatus['remaining_attempts']} attempt(s) remaining.";
                             }
                         } else {
-                            // User not found - treat as failed attempt
-                            $_SESSION['login_attempts']++;
-
-                            if ($_SESSION['login_attempts'] >= 3) {
-                                $_SESSION['lockout_time'] = time() + (3 * 60);
-
-                                echo "<script>
-                                document.addEventListener('DOMContentLoaded', function() {
-                                    Swal.fire({
-                                        icon: 'error',
-                                        title: 'Too Many Attempts',
-                                        text: 'You have exceeded the maximum login attempts. Your account is locked for 3 minutes.',
-                                        confirmButtonColor: '#0d6efd',
-                                        confirmButtonText: 'OK'
-                                    });
-                                    
-                                    sessionStorage.setItem('loginLockoutEnd', '" . ($_SESSION['lockout_time'] * 1000) . "');
-                                    sessionStorage.setItem('loginAttempts', '3');
-                                    window.location.reload();
-                                });
-                            </script>";
-                            } else {
-                                $remainingAttempts = 3 - $_SESSION['login_attempts'];
-                                $errors[] = "Invalid email or password. {$remainingAttempts} attempt(s) remaining.";
-
-                                echo "<script>
-                                sessionStorage.setItem('loginAttempts', '{$_SESSION['login_attempts']}');
-                            </script>";
-                            }
+                            // User not found - record attempt
+                            $loginSecurity->recordFailedAttempt($email);
+                            $lockoutStatus = $loginSecurity->checkLockout($email);
+                            $errors[] = "User not found. {$lockoutStatus['remaining_attempts']} attempt(s) remaining.";
                         }
                     }
-                } else {
-                    echo "<script>
+                }
+            } else {
+                echo "<script>
                     document.addEventListener('DOMContentLoaded', function() {
                         Swal.fire({
                             icon: 'error',
@@ -205,21 +170,20 @@ function getRemainingLockoutTime()
                             confirmButtonText: 'Try Again'
                         });
                     });
-                </script>";
-                }
-            } else {
-                echo "<script>
-                document.addEventListener('DOMContentLoaded', function() {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Verification Required',
-                        text: 'Please complete the reCAPTCHA verification.',
-                        confirmButtonColor: '#0d6efd',
-                        confirmButtonText: 'Try Again'
-                    });
-                });
-            </script>";
+                    </script>";
             }
+        } else {
+            echo "<script>
+        document.addEventListener('DOMContentLoaded', function() {
+            Swal.fire({
+                icon: 'error',
+                title: 'Verification Required',
+                text: 'Please complete the reCAPTCHA verification.',
+                confirmButtonColor: '#0d6efd',
+                confirmButtonText: 'Try Again'
+            });
+        });
+        </script>";
         }
     }
 
@@ -422,7 +386,8 @@ function getRemainingLockoutTime()
         }
     }
 
-    //RECOVER PASSWORD
+
+    //RECOVER ACCOUNT
     if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['form_action']) && $_POST['form_action'] === "recover_password") {
         $conn = connectToDB();
         $security_question = $_POST['forgot_question'];
@@ -445,41 +410,69 @@ function getRemainingLockoutTime()
 
                 if ($conn) {
 
-                    if ($authMethod === 'password') {
+                    // Check password reset limit BEFORE authentication
+                    $resetCount = checkPasswordResetLimit($conn, $email);
+                    $remainingResets = getRemainingResets($conn, $email);
 
-                        $stmt = $conn->prepare("SELECT * FROM auth WHERE password = ?");
-                        $stmt->bind_param("s", $authKey);
-                        $stmt->execute();
-                        $result = $stmt->get_result();
-                        $Loggedin = $result->fetch_assoc();
+                    if ($resetCount >= 2) {
+                        $currentMonth = date('F Y');
+                        echo "<script>
+                        document.addEventListener('DOMContentLoaded', function() {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Reset Limit Exceeded',
+                                html: 'You have already reset your password 2 times this month ({$currentMonth}).<br><br>Please try again next month or contact support for assistance.',
+                                confirmButtonColor: '#0d6efd',
+                                confirmButtonText: 'OK'
+                            });
+                        });
+                    </script>";
 
-                        if ($Loggedin) {
-                            // Check if email and security credentials match
-                            $checkStmt = $conn->prepare("SELECT * FROM admin WHERE email = ? AND security_question = ? AND security_answer = ?");
-                            $checkStmt->bind_param("sss", $email, $security_question, $security_answer);
-                            $checkStmt->execute();
-                            $result = $checkStmt->get_result();
+                        $conn->close();
+                    } else {
 
-                            if ($result->num_rows > 0) {
-                                // Generate random password
-                                $random_password = generateRandomPassword(12);
+                        if ($authMethod === 'password') {
 
-                                // Hash the password (recommended for security)
-                                $hashed_password = password_hash($random_password, PASSWORD_DEFAULT);
+                            $stmt = $conn->prepare("SELECT * FROM auth WHERE password = ?");
+                            $stmt->bind_param("s", $authKey);
+                            $stmt->execute();
+                            $result = $stmt->get_result();
+                            $Loggedin = $result->fetch_assoc();
 
-                                // Update password in database
-                                $updateStmt = $conn->prepare("UPDATE admin SET password = ?, confirm_password = ? WHERE email = ?");
-                                $updateStmt->bind_param("sss", $hashed_password, $hashed_password, $email);
+                            if ($Loggedin) {
+                                // Check if email and security credentials match
+                                $checkStmt = $conn->prepare("SELECT * FROM admin WHERE email = ? AND security_question = ? AND security_answer = ?");
+                                $checkStmt->bind_param("sss", $email, $security_question, $security_answer);
+                                $checkStmt->execute();
+                                $result = $checkStmt->get_result();
 
-                                if ($updateStmt->execute()) {
+                                if ($result->num_rows > 0) {
+                                    // Generate random password
+                                    $random_password = generateRandomPassword(12);
 
-                                    echo "<script>
+                                    // Hash the password (recommended for security)
+                                    $hashed_password = password_hash($random_password, PASSWORD_DEFAULT);
+
+                                    // Update password in database
+                                    $updateStmt = $conn->prepare("UPDATE admin SET password = ?, confirm_password = ? WHERE email = ?");
+                                    $updateStmt->bind_param("sss", $hashed_password, $hashed_password, $email);
+
+                                    if ($updateStmt->execute()) {
+
+                                        // Log the password reset
+                                        logPasswordReset($conn, $email);
+
+                                        // Calculate remaining resets after this one
+                                        $newRemainingResets = getRemainingResets($conn, $email);
+                                        $currentMonth = date('F Y');
+
+                                        echo "<script>
                                             document.addEventListener('DOMContentLoaded', function() {
                                                 Swal.fire({
                                                     icon: 'success',
                                                     title: 'Success!',
-                                                    text: 'Password Reset Successfully!',
-                                                    timer: 2000,
+                                                    html: 'Password Reset Successfully!<br><br><small>You have {$newRemainingResets} password reset(s) remaining for {$currentMonth}.</small>',
+                                                    timer: 3000,
                                                     showConfirmButton: false
                                                 }).then(() => {
                                                     // Generate and download PDF
@@ -487,9 +480,9 @@ function getRemainingLockoutTime()
                                                 });
                                             });
                                         </script>";
-                                } else {
+                                    } else {
 
-                                    echo "<script>
+                                        echo "<script>
                                             document.addEventListener('DOMContentLoaded', function() {
                                                 Swal.fire({
                                                     icon: 'error',
@@ -499,12 +492,12 @@ function getRemainingLockoutTime()
                                                 });
                                             });
                                         </script>";
-                                }
+                                    }
 
-                                $updateStmt->close();
-                            } else {
+                                    $updateStmt->close();
+                                } else {
 
-                                echo "<script>
+                                    echo "<script>
                                         document.addEventListener('DOMContentLoaded', function() {
                                             Swal.fire({
                                                 icon: 'error',
@@ -514,13 +507,13 @@ function getRemainingLockoutTime()
                                             });
                                         });
                                     </script>";
-                            }
+                                }
 
-                            $checkStmt->close();
-                            $conn->close();
-                        } else {
+                                $checkStmt->close();
+                                $conn->close();
+                            } else {
 
-                            echo "<script>
+                                echo "<script>
                                     document.addEventListener('DOMContentLoaded', function() {
                                         Swal.fire({
                                             icon: 'error',
@@ -531,42 +524,49 @@ function getRemainingLockoutTime()
                                         });
                                     });
                                 </script>";
-                        }
-                    } else {
+                            }
+                        } else {
 
-                        $stmt = $conn->prepare("SELECT * FROM auth WHERE pin = ?");
-                        $stmt->bind_param("s", $authPIN);
-                        $stmt->execute();
-                        $result = $stmt->get_result();
-                        $Loggedin = $result->fetch_assoc();
+                            $stmt = $conn->prepare("SELECT * FROM auth WHERE pin = ?");
+                            $stmt->bind_param("s", $authPIN);
+                            $stmt->execute();
+                            $result = $stmt->get_result();
+                            $Loggedin = $result->fetch_assoc();
 
-                        if ($Loggedin) {
-                            // Check if email and security credentials match
-                            $checkStmt = $conn->prepare("SELECT * FROM admin WHERE email = ? AND security_question = ? AND security_answer = ?");
-                            $checkStmt->bind_param("sss", $email, $security_question, $security_answer);
-                            $checkStmt->execute();
-                            $result = $checkStmt->get_result();
+                            if ($Loggedin) {
+                                // Check if email and security credentials match
+                                $checkStmt = $conn->prepare("SELECT * FROM admin WHERE email = ? AND security_question = ? AND security_answer = ?");
+                                $checkStmt->bind_param("sss", $email, $security_question, $security_answer);
+                                $checkStmt->execute();
+                                $result = $checkStmt->get_result();
 
-                            if ($result->num_rows > 0) {
-                                // Generate random password
-                                $random_password = generateRandomPassword(12);
+                                if ($result->num_rows > 0) {
+                                    // Generate random password
+                                    $random_password = generateRandomPassword(12);
 
-                                // Hash the password (recommended for security)
-                                $hashed_password = password_hash($random_password, PASSWORD_DEFAULT);
+                                    // Hash the password (recommended for security)
+                                    $hashed_password = password_hash($random_password, PASSWORD_DEFAULT);
 
-                                // Update password in database
-                                $updateStmt = $conn->prepare("UPDATE admin SET password = ?, confirm_password = ? WHERE email = ?");
-                                $updateStmt->bind_param("sss", $hashed_password, $hashed_password, $email);
+                                    // Update password in database
+                                    $updateStmt = $conn->prepare("UPDATE admin SET password = ?, confirm_password = ? WHERE email = ?");
+                                    $updateStmt->bind_param("sss", $hashed_password, $hashed_password, $email);
 
-                                if ($updateStmt->execute()) {
+                                    if ($updateStmt->execute()) {
 
-                                    echo "<script>
+                                        // Log the password reset
+                                        logPasswordReset($conn, $email);
+
+                                        // Calculate remaining resets after this one
+                                        $newRemainingResets = getRemainingResets($conn, $email);
+                                        $currentMonth = date('F Y');
+
+                                        echo "<script>
                                             document.addEventListener('DOMContentLoaded', function() {
                                                 Swal.fire({
                                                     icon: 'success',
                                                     title: 'Success!',
-                                                    text: 'Password Reset Successfully!',
-                                                    timer: 2000,
+                                                    html: 'Password Reset Successfully!<br><br><small>You have {$newRemainingResets} password reset(s) remaining for {$currentMonth}.</small>',
+                                                    timer: 3000,
                                                     showConfirmButton: false
                                                 }).then(() => {
                                                     // Generate and download PDF
@@ -574,9 +574,9 @@ function getRemainingLockoutTime()
                                                 });
                                             });
                                         </script>";
-                                } else {
+                                    } else {
 
-                                    echo "<script>
+                                        echo "<script>
                                             document.addEventListener('DOMContentLoaded', function() {
                                                 Swal.fire({
                                                     icon: 'error',
@@ -586,12 +586,12 @@ function getRemainingLockoutTime()
                                                 });
                                             });
                                         </script>";
-                                }
+                                    }
 
-                                $updateStmt->close();
-                            } else {
+                                    $updateStmt->close();
+                                } else {
 
-                                echo "<script>
+                                    echo "<script>
                                         document.addEventListener('DOMContentLoaded', function() {
                                             Swal.fire({
                                                 icon: 'error',
@@ -601,13 +601,13 @@ function getRemainingLockoutTime()
                                             });
                                         });
                                     </script>";
-                            }
+                                }
 
-                            $checkStmt->close();
-                            $conn->close();
-                        } else {
+                                $checkStmt->close();
+                                $conn->close();
+                            } else {
 
-                            echo "<script>
+                                echo "<script>
                                     document.addEventListener('DOMContentLoaded', function() {
                                         Swal.fire({
                                             icon: 'error',
@@ -618,48 +618,49 @@ function getRemainingLockoutTime()
                                         });
                                     });
                                 </script>";
+                            }
                         }
                     }
                 } else {
 
                     echo "<script>
-                            document.addEventListener('DOMContentLoaded', function() {
-                                Swal.fire({
-                                    icon: 'error',
-                                    title: 'Error!',
-                                    text: 'Database connection failed',
-                                    confirmButtonColor: '#d33'
-                                });
+                        document.addEventListener('DOMContentLoaded', function() {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Error!',
+                                text: 'Database connection failed',
+                                confirmButtonColor: '#d33'
                             });
-                        </script>";
+                        });
+                    </script>";
                 }
             } else {
 
                 echo "<script>
-                        document.addEventListener('DOMContentLoaded', function() {
-                            Swal.fire({
-                                icon: 'error',
-                                title: 'Verification Failed',
-                                text: 'reCAPTCHA verification failed. Please try again.',
-                                confirmButtonColor: '#0d6efd',
-                                confirmButtonText: 'Try Again'
-                            });
+                    document.addEventListener('DOMContentLoaded', function() {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Verification Failed',
+                            text: 'reCAPTCHA verification failed. Please try again.',
+                            confirmButtonColor: '#0d6efd',
+                            confirmButtonText: 'Try Again'
                         });
-                    </script>";
+                    });
+                </script>";
             }
         } else {
 
             echo "<script>
-                document.addEventListener('DOMContentLoaded', function() {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Verification Required',
-                        text: 'Please complete the reCAPTCHA verification.',
-                        confirmButtonColor: '#0d6efd',
-                        confirmButtonText: 'Try Again'
-                    });
+            document.addEventListener('DOMContentLoaded', function() {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Verification Required',
+                    text: 'Please complete the reCAPTCHA verification.',
+                    confirmButtonColor: '#0d6efd',
+                    confirmButtonText: 'Try Again'
                 });
-            </script>";
+            });
+        </script>";
         }
     }
 
@@ -964,9 +965,19 @@ function getRemainingLockoutTime()
             <!-- Forgot Password Form (initially hidden) -->
             <div class="form-section" id="forgotPasswordForm">
                 <h5 class="mb-4 text-center">Password Recovery</h5>
+
+                <!-- Reset Limit Warning -->
+                <div class="alert alert-warning" id="resetLimitWarning" style="display: none;">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    <strong>Limited Password Resets:</strong>
+                    <span id="resetLimitText"></span>
+                </div>
+
                 <div class="alert alert-info">
                     <i class="bi bi-info-circle me-2"></i>Enter your email and security question to reset your password.
+                    <br><small class="text-muted">Note: You can only reset your password 2 times per month.</small>
                 </div>
+
                 <form id="forgotPasswordFormInner1" method="POST" action="<?php echo htmlspecialchars($_SERVER['PHP_SELF']) ?>">
                     <div class="floating-label">
                         <input type="email" class="form-control" id="recoveryEmail" placeholder=" " required>
@@ -1025,7 +1036,7 @@ function getRemainingLockoutTime()
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <!-- jsPDF Autotable plugin for better table formatting -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
-    <script src="login1.js"></script>
+    <script src="login.js"></script>
     <script>
         function generatePasswordPDF(email, password) {
             // Create new jsPDF instance
@@ -1137,8 +1148,7 @@ function getRemainingLockoutTime()
         }
 
         document.addEventListener('DOMContentLoaded', function() {
-            // Check initial lockout state
-            checkLoginLockout();
+
 
             const registerForm = document.getElementById('registerForm1');
             const forgotForm = document.getElementById('forgotPasswordFormInner1');
@@ -1213,6 +1223,56 @@ function getRemainingLockoutTime()
                     html: '<?php echo implode("<br>", array_map('addslashes', $errors)); ?>',
                     confirmButtonColor: '#0d6efd',
                     confirmButtonText: 'Try Again'
+                });
+            <?php endif; ?>
+
+            <?php if (isset($lockoutStatus) && $lockoutStatus['locked']): ?>
+                const remainingTime = <?php echo $lockoutStatus['remaining_time']; ?>;
+
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Account Locked',
+                    html: `Too many failed attempts.<br>Please wait <b></b> to try again.`,
+                    timer: remainingTime * 1000,
+                    timerProgressBar: true,
+                    allowOutsideClick: false,
+                    allowEscapeKey: false,
+                    showConfirmButton: false,
+                    didOpen: () => {
+                        const b = Swal.getHtmlContainer().querySelector('b');
+                        const startTime = Date.now();
+                        const endTime = startTime + (remainingTime * 1000);
+
+                        const timerInterval = setInterval(() => {
+                            const now = Date.now();
+                            const timeLeft = Math.max(0, endTime - now);
+                            const secondsLeft = Math.ceil(timeLeft / 1000);
+
+                            const mins = Math.floor(secondsLeft / 60);
+                            const secs = secondsLeft % 60;
+                            b.textContent = `${mins}:${secs.toString().padStart(2, '0')}`;
+
+                            if (timeLeft <= 0) {
+                                clearInterval(timerInterval);
+                            }
+                        }, 100);
+
+                        // Store interval for cleanup
+                        Swal.getTimerInterval = () => timerInterval;
+                    },
+                    willClose: () => {
+                        // Clear interval
+                        if (Swal.getTimerInterval) {
+                            clearInterval(Swal.getTimerInterval());
+                        }
+                        Swal.fire({
+                            icon: 'info',
+                            title: 'Lockout Expired',
+                            text: 'You can now try logging in again.',
+                            timer: 2000,
+                            showConfirmButton: false
+                        });
+                    }
                 });
             <?php endif; ?>
         });

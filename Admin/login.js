@@ -4,70 +4,7 @@ let currentRegisterStep = 1;
 // Initialize the application
 $(document).ready(function () {
     setupEventListeners();
-    checkLoginLockout();
 });
-
-// Check if login is currently locked out
-function checkLoginLockout() {
-    const lockoutEnd = sessionStorage.getItem('loginLockoutEnd');
-    
-    if (lockoutEnd) {
-        const now = Date.now();
-        const lockoutTime = parseInt(lockoutEnd);
-        
-        if (now < lockoutTime) {
-            // Still locked out
-            disableLoginForm(lockoutTime - now);
-        } else {
-            // Lockout expired, clear it
-            sessionStorage.removeItem('loginLockoutEnd');
-            sessionStorage.removeItem('loginAttempts');
-        }
-    }
-}
-
-// Disable login form for specified duration
-function disableLoginForm(remainingTime) {
-    const loginBtn = $('button[name="btnLogin"]');
-    const loginEmail = $('#loginEmail');
-    const loginPassword = $('#loginPassword');
-    
-    loginBtn.prop('disabled', true);
-    loginEmail.prop('disabled', true);
-    loginPassword.prop('disabled', true);
-    
-    updateLockoutTimer(remainingTime);
-}
-
-// Update lockout timer display
-function updateLockoutTimer(remainingTime) {
-    const loginBtn = $('button[name="btnLogin"]');
-    
-    const updateTimer = () => {
-        const lockoutEnd = sessionStorage.getItem('loginLockoutEnd');
-        const now = Date.now();
-        const remaining = parseInt(lockoutEnd) - now;
-        
-        if (remaining <= 0) {
-            // Lockout expired
-            loginBtn.prop('disabled', false);
-            $('#loginEmail').prop('disabled', false);
-            $('#loginPassword').prop('disabled', false);
-            loginBtn.html('Sign In');
-            sessionStorage.removeItem('loginLockoutEnd');
-            sessionStorage.removeItem('loginAttempts');
-            return;
-        }
-        
-        const minutes = Math.floor(remaining / 60000);
-        const seconds = Math.floor((remaining % 60000) / 1000);
-        loginBtn.html(`Locked (${minutes}:${seconds.toString().padStart(2, '0')})`);
-        
-        setTimeout(updateTimer, 1000);
-    };
-    
-    updateTimer();
-}
 
 // Set up all event listeners
 function setupEventListeners() {
@@ -172,7 +109,7 @@ function handleLoginSubmit(e) {
         });
         return false;
     }
-    
+
     // Form will submit normally, PHP will handle validation
     return true;
 }
@@ -342,7 +279,7 @@ function togglePasswordVisibility(fieldId, toggleElement) {
 // Show register form
 function showRegisterForm(e) {
     if (e) e.preventDefault();
-    
+
     // Hide login form and show register form using Bootstrap classes
     $('#login').removeClass('show active');
     $('#register').addClass('show active');
@@ -370,12 +307,57 @@ function showForgotPasswordForm(e) {
     // Show forgot password form
     $('.form-section').removeClass('active');
     $('#forgotPasswordForm').addClass('active');
+
+    // Reset the warning
+    $('#resetLimitWarning').hide();
+}
+
+// Check password reset limit for email
+function checkResetLimit(email) {
+    if (!email || !isValidEmail(email)) {
+        $('#resetLimitWarning').hide();
+        return;
+    }
+
+    $.ajax({
+        url: window.location.href,
+        method: 'POST',
+        data: {
+            check_reset_limit: true,
+            check_email: email
+        },
+        dataType: 'json',
+        success: function (response) {
+            if (response.remaining !== undefined) {
+                const remaining = response.remaining;
+                const currentMonth = new Date().toLocaleString('default', { month: 'long', year: 'numeric' });
+
+                if (remaining === 0) {
+                    $('#resetLimitText').html(`You have used all password resets for <strong>${currentMonth}</strong>. Please try again next month.`);
+                    $('#resetLimitWarning').removeClass('alert-warning').addClass('alert-danger').show();
+                    $('#recoveryButton').prop('disabled', true);
+                } else if (remaining === 1) {
+                    $('#resetLimitText').html(`You have <strong>1 password reset</strong> remaining for <strong>${currentMonth}</strong>.`);
+                    $('#resetLimitWarning').removeClass('alert-danger').addClass('alert-warning').show();
+                    $('#recoveryButton').prop('disabled', false);
+                } else {
+                    $('#resetLimitText').html(`You have <strong>${remaining} password resets</strong> remaining for <strong>${currentMonth}</strong>.`);
+                    $('#resetLimitWarning').removeClass('alert-danger').addClass('alert-info').show();
+                    $('#recoveryButton').prop('disabled', false);
+                }
+            }
+        },
+        error: function () {
+            // Silently fail - don't block user
+            $('#resetLimitWarning').hide();
+        }
+    });
 }
 
 // Show login form
 function showLoginForm(e) {
     if (e) e.preventDefault();
-    
+
     // Show login form and hide register form using Bootstrap classes
     $('#login').addClass('show active');
     $('#register').removeClass('show active');
@@ -497,6 +479,7 @@ function handlePasswordRecovery(e) {
         Swal.fire('Error', 'Please provide an answer to the security question', 'error');
         return;
     }
+
 }
 
 // Validate email format

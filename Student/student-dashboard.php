@@ -1,5 +1,5 @@
 <?php
-include 'includes/session.php';
+
 include('../database.php');
 ?>
 <!DOCTYPE html>
@@ -198,7 +198,7 @@ include('../database.php');
                             <select class="form-control rounded-4 border-2" id="filterDate">
                                 <?php
                                 $conn = connectToDB();
-                                $sql = "SELECT * FROM schoolyear ORDER BY schoolyear_id DESC";
+                                $sql = "SELECT * FROM schoolyear WHERE status = '1' ORDER BY schoolyear_id DESC";
                                 $result = $conn->query($sql);
 
                                 if ($result && $result->num_rows > 0) {
