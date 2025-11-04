@@ -1,12 +1,24 @@
 <?php
 
 include 'database.php';
+include 'includes/activity_logger.php';
 ?>
 <!DOCTYPE html>
 <html lang="en">
 
 <head>
     <?php include 'header.php'; ?>
+    <style>
+        .form-check-input:checked {
+            background-color: var(--navy-blue);
+            border-color: var(--navy-blue);
+        }
+
+        .form-check-input:focus {
+            border-color: var(--gold);
+            box-shadow: 0 0 0 0.25rem rgba(212, 175, 55, 0.15);
+        }
+    </style>
 </head>
 
 <body class="student-mode animated-background">
@@ -99,26 +111,56 @@ include 'database.php';
                                 $_SESSION['user_type'] = $loginType;
                                 $_SESSION['logged_in'] = true;
 
+                                logActivity($conn, $userId, $userType, 'LOGIN', "logged in to the system.");
+
                                 $showSuccess = true;
 
                                 echo "<script>
                                     document.addEventListener('DOMContentLoaded', function() {
                                         Swal.fire({
-                                            icon: 'success',
-                                            title: 'Login Successful!',
-                                            text: 'Welcome back, $loginType!',
-                                            showConfirmButton: false,
-                                            timer: 1500,
-                                            willClose: () => {
-                                                window.location.href = '$dashboard';
-                                            }
-                                        });
+                                                icon: 'warning',
+                                                title: 'Privacy Notice!',
+                                                html: 'This system logs users\' IPv4 addresses for security and monitoring in compliance with <strong>Republic Act No. 10173 – Data Privacy Act of 2012</strong>. Logs are viewable only by authorized SMATI administrators, and any external access requires a valid court subpoena.',
+                                                confirmButtonColor: '#0d6efd',
+                                                confirmButtonText: 'I Understand & Accept',
+                                                backdrop: true,
+                                                allowOutsideClick: false
+                                            }).then((result) => {
+                                                if (result.isConfirmed) {
+                                                    // Show success message and auto-redirect
+                                                    Swal.fire({
+                                                        icon: 'success',
+                                                        title: 'Login Successful!',
+                                                        text: 'Redirecting to dashboard...',
+                                                        confirmButtonColor: '#0d6efd',
+                                                        showConfirmButton: false,
+                                                        timer: 2000,
+                                                        timerProgressBar: true,
+                                                        willClose: () => {
+                                                            window.location.href = '$dashboard';
+                                                        }
+                                                    });
+
+                                                    // Fallback redirect in case willClose doesn't fire
+                                                    setTimeout(() => {
+                                                        window.location.href = '$dashboard';
+                                                    }, 2000);
+                                                }
+                                            });
                                     });
                                     </script>";
                             } else {
                                 // Failed login - record attempt
                                 $loginSecurity->recordFailedAttempt($id);
                                 $lockoutStatus = $loginSecurity->checkLockout($id);
+
+                                if ($loginType === 'student') {
+                                    logActivity($conn, $user['student_id'], 'student', 'FAILED_LOGIN', "failed logged in attempt to the system. {$lockoutStatus['remaining_attempts']} attempt(s) remaining.");
+                                } else {
+                                    logActivity($conn, $user['teacher_id'], 'teacher', 'FAILED_LOGIN', "failed logged in attempt to the system. {$lockoutStatus['remaining_attempts']} attempt(s) remaining.");
+                                }
+
+
                                 $errors[] = "Incorrect ID/Username or password. {$lockoutStatus['remaining_attempts']} attempt(s) remaining.";
                             }
                         } else {
@@ -290,15 +332,14 @@ include 'database.php';
                     <div class="invalid-feedback" id="loginPasswordError"></div>
                 </div>
 
-                <div class="remember-me-container">
-                    <input type="checkbox" id="rememberMe">
-                    <label class="remember-me-label" for="rememberMe">
-                        <span class="custom-checkbox"></span>
-                        Remember my ID
-                    </label>
-                    <div class="remember-me-info">
-                        <i class="bi bi-info-circle"></i> Your ID will be saved for faster login on this device
+                <div class="remember-me-container mb-3">
+                    <div class="form-check">
+                        <div class="text-muted small">
+                            <input class="form-check-input" type="checkbox" required>
+                            By logging in, you agree that your IP address may be collected for security and fraud-prevention purposes.
+                        </div>
                     </div>
+
                 </div>
 
                 <div class="g-recaptcha" data-sitekey="6LdxyvQrAAAAAMCDZVWlknaTzOMK_q6CT6Wx4min"></div>
@@ -327,6 +368,7 @@ include 'database.php';
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.all.min.js"></script>
     <script src="script.js"></script>
     <script>
+        
         <?php if (isset($lockoutStatus) && $lockoutStatus['locked']): ?>
             document.addEventListener('DOMContentLoaded', function() {
                 const remainingTime = <?php echo $lockoutStatus['remaining_time']; ?>;

@@ -84,7 +84,7 @@ if (isset($_POST['check_reset_limit']) && !empty($_POST['check_email'])) {
     $errors = [];
     $showSuccess = false;
 
-    // Replace your LOGIN QUERY section with this:
+    // LOGIN QUERY
     if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnLogin'])) {
         $conn = connectToDB();
         $email = trim($_POST['email'] ?? '');
@@ -149,6 +149,7 @@ if (isset($_POST['check_reset_limit']) && !empty($_POST['check_email'])) {
                                 // Failed login - record attempt
                                 $loginSecurity->recordFailedAttempt($email);
                                 $lockoutStatus = $loginSecurity->checkLockout($email);
+                                logActivity($conn, $user['admin_id'], 'admin', 'FAILED_LOGIN', "failed logged in attempt to the system. {$lockoutStatus['remaining_attempts']} attempt(s) remaining.");
                                 $errors[] = "Incorrect email or password. {$lockoutStatus['remaining_attempts']} attempt(s) remaining.";
                             }
                         } else {
@@ -840,13 +841,17 @@ if (isset($_POST['check_reset_limit']) && !empty($_POST['check_email'])) {
                             </div>
                         </div>
 
-                        <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div class="d-flex flex-column align-items-center mb-3">
                             <div class="form-check">
-                                <input type="checkbox" class="form-check-input" id="rememberMe" name="remember_me">
-                                <label class="form-check-label" for="rememberMe">Remember me</label>
+                                <div class="text-muted small">
+                                    <input class="form-check-input" type="checkbox" required>
+                                    By logging in, you agree that your IP address may be collected for security and fraud-prevention purposes.
+                                </div>
                             </div>
-                            <a href="#" id="showForgotPassword">Forgot Password?</a>
+                            <a href="#" id="showForgotPassword" class="mt-2">Forgot Password?</a>
+
                         </div>
+
 
                         <!-- CAPTCHA for Login -->
                         <div class="captcha-container">
@@ -1020,7 +1025,7 @@ if (isset($_POST['check_reset_limit']) && !empty($_POST['check_email'])) {
 
 
             <div class="footer-links">
-                <a href="#">Contact Support</a>
+                <a href="#" id="contactSupport">Contact Support</a>
                 <p>|</p>
                 <p>v1.0.0</p>
             </div>
@@ -1038,6 +1043,7 @@ if (isset($_POST['check_reset_limit']) && !empty($_POST['check_email'])) {
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
     <script src="login.js"></script>
     <script>
+
         function generatePasswordPDF(email, password) {
             // Create new jsPDF instance
             const {
@@ -1155,6 +1161,22 @@ if (isset($_POST['check_reset_limit']) && !empty($_POST['check_email'])) {
             const authForm = document.getElementById('authForm');
             const authModal = new bootstrap.Modal(document.getElementById('authModal'));
             const pinInput = document.querySelector('input[name="authPIN"]');
+            const contactSupport = document.getElementById('contactSupport');
+
+            contactSupport.addEventListener("click", function(e) {
+                Swal.fire({
+                    title: 'Contact Support',
+                    html: 'Please contact the developers for assistance.<br><br>' +
+                        '<div class="text-start">' +
+                        '<p class="mb-1"><i class="bi bi-telephone me-2"></i><strong>Phone:</strong> (+63) 991-339-1413</p>' +
+                        '<p class="mb-1"><i class="bi bi-envelope me-2"></i><strong>Email:</strong> soldevillamauchilan@gmail.com </p>' +
+                        '<p class="mb-0"><i class="bi bi-geo-alt me-2"></i><strong>Location:</strong> Malinta, Valenzuela</p>' +
+                        '</div>',
+                    icon: 'info',
+                    confirmButtonColor: '#0A2342',
+                    confirmButtonText: 'OK'
+                });
+            });
 
             // Prevent non-numeric input
             pinInput.addEventListener('input', function(e) {
@@ -1207,13 +1229,33 @@ if (isset($_POST['check_reset_limit']) && !empty($_POST['check_email'])) {
 
             <?php if ($showSuccess): ?>
                 Swal.fire({
-                    icon: 'success',
-                    title: 'Login Successful!',
-                    text: 'Welcome back, <?php echo htmlspecialchars($_SESSION['username']); ?>!',
-                    showConfirmButton: false,
-                    timer: 1500,
-                    willClose: () => {
-                        window.location.href = 'admin-dashboard.php';
+                    icon: 'warning',
+                    title: 'Privacy Notice!',
+                    html: 'This system logs users\' IPv4 addresses for security and monitoring in compliance with <strong>Republic Act No. 10173 – Data Privacy Act of 2012</strong>. Logs are viewable only by authorized SMATI administrators, and any external access requires a valid court subpoena.',
+                    confirmButtonColor: '#0d6efd',
+                    confirmButtonText: 'I Understand & Accept',
+                    backdrop: true,
+                    allowOutsideClick: false
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        // Show success message and auto-redirect
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Login Successful!',
+                            text: 'Redirecting to dashboard...',
+                            confirmButtonColor: '#0d6efd',
+                            showConfirmButton: false,
+                            timer: 2000,
+                            timerProgressBar: true,
+                            willClose: () => {
+                                window.location.href = 'admin-dashboard.php';
+                            }
+                        });
+
+                        // Fallback redirect in case willClose doesn't fire
+                        setTimeout(() => {
+                            window.location.href = 'admin-dashboard.php';
+                        }, 2000);
                     }
                 });
             <?php elseif (!empty($errors)): ?>

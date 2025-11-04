@@ -44,7 +44,7 @@ include('../database.php'); ?>
                     <tbody>
                         <?php
                         $conn = connectToDB();
-                        $sql = "SELECT * FROM students ORDER BY lastname, firstname ASC";
+                        $sql = "SELECT * FROM students WHERE status = '1' ORDER BY lastname, firstname ASC ";
                         $result = $conn->query($sql);
 
                         if ($result && $result->num_rows > 0) {

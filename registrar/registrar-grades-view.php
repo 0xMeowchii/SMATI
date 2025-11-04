@@ -114,15 +114,25 @@ while ($row = $result->fetch_assoc()) {
 
                                         if ($result && $result->num_rows > 0) {
                                             while ($row = $result->fetch_assoc()) {
+                                                $badgeClass = '';
+                                                if ($row['remarks'] === 'Passed') {
+                                                    $badgeClass = 'badge bg-success';
+                                                } elseif ($row['remarks'] === 'Pending') {
+                                                    $badgeClass = 'badge bg-warning text-dark';
+                                                } elseif ($row['remarks'] === 'Failed') {
+                                                    $badgeClass = 'badge bg-danger';
+                                                } else {
+                                                    $badgeClass = 'badge bg-secondary';
+                                                }
                                                 echo "<tr>";
                                                 echo "<td>" . $row['subject'] . "</td>";
                                                 echo "<td>" . $row["lastname"] . ", " . $row["firstname"] . "</td>";
-                                                echo "<td>" . $row['prelim'] . "</td>";
-                                                echo "<td>" . $row['midterm'] . "</td>";
-                                                echo "<td>" . $row['finals'] . "</td>";
+                                                echo "<td>" . ($row['prelim'] !== null ? $row['prelim'] : '-') . "</td>";
+                                                echo "<td>" . ($row['midterm'] !== null ? $row['midterm'] : '-') . "</td>";
+                                                echo "<td>" . ($row['finals'] !== null ? $row['finals'] : '-') . "</td>";
                                                 echo "<td>" . $row['average'] . "</td>";
                                                 echo "<td>" . $row['equivalent'] . "</td>";
-                                                echo "<td>" . $row['remarks'] . "</td>";
+                                                echo "<td><span class='$badgeClass'>" . $row['remarks'] . "</span></td>";
                                                 echo "<td>" . $row['comment'] . "</td>";
                                                 echo "</tr>";
                                             }
@@ -257,8 +267,7 @@ while ($row = $result->fetch_assoc()) {
                 const studentId = "<?php foreach ($students as $student) {
                                         echo $student['student_id'];
                                     } ?>";
-                const currentDate = new Date().toLocaleDateString();
-
+                const currentDateTime = new Date().toLocaleString();
                 // Set document properties
                 doc.setProperties({
                     title: `Student Grades - ${studentName}`,
@@ -272,8 +281,7 @@ while ($row = $result->fetch_assoc()) {
                 const logoUrl = '../images/logo5.png';
                 try {
                     // Add logo to the top left and right
-                    doc.addImage(logoUrl, 'PNG', 20, 10, 15, 15);
-                    doc.addImage(logoUrl, 'PNG', 175, 10, 15, 15);
+                    doc.addImage(logoUrl, 'PNG', 20, 10, 30, 30);
                 } catch (e) {
                     console.warn('Logo could not be loaded:', e);
                 }
@@ -320,7 +328,7 @@ while ($row = $result->fetch_assoc()) {
                 doc.setFont(undefined, 'bold');
                 doc.text('Date Generated:', 20, 62);
                 doc.setFont(undefined, 'normal');
-                doc.text(currentDate, 50, 62);
+                doc.text(currentDateTime, 50, 62);
 
                 // Add signature area if requested
                 if (includeSignature && (signatoryName || signatureImage)) {
@@ -346,7 +354,7 @@ while ($row = $result->fetch_assoc()) {
                         doc.setFont(undefined, 'bold');
                         doc.text('Signed by:', 20, signatureY);
                         doc.setFont(undefined, 'normal');
-                        doc.text(signatoryName, 45, signatureY);
+                        doc.text(`Registrar - ${signatoryName}`, 45, signatureY);
 
                         signatureY += 10;
                     }
@@ -450,7 +458,7 @@ while ($row = $result->fetch_assoc()) {
                 }
 
                 // Save the PDF
-                doc.save(`Grades_${studentName.replace(', ', '_')}_${currentDate.replace(/\//g, '-')}.pdf`);
+                doc.save(`Grades_${studentName.replace(', ', '_')}_${currentDateTime.replace(/\//g, '-')}.pdf`);
 
                 // Show success message
                 Swal.fire({

@@ -93,7 +93,7 @@ if ($result->num_rows > 0) {
 
             //insert/update grades query
             $teacher_id = $_SESSION['id'] ?? null;
-            if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnSaveGrades'])) {
+            if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 if (isset($_POST['grades']) && is_array($_POST['grades'])) {
                     $conn = connectToDB();
                     $subject_id = $_POST['subject_id'];
@@ -136,46 +136,20 @@ if ($result->num_rows > 0) {
                     }
 
                     if ($success) {
-                        logActivity($conn, $teacher_id, $_SESSION['user_type'], 'SUBMIT_GRADE', "submitted a Grade:" . $detail['subject'] ." S.Y. - ". $detail['schoolyear'] . ", " . $detail['semester'] . " Semester");
+                        logActivity($conn, $teacher_id, $_SESSION['user_type'], 'SUBMIT_GRADE', "submitted a Grade:" . $detail['subject'] . " S.Y. - " . $detail['schoolyear'] . ", " . $detail['semester'] . " Semester");
 
                         echo "<script>
-                document.addEventListener('DOMContentLoaded', function() {
-                    Swal.fire({
-                        title: 'Save all grades?',
-                        text: 'This will save/overwrite the grades for all listed students. Continue?',
-                        icon: 'warning',
-                        showCancelButton: true,
-                        confirmButtonText: 'Yes, save',
-                        cancelButtonText: 'Cancel',
-                        confirmButtonColor: '#0d6efd',
-                        cancelButtonColor: '#6c757d'
-                    }).then((result) => {
-                        if (result.isConfirmed) {
-                            // show loading modal then submit
-                            Swal.fire({
-                                title: 'Saving...',
-                                allowOutsideClick: false,
-                                didOpen: () => {
-                                    Swal.showLoading();
-                                    setTimeout(() => window.location.href = 'teacher-student-list.php?subject_id=" . urlencode($subject_id) . "&sy=" . urlencode($sy) . "', 1000);
-                                }
-                            });
-                        }
-                    });
-                });
-                 
-            </script>";
-                    } else {
-                        echo "<script>
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Error!',
-                    text: '" . addslashes($error_message) . "',
-                    confirmButtonColor: '#d33'
-                });
-            </script>";
+                                Swal.fire({
+                                    title: 'Success!',
+                                    text: 'Grades saved successfully!',
+                                    icon: 'success',
+                                    confirmButtonColor: '#0d6efd'
+                                }).then((result) => {
+                                    // Refresh the page while maintaining the same URL parameters
+                                    window.location.href = window.location.href;
+                                });
+                            </script>";
                     }
-
                     $stmt->close();
                     $conn->close();
                 }
@@ -183,7 +157,7 @@ if ($result->num_rows > 0) {
 
             ?>
             <div class="table-responsive">
-                <form id="gradesForm" action="<?php htmlspecialchars($_SERVER['PHP_SELF']) ?>" method="post">
+                <form id="gradesForm" action="<?php echo htmlspecialchars($_SERVER['PHP_SELF'] . '?' . $_SERVER['QUERY_STRING']); ?>" method="post">
                     <input type="hidden" name="subject_id" value="<?php echo htmlspecialchars($subject); ?>">
                     <input type="hidden" name="sy_id" value="<?php echo htmlspecialchars($sy); ?>">
                     <table class="table table-hover">
@@ -241,10 +215,10 @@ if ($result->num_rows > 0) {
                                     </td>
                                     <td>
                                         <span class='form-control-plaintext'>
-                                            <?php echo isset($currentGrades['remarks']) ? $currentGrades['remarks'] : 'Failed'; ?>
+                                            <?php echo isset($currentGrades['remarks']) ? $currentGrades['remarks'] : 'Pending'; ?>
                                         </span>
                                         <input type='hidden' name="grades[<?php echo $student_id; ?>][remarks]"
-                                            value="<?php echo isset($currentGrades['remarks']) ? htmlspecialchars($currentGrades['remarks']) : 'Failed'; ?>">
+                                            value="<?php echo isset($currentGrades['remarks']) ? htmlspecialchars($currentGrades['remarks']) : 'Pending'; ?>">
                                     </td>
                                     <td>
                                         <input type='text' name="grades[<?php echo $student_id; ?>][comment]"
@@ -257,7 +231,7 @@ if ($result->num_rows > 0) {
                         </tbody>
                     </table>
                     <div class="text-end mt-3">
-                        <button type="submit" name="btnSaveGrades" class="btn btn-primary">
+                        <button type="submit" class="btn btn-primary">
                             <i class="fas fa-save me-2"></i>Save All Grades
                         </button>
                     </div>
@@ -269,6 +243,41 @@ if ($result->num_rows > 0) {
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
+        document.getElementById('gradesForm').addEventListener('submit', function(e) {
+            e.preventDefault(); // Stop immediate submission
+
+            // Preserve current URL parameters
+            const currentUrl = window.location.href;
+            this.action = currentUrl;
+
+            Swal.fire({
+                title: 'Save all grades?',
+                text: 'This will save/overwrite the grades for all listed students. Continue?',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Yes, save',
+                cancelButtonText: 'Cancel',
+                confirmButtonColor: '#0d6efd',
+                cancelButtonColor: '#6c757d'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Show loading and submit the form
+                    Swal.fire({
+                        title: 'Saving...',
+                        allowOutsideClick: false,
+                        didOpen: () => {
+                            Swal.showLoading();
+                            // Submit the form after a brief delay to show loading state
+                            setTimeout(() => {
+                                document.getElementById('gradesForm').submit();
+                            }, 500);
+                        }
+                    });
+                }
+                // If cancelled, do nothing - form won't submit
+            });
+        });
+
         document.addEventListener('DOMContentLoaded', function() {
             // Select All functionality
             const selectAllCheckbox = document.getElementById('selectAll');
@@ -318,31 +327,44 @@ if ($result->num_rows > 0) {
 
             function calculateGrades() {
                 const studentRow = this.closest('tr');
-                const studentId = this.name.match(/\[(\d+)\]/)[1];
+                const prelimInput = studentRow.querySelector('input[name*="[prelim]"]');
+                const midtermInput = studentRow.querySelector('input[name*="[midterm]"]');
+                const finalsInput = studentRow.querySelector('input[name*="[finals]"]');
 
-                const prelim = parseFloat(studentRow.querySelector('input[name*="[prelim]"]').value) || 0;
-                const midterm = parseFloat(studentRow.querySelector('input[name*="[midterm]"]').value) || 0;
-                const finals = parseFloat(studentRow.querySelector('input[name*="[finals]"]').value) || 0;
+                const prelim = prelimInput.value.trim();
+                const midterm = midtermInput.value.trim();
+                const finals = finalsInput.value.trim();
 
-                // Calculate average
-                const average = (prelim + midterm + finals) / 3;
-
-                // Calculate equivalent and remarks
+                let average = 0;
                 let equivalent = '5.00';
-                let remarks = 'Failed';
+                let remarks = 'Pending';
 
-                if (average >= 90) {
-                    equivalent = '1.50';
-                    remarks = 'Passed';
-                } else if (average >= 85) {
-                    equivalent = '2.00';
-                    remarks = 'Passed';
-                } else if (average >= 80) {
-                    equivalent = '2.50';
-                    remarks = 'Passed';
-                } else if (average >= 75) {
-                    equivalent = '3.00';
-                    remarks = 'Passed';
+                // Only calculate if ALL three grades have values
+                if (prelim !== '' && midterm !== '' && finals !== '') {
+                    const prelimNum = parseFloat(prelim) || 0;
+                    const midtermNum = parseFloat(midterm) || 0;
+                    const finalsNum = parseFloat(finals) || 0;
+
+                    // Calculate average
+                    average = (prelimNum + midtermNum + finalsNum) / 3;
+
+                    // Calculate equivalent and remarks only if average is valid
+                    if (average >= 90) {
+                        equivalent = '1.50';
+                        remarks = 'Passed';
+                    } else if (average >= 85) {
+                        equivalent = '2.00';
+                        remarks = 'Passed';
+                    } else if (average >= 80) {
+                        equivalent = '2.50';
+                        remarks = 'Passed';
+                    } else if (average >= 75) {
+                        equivalent = '3.00';
+                        remarks = 'Passed';
+                    } else {
+                        equivalent = '5.00';
+                        remarks = 'Failed';
+                    }
                 }
 
                 // Update display

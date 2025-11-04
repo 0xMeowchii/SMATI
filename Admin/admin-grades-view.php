@@ -15,6 +15,7 @@ while ($row = $result->fetch_assoc()) {
 ?>
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <?php include 'includes/header.php' ?>
 </head>
@@ -88,15 +89,25 @@ while ($row = $result->fetch_assoc()) {
 
                                         if ($result && $result->num_rows > 0) {
                                             while ($row = $result->fetch_assoc()) {
+                                                $badgeClass = '';
+                                                if ($row['remarks'] === 'Passed') {
+                                                    $badgeClass = 'badge bg-success';
+                                                } elseif ($row['remarks'] === 'Pending') {
+                                                    $badgeClass = 'badge bg-warning text-dark';
+                                                } elseif ($row['remarks'] === 'Failed') {
+                                                    $badgeClass = 'badge bg-danger';
+                                                } else {
+                                                    $badgeClass = 'badge bg-secondary';
+                                                }
                                                 echo "<tr>";
                                                 echo "<td>" . $row['subject'] . "</td>";
                                                 echo "<td>" . $row["lastname"] . ", " . $row["firstname"] . "</td>";
-                                                echo "<td>" . $row['prelim'] . "</td>";
-                                                echo "<td>" . $row['midterm'] . "</td>";
-                                                echo "<td>" . $row['finals'] . "</td>";
+                                                echo "<td>" . ($row['prelim'] !== null ? $row['prelim'] : '-') . "</td>";
+                                                echo "<td>" . ($row['midterm'] !== null ? $row['midterm'] : '-') . "</td>";
+                                                echo "<td>" . ($row['finals'] !== null ? $row['finals'] : '-') . "</td>";
                                                 echo "<td>" . $row['average'] . "</td>";
                                                 echo "<td>" . $row['equivalent'] . "</td>";
-                                                echo "<td>" . $row['remarks'] . "</td>";
+                                                echo "<td><span class='$badgeClass'>" . $row['remarks'] . "</span></td>";
                                                 echo "<td>" . $row['comment'] . "</td>";
                                                 echo "</tr>";
                                             }

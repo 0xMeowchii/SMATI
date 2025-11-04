@@ -58,15 +58,27 @@ include('../database.php'); ?>
                         $result = $stmt->get_result();
 
                         while ($row = $result->fetch_assoc()) {
+
+                            $badgeClass = '';
+                            if ($row['remarks'] === 'Passed') {
+                                $badgeClass = 'badge bg-success';
+                            } elseif ($row['remarks'] === 'Pending') {
+                                $badgeClass = 'badge bg-warning text-dark';
+                            } elseif ($row['remarks'] === 'Failed') {
+                                $badgeClass = 'badge bg-danger';
+                            } else {
+                                $badgeClass = 'badge bg-secondary';
+                            }
+
                             echo "<tr>";
                             echo "<td>" . $row['subject'] . "</td>";
                             echo "<td>" . $row["lastname"] . ", " . $row["firstname"] . "</td>";
-                            echo "<td>" . $row['prelim'] . "</td>";
-                            echo "<td>" . $row['midterm'] . "</td>";
-                            echo "<td>" . $row['finals'] . "</td>";
+                            echo "<td>" . ($row['prelim'] !== null ? $row['prelim'] : '-') . "</td>";
+                            echo "<td>" . ($row['midterm'] !== null ? $row['midterm'] : '-') . "</td>";
+                            echo "<td>" . ($row['finals'] !== null ? $row['finals'] : '-') . "</td>";
                             echo "<td>" . $row['average'] . "</td>";
                             echo "<td>" . $row['equivalent'] . "</td>";
-                            echo "<td>" . $row['remarks'] . "</td>";
+                            echo "<td><span class='$badgeClass'>" . $row['remarks'] . "</span></td>";
                             echo "<td>" . $row['comment'] . "</td>";
                             echo "</tr>";
                         }
@@ -82,7 +94,7 @@ include('../database.php'); ?>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
-           document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function() {
             const searchInput = document.getElementById('searchInput');
             const tableBody = document.querySelector('tbody');
             const tableRows = Array.from(tableBody.querySelectorAll('tr'));

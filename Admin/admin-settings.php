@@ -766,7 +766,7 @@ include '../includes/activity_logger.php';
                         <div class="text-center mb-4">
                             <i class="fas fa-envelope-circle-check text-primary" style="font-size: 3rem;"></i>
                             <h4 class="mt-3">SMATI Authentication</h4>
-                            <p class="text-muted">Chooses your authentication method to proceed.</p>
+                            <p class="text-muted">Choose your authentication method to proceed.</p>
                         </div>
 
                         <div class="col-12 mb-2">

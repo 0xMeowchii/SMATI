@@ -91,7 +91,7 @@ include('../database.php');
             'concern_id' => $row['concern_id'],
             'reference_num' => $row['reference_num'],
             'fullname' => $row['lastname'] . ", " . $row['firstname'],
-            'date' => $row['concern_date'],
+            'date' => new DateTime($row['concern_date']),
             'section' => $row['section'],
             'type' => $row['type'],
             'details' => $row['details'],
@@ -296,7 +296,7 @@ include('../database.php');
                                 <div class="d-flex justify-content-between align-items-start mb-3">
                                     <div class="pt-3 mb-2">
                                         <div class="h5 text-primary fw-bold concern-reference-num"><?php echo $concern['reference_num'] ?></div>
-                                        <div class="text-muted small">Submitted on <?php echo $concern['date'] ?> </div>
+                                        <div class="text-muted small">Submitted on <?php echo $concern['date']->format('m-d-Y h:i A') ?> </div>
                                         <div class="badge bg-light text-primary px-3 py-2 mt-3">
                                             <i class="fas fa-tag me-1"></i><?php echo $concern['type']; ?>
                                         </div>
@@ -320,7 +320,7 @@ include('../database.php');
                                             data-type='<?php echo $concern['type']; ?>'
                                             data-status='<?php echo $concern['status']; ?>'
                                             data-details='<?php echo $concern['details']; ?>'
-                                            data-date='<?php echo $concern['date']; ?>'>
+                                            data-date='<?php echo $concern['date']->format('m-d-Y h:i A'); ?>'>
                                             <i class='fas fa-download'></i>
                                         </a>
                                     </div>
@@ -330,7 +330,7 @@ include('../database.php');
                                             data-type='<?php echo $concern['type']; ?>'
                                             data-status='<?php echo $concern['status']; ?>'
                                             data-details='<?php echo $concern['details']; ?>'
-                                            data-date='<?php echo $concern['date']; ?>'
+                                            data-date='<?php echo $concern['date']->format('m-d-Y h:i A'); ?>'
                                             data-bs-toggle='modal'
                                             data-bs-target='#viewConcernModal'>
                                             <i class="fas fa-eye me-1"></i>View Details

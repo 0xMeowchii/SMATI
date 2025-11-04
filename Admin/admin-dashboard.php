@@ -152,6 +152,34 @@ $todayActivitylogs = $result->num_rows;
             color: #6c757d;
             font-style: italic;
         }
+
+        .auth-tabs {
+            display: flex;
+            width: 100%;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .auth-tab {
+            flex: 1;
+            padding: 0.5rem 1rem;
+            border: none;
+            background: none;
+            border-bottom: 2px solid transparent;
+            cursor: pointer;
+        }
+
+        .auth-tab.active {
+            border-bottom-color: #007bff;
+            color: #007bff;
+        }
+
+        .otp-input {
+            letter-spacing: 30px;
+            text-align: center;
+            font-size: 24px;
+            font-weight: bold;
+            padding: 10px 20px;
+        }
     </style>
 </head>
 
@@ -183,10 +211,14 @@ $todayActivitylogs = $result->num_rows;
             CASE
                 WHEN al.user_type = 'admin' THEN a.username
                 WHEN al.user_type = 'teacher' THEN CONCAT(t.lastname, ', ', t.firstname)
+                WHEN al.user_type = 'student' THEN CONCAT(s.lastname, ', ', s.firstname)
+                WHEN al.user_type = 'registrar' THEN r.username
               END AS user_name
             FROM activity_logs al
             LEFT JOIN admin a ON al.user_id = a.admin_id AND al.user_type = 'admin'
             LEFT JOIN teachers t ON al.user_id = t.teacher_id AND al.user_type = 'teacher'
+            LEFT JOIN students s ON al.user_id = s.student_id AND al.user_type = 'student'
+            LEFT JOIN registrars r ON al.user_id = r.registrar_id AND al.user_type = 'registrar'
             WHERE DATE(created_at) = CURDATE()
             ORDER BY id DESC";
     $stmt = $conn->prepare($sql);
@@ -214,13 +246,6 @@ $todayActivitylogs = $result->num_rows;
                     <i class="bi bi-clock-history me-1"></i>
                     Last Login: <?php echo $_SESSION['last_login'] ?>
                 </div>
-                <button
-                    class="dark-mode-toggle"
-                    onclick="toggleDarkMode()"
-                    title="Toggle Dark Mode"
-                    aria-label="Toggle Dark Mode">
-                    <i class="fas fa-moon" id="darkModeIcon"></i>
-                </button>
             </div>
         </div>
 
@@ -346,7 +371,7 @@ $todayActivitylogs = $result->num_rows;
                     </div>
                     <div class="card-footer">
                         <!-- View All Button -->
-                        <button class="btn btn-outline-primary w-100" data-bs-toggle="modal" data-bs-target="#view-activitylogs-modal">
+                        <button class="btn btn-outline-primary w-100" id="view-all-activity-btn">
                             <i class="fas fa-list me-2"></i>View All Activity Logs
                         </button>
                     </div>
@@ -399,6 +424,7 @@ $todayActivitylogs = $result->num_rows;
                                         <option value="">All User Types</option>
                                         <option value="admin">Admin</option>
                                         <option value="teacher">Teacher</option>
+                                        <option value="registrar">Registrar</option>
                                     </select>
                                 </div>
                                 <div class="col-md-6">
@@ -435,10 +461,14 @@ $todayActivitylogs = $result->num_rows;
                                                 CASE
                                                     WHEN al.user_type = 'admin' THEN a.username
                                                     WHEN al.user_type = 'teacher' THEN CONCAT(t.lastname, ', ', t.firstname)
+                                                     WHEN al.user_type = 'student' THEN CONCAT(s.lastname, ', ', s.firstname)
+                                                    WHEN al.user_type = 'registrar' THEN r.username
                                                 END AS user_name
                                                 FROM activity_logs al 
                                                 LEFT JOIN admin a ON al.user_id = a.admin_id AND al.user_type = 'admin'
                                                 LEFT JOIN teachers t ON al.user_id = t.teacher_id AND al.user_type = 'teacher'
+                                                LEFT JOIN students s ON al.user_id = s.student_id AND al.user_type = 'student'
+                                                LEFT JOIN registrars r ON al.user_id = r.registrar_id AND al.user_type = 'registrar'
                                                 ORDER BY id DESC";
                                         $stmt = $conn->prepare($sql);
                                         $stmt->execute();
@@ -473,6 +503,81 @@ $todayActivitylogs = $result->num_rows;
                         </div>
                         <div class="modal-footer">
                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                            <button id="exportPdf" class="btn btn-success">
+                                <i class="fas fa-file-pdf me-2"></i>Export to PDF
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- AUTHENTICATION MODAL -->
+            <div class="modal fade" id="authModal" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h2 class="modal-title">Authentication Required</h2>
+                        </div>
+                        <div class="modal-body">
+                            <div class="text-center mb-4">
+                                <i class="fas fa-envelope-circle-check text-primary" style="font-size: 3rem;"></i>
+                                <h4 class="mt-3">SMATI Authentication</h4>
+                                <p class="text-muted">Choose your authentication method to proceed.</p>
+                            </div>
+
+                            <div class="col-12 mb-2">
+                                <div class="auth-tabs" role="tablist">
+                                    <button class="auth-tab active"
+                                        id="password-tab"
+                                        type="button"
+                                        role="tab"
+                                        onclick="switchAuthMethod('password')">
+                                        Authentication Key
+                                    </button>
+                                    <button class="auth-tab"
+                                        id="pin-tab"
+                                        type="button"
+                                        role="tab"
+                                        onclick="switchAuthMethod('pin')">
+                                        PIN
+                                    </button>
+                                </div>
+                            </div>
+
+                            <form id="authForm">
+
+                                <input type="hidden" id="authMethod" name="authMethod" value="password">
+
+                                <!-- Authentication Key Section -->
+                                <div class="d-block" id="authPassword">
+                                    <label class="form-label">SMATI Authentication Key</label>
+                                    <div class="input-group">
+                                        <input type="password" class="form-control" placeholder="Enter SMATI Key" id="authKey" name="authKey">
+                                        <span class="input-group-text"
+                                            onmousedown="document.getElementById('authKey').type='text'"
+                                            onmouseup="document.getElementById('authKey').type='password'"
+                                            onmouseleave="document.getElementById('authKey').type='password'">
+                                            <i class="bi bi-eye"></i></span>
+                                    </div>
+                                </div>
+
+                                <!-- PIN Section -->
+                                <div class="d-none" id="authPIN">
+                                    <label class="form-label text-center">Enter 6-digit PIN</label>
+                                    <input type="password"
+                                        class="form-control otp-input"
+                                        maxlength="6"
+                                        placeholder="000000"
+                                        name="authPIN"
+                                        inputmode="numeric"
+                                        pattern="[0-9]*"
+                                        onkeypress="return event.charCode >= 48 && event.charCode <= 57">
+                                </div>
+
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-primary" id="btnAuth">Authenticate</button>
                         </div>
                     </div>
                 </div>
@@ -504,7 +609,7 @@ $todayActivitylogs = $result->num_rows;
                     backgroundColor: 'rgba(0, 255, 30, 0.3)',
                     borderColor: 'rgba(13, 115, 6, 1)',
                     borderWidth: 2
-                },{
+                }, {
                     label: 'Registrars',
                     data: [<?php echo $activeRegistrars ?>],
                     backgroundColor: 'rgba(242, 255, 0, 0.51)',
@@ -721,6 +826,107 @@ $todayActivitylogs = $result->num_rows;
             const filterUserType = document.getElementById('filterUserType');
             const searchQuery = document.getElementById('searchQuery');
             const filterDate = document.getElementById('filterDate');
+            const authForm = document.getElementById('authForm');
+            const authModal = document.getElementById('authModal');
+            const viewLogsBtn = document.getElementById('view-all-activity-btn');
+
+            // Function to switch authentication methods
+            window.switchAuthMethod = function(method) {
+                document.getElementById('password-tab').classList.toggle('active', method === 'password');
+                document.getElementById('pin-tab').classList.toggle('active', method === 'pin');
+                document.getElementById('authPassword').classList.toggle('d-none', method !== 'password');
+                document.getElementById('authPassword').classList.toggle('d-block', method === 'password');
+                document.getElementById('authPIN').classList.toggle('d-none', method !== 'pin');
+                document.getElementById('authPIN').classList.toggle('d-block', method === 'pin');
+                document.getElementById('authMethod').value = method;
+                document.getElementById('authKey').value = '';
+                document.querySelector('input[name="authPIN"]').value = '';
+            };
+
+            if (viewLogsBtn) {
+                viewLogsBtn.addEventListener('click', function() {
+                    currentRestoreData = {
+                        type: 'logs'
+                    };
+                    const modal = new bootstrap.Modal(authModal);
+                    modal.show();
+                    switchAuthMethod('password');
+                });
+            }
+
+            // Authentication form submission
+            authForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+
+                const formData = new FormData(this);
+                const submitBtn = document.getElementById('btnAuth');
+                const currentMethod = document.getElementById('authMethod').value;
+
+                // Validate form
+                if (currentMethod === 'password' && !document.getElementById('authKey').value.trim()) {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Missing Information',
+                        text: 'Please enter your Authentication Key',
+                        confirmButtonColor: '#0d6efd'
+                    });
+                    return;
+                }
+
+                if (currentMethod === 'pin' && !document.querySelector('input[name="authPIN"]').value.trim()) {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Missing Information',
+                        text: 'Please enter your 6-digit PIN',
+                        confirmButtonColor: '#0d6efd'
+                    });
+                    return;
+                }
+
+                // Show loading state
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Authenticating...';
+
+                fetch('authentication.php', {
+                        method: 'POST',
+                        body: formData
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            // Close auth modal
+                            const authModalInstance = bootstrap.Modal.getInstance(authModal);
+                            authModalInstance.hide();
+                            authForm.reset();
+
+                            if (currentRestoreData.type === 'logs') {
+                                setTimeout(() => {
+                                    const logsModal = new bootstrap.Modal(document.getElementById("view-activitylogs-modal"));
+                                    logsModal.show();
+                                }, 300);
+                            }
+                        } else {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Authentication Failed',
+                                text: data.message
+                            });
+                        }
+                    })
+                    .catch(error => {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Request Failed',
+                            text: 'Error: ' + error
+                        });
+                    })
+                    .finally(() => {
+                        submitBtn.disabled = false;
+                        submitBtn.innerHTML = 'Authenticate';
+                    });
+            });
+
+
 
             if (filterUserType) {
                 filterUserType.addEventListener('change', filterActivityLogs);
@@ -839,6 +1045,112 @@ $todayActivitylogs = $result->num_rows;
                 });
             }
         });
+
+        function exportActivityLogsPDF() {
+            const {
+                jsPDF
+            } = window.jspdf;
+            // Create new PDF document
+            const doc = new jsPDF('p', 'mm', 'a4');
+
+            // Add title
+            doc.setFontSize(16);
+            doc.text('Activity Logs Report', 105, 15, {
+                align: 'center'
+            });
+
+            // Add current date and time
+            const now = new Date();
+            const currentDateTime = now.toLocaleDateString() + ' ' + now.toLocaleTimeString();
+            doc.setFontSize(10);
+            doc.text('Generated on: ' + currentDateTime, 105, 22, {
+                align: 'center'
+            });
+
+            // Table headers
+            const headers = [
+                ['Date/Time', 'User', 'Type', 'Action', 'Description', 'IP Address']
+            ];
+
+            // Get ONLY VISIBLE table rows (respects filters/search)
+            const modal = document.getElementById('view-activitylogs-modal');
+            const rows = modal.querySelectorAll('tbody tr:not(.no-results-message)');
+            const data = [];
+
+            rows.forEach(row => {
+                // Only include rows that are visible (not hidden by filters)
+                if (row.style.display !== 'none') {
+                    const cells = row.querySelectorAll('td');
+                    const rowData = [
+                        cells[0].textContent,
+                        cells[1].textContent,
+                        cells[2].textContent,
+                        cells[3].textContent,
+                        cells[4].textContent,
+                        cells[5].textContent
+                    ];
+                    data.push(rowData);
+                }
+            });
+
+            // Check if there's data to export
+            if (data.length === 0) {
+                alert('No data to export! Please check your filters.');
+                return;
+            }
+
+            // AutoTable configuration
+            doc.autoTable({
+                head: headers,
+                body: data,
+                startY: 30,
+                styles: {
+                    fontSize: 8
+                },
+                headStyles: {
+                    fillColor: [13, 110, 253]
+                },
+                columnStyles: {
+                    0: {
+                        cellWidth: 25
+                    },
+                    1: {
+                        cellWidth: 25
+                    },
+                    2: {
+                        cellWidth: 15
+                    },
+                    3: {
+                        cellWidth: 20
+                    },
+                    4: {
+                        cellWidth: 50
+                    },
+                    5: {
+                        cellWidth: 20
+                    }
+                },
+                margin: {
+                    left: 10,
+                    right: 10
+                },
+                didDrawPage: function(data) {
+                    // Add page numbers
+                    doc.setFontSize(8);
+                    doc.text(
+                        'Page ' + doc.internal.getNumberOfPages(),
+                        data.settings.margin.left,
+                        doc.internal.pageSize.height - 10
+                    );
+                }
+            });
+
+            // Save the PDF
+            doc.save('activity-logs-' + now.toISOString().split('T')[0] + '.pdf');
+        }
+
+        // Add event listener to the export button
+        document.getElementById('exportPdf').addEventListener('click', exportActivityLogsPDF);
     </script>
 </body>
 

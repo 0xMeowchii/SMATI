@@ -1,6 +1,6 @@
 <?php
-
 include('../database.php');
+include '../includes/activity_logger.php';
 date_default_timezone_set('Asia/Manila');
 ?>
 <!DOCTYPE html>
@@ -87,17 +87,21 @@ date_default_timezone_set('Asia/Manila');
                                 session_destroy();
 
                                 $userId = $user['registrar_id'];
-                                $userType = 'registrar'; // Use 'admin' as the user type
+                                $userType = 'registrar';
 
                                 // Start unique session for this admin user
                                 startUniqueSession($userType, $userId);
 
                                 $_SESSION['username'] = $user['username'];
+
+                                logActivity($conn, $userId, 'registrar', 'LOGIN', "logged in to the system.");
+
                                 $showSuccess = true;
                             } else {
                                 // Failed login - record attempt
                                 $loginSecurity->recordFailedAttempt($username);
                                 $lockoutStatus = $loginSecurity->checkLockout($username);
+                                logActivity($conn, $user['registrar_id'], 'registrar', 'FAILED_LOGIN', "failed logged in attempt to the system. {$lockoutStatus['remaining_attempts']} attempt(s) remaining.");
                                 $errors[] = "Incorrect username or password. {$lockoutStatus['remaining_attempts']} attempt(s) remaining.";
                             }
                         } else {
@@ -194,7 +198,13 @@ date_default_timezone_set('Asia/Manila');
                         </span>
                     </div>
                 </div>
-
+                <!-- Security Notice -->
+                <div class="security-notice">
+                    <div class="security-text">
+                        <input class="form-check-input me-1" type="checkbox" required>
+                        By logging in, you agree that your IP address may be collected for security and fraud-prevention purposes.
+                    </div>
+                </div>
                 <!-- Enhanced CAPTCHA Container -->
                 <div class="captcha-container">
                     <div class="captcha-header">
@@ -218,14 +228,7 @@ date_default_timezone_set('Asia/Manila');
                 </div>
             </form>
 
-            <!-- Security Notice -->
-            <div class="security-notice">
-                <i class="fas fa-info-circle"></i>
-                <div class="security-text">
-                    <strong>Security Notice:</strong> This system contains confidential registrar information.
-                    Unauthorized access is prohibited and may be subject to legal action.
-                </div>
-            </div>
+
 
             <!-- Footer Note -->
             <div class="footer-note">
@@ -304,13 +307,33 @@ date_default_timezone_set('Asia/Manila');
     <script>
         <?php if ($showSuccess): ?>
             Swal.fire({
-                icon: 'success',
-                title: 'Login Successful!',
-                text: 'Welcome back, Registrar!',
-                showConfirmButton: false,
-                timer: 1500,
-                willClose: () => {
-                    window.location.href = 'registrar-dashboard.php';
+                icon: 'warning',
+                title: 'Privacy Notice!',
+                html: 'This system logs users\' IPv4 addresses for security and monitoring in compliance with <strong>Republic Act No. 10173 – Data Privacy Act of 2012</strong>. Logs are viewable only by authorized SMATI administrators, and any external access requires a valid court subpoena.',
+                confirmButtonColor: '#0d6efd',
+                confirmButtonText: 'I Understand & Accept',
+                backdrop: true,
+                allowOutsideClick: false
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Show success message and auto-redirect
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Login Successful!',
+                        text: 'Redirecting to dashboard...',
+                        confirmButtonColor: '#0d6efd',
+                        showConfirmButton: false,
+                        timer: 2000,
+                        timerProgressBar: true,
+                        willClose: () => {
+                            window.location.href = 'registrar-dashboard.php';
+                        }
+                    });
+
+                    // Fallback redirect in case willClose doesn't fire
+                    setTimeout(() => {
+                        window.location.href = 'registrar-dashboard.php';
+                    }, 2000);
                 }
             });
 

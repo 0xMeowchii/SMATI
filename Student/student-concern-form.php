@@ -507,13 +507,13 @@ function getTodaySubmissionsCount($student_id)
                             <div class="row mb-4">
                                 <div class="col-md-6">
                                     <div class="floating-label">
-                                        <input type="text" class="form-control floating-input" name="name" placeholder=" " value="<?php echo $fullname ?>" required>
+                                        <input type="text" class="form-control floating-input" name="name" placeholder=" " value="<?php echo $fullname ?>" readonly>
                                         <label for="name" class="required-field">Name</label>
                                     </div>
                                 </div>
                                 <div class="col-md-6">
                                     <div class="floating-label">
-                                        <input type="text" class="form-control floating-input" name="section" placeholder=" " value="<?php echo $set ?>" required>
+                                        <input type="text" class="form-control floating-input" name="section" placeholder=" " value="<?php echo $set ?>" readonly>
                                         <label for="section" class="required-field">Section</label>
                                     </div>
                                 </div>
@@ -521,7 +521,7 @@ function getTodaySubmissionsCount($student_id)
 
                             <div class="mb-4">
                                 <div class="floating-label">
-                                    <input type="email" class="form-control floating-input" name="email" placeholder=" " value="<?php echo $email ?>" required>
+                                    <input type="email" class="form-control floating-input" name="email" placeholder=" " value="<?php echo $email ?>" readonly>
                                     <label for="email" class="required-field">Email Address</label>
                                 </div>
                                 <div class="form-text ms-2">We'll never share your email with anyone else.</div>
