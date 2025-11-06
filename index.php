@@ -70,7 +70,7 @@ include 'includes/activity_logger.php';
 
                     if (empty($errors)) {
                         if ($loginType === 'student') {
-                            $stmt = $conn->prepare("SELECT * FROM students WHERE (student_id = ? OR username = ?)");
+                            $stmt = $conn->prepare("SELECT * FROM students WHERE (email = ? OR username = ?)");
                             $stmt->bind_param("ss", $id, $id);
                             $stmt->execute();
                             $result = $stmt->get_result();
@@ -78,7 +78,7 @@ include 'includes/activity_logger.php';
                             $dashboard = './Student/student-dashboard.php';
                         } else {
 
-                            $stmt = $conn->prepare("SELECT * FROM teachers WHERE (teacher_id = ? OR username = ?)");
+                            $stmt = $conn->prepare("SELECT * FROM teachers WHERE (email = ? OR username = ?)");
                             $stmt->bind_param("ss", $id, $id);
                             $stmt->execute();
                             $result = $stmt->get_result();
@@ -305,10 +305,10 @@ include 'includes/activity_logger.php';
             <form id="loginForm" method="POST" action="<?php echo htmlspecialchars($_SERVER['PHP_SELF']) ?>">
                 <input type="hidden" id="userType" name="user_type" value="student">
                 <div class="mb-3 input-icon">
-                    <label for="loginId" class="form-label" id="idLabel">Student ID or Username</label>
+                    <label for="loginId" class="form-label" id="idLabel">ID # or Username</label>
                     <div class="input-group">
                         <span class="input-group-text"><i class="bi bi-person-vcard"></i></span>
-                        <input type="text" class="form-control" id="loginId" name="loginId" placeholder="Enter your ID or Username" required oncopy="return false" onpaste="return false">
+                        <input type="text" class="form-control" id="loginId" name="loginId" placeholder="Enter your ID # or Username" required oncopy="return false" onpaste="return false">
                     </div>
                     <i class="bi bi-check-circle-fill validation-icon" id="loginIdValid"></i>
                     <i class="bi bi-exclamation-circle-fill validation-icon" id="loginIdInvalid"></i>
@@ -366,7 +366,7 @@ include 'includes/activity_logger.php';
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
     <!-- SweetAlert2 JS -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.all.min.js"></script>
-    <script src="script.js"></script>
+    <script src="script1.js"></script>
     <script>
         
         <?php if (isset($lockoutStatus) && $lockoutStatus['locked']): ?>

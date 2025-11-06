@@ -108,8 +108,8 @@ function setupEventListeners() {
 
         $(this).addClass('active');
         $('#teacherBtn').removeClass('active');
-        $('#idLabel').text('Student ID or Username');
-        $('#loginId').attr('placeholder', 'Enter your Student ID or Username');
+        $('#idLabel').text('ID # or Username');
+        $('#loginId').attr('placeholder', 'Enter your ID # or Username');
 
         // Clear any stored credentials when switching
         clearFormFields();
@@ -130,8 +130,8 @@ function setupEventListeners() {
 
         $(this).addClass('active');
         $('#studentBtn').removeClass('active');
-        $('#idLabel').text('Teacher ID or Username');
-        $('#loginId').attr('placeholder', 'Enter your Teacher ID or Username');
+        $('#idLabel').text('ID # or Username');
+        $('#loginId').attr('placeholder', 'Enter your ID # or Username');
 
         // Clear any stored credentials when switching
         clearFormFields();

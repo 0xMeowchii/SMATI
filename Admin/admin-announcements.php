@@ -231,7 +231,7 @@ include '../includes/activity_logger.php';
                     if ($result && $result->num_rows > 0) {
                         // output data of each row
                         while ($row = $result->fetch_assoc()) {
-                            $row['createdAt'] = new DateTime();
+                            $date = new DateTime($row['createdAt']);
                             // Determine priority class
                             $priorityClass = '';
                             if ($row["type"] == 'High') {
@@ -263,7 +263,7 @@ include '../includes/activity_logger.php';
                             echo '<span class="badge ' . $badgeClass . ' priority-badge"><i class="' . $iconClass . '"></i>' . $row["type"] . '</span>';
                             echo '</div>';
                             echo '<p class="card-text details-text flex-grow-1">' . $row["details"] . '</p>';
-                            echo '<p class="card-text details-text"><i class="bi bi-calendar-event-fill me-2"></i>' . $row["createdAt"]->format('m-d-Y h:i A') . '</p>';
+                            echo '<p class="card-text details-text"><i class="bi bi-calendar-event-fill me-2"></i>' . $date->format('m-d-Y h:i A') . '</p>';
                             echo '<div class="action-buttons1 mt-3">';
                             echo '<a class="btn btn-sm btn-outline-primary me-1 view-announcement-btn"
                             data-id="' . $row["announcement_id"] . '"

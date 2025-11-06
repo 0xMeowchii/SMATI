@@ -442,7 +442,7 @@ include '../includes/activity_logger.php';
                                         <option value="">Select School Year & Semester</option>
                                         <?php
                                         $conn = connectToDB();
-                                        $sql = "SELECT * FROM schoolyear";
+                                        $sql = "SELECT * FROM schoolyear WHERE status = '1' ORDER BY schoolyear_id DESC";
                                         $result = $conn->query($sql);
 
                                         if ($result && $result->num_rows > 0) {
@@ -519,6 +519,17 @@ include '../includes/activity_logger.php';
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
+        // Apply to all inputs except those containing specific words in ID
+        document.querySelectorAll('input[type="text"]').forEach(input => {
+            const excludePatterns = ['username', 'email', 'editUsername', 'editEmail'];
+            const shouldExclude = excludePatterns.some(pattern => input.id.includes(pattern));
+
+            if (!shouldExclude) {
+                input.addEventListener('input', function() {
+                    this.value = this.value.toUpperCase();
+                });
+            }
+        });
         document.querySelectorAll('.view-subject-btn').forEach(function(btn) {
             btn.addEventListener('click', function() {
                 document.getElementById('modalSubjectName').textContent = btn.getAttribute('data-name');

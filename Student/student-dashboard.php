@@ -68,18 +68,29 @@ include('../database.php');
     while ($row = $result->fetch_assoc()) {
         $subjects[] = [
             'subjectname' => $row['subject'],
+            'prelim' => $row['prelim'],
+            'midterm' => $row['midterm'],
+            'finals' => $row['finals'],
             'teachername' => $row['lastname'] . ", " . $row['firstname'],
             'schoolyear' => $row['schoolyear'] . ", " . $row['semester'] . ' Semester'
 
         ];
     }
 
-    //Fetch Subjects
+    //Fetch concerns
     $conn = connectToDB();
-    $sql = "SELECT *
-            FROM concern c
-            INNER JOIN students s ON c.student_id = s.student_id
-            WHERE c.student_id = ? ORDER BY c.concern_id DESC";
+    $sql = "SELECT 
+            c.*,
+            s.firstname as student_firstname, 
+            s.lastname as student_lastname,
+            s.email as email,
+            t.firstname as teacher_firstname, 
+            t.lastname as teacher_lastname
+        FROM concern c
+        INNER JOIN students s ON c.student_id = s.student_id
+        INNER JOIN teachers t ON c.teacher_id = t.teacher_id
+        WHERE c.student_id = ? 
+        ORDER BY c.concern_id DESC";
     $stmt = $conn->prepare($sql);
     $stmt->bind_param("i", $_SESSION['id']);
     $stmt->execute();
@@ -90,13 +101,15 @@ include('../database.php');
         $concerns[] = [
             'concern_id' => $row['concern_id'],
             'reference_num' => $row['reference_num'],
-            'fullname' => $row['lastname'] . ", " . $row['firstname'],
+            'fullname' => $row['student_lastname'] . ", " . $row['student_firstname'],
+            'teacher_fullname' => $row['teacher_lastname'] . ", " . $row['teacher_firstname'],
             'date' => new DateTime($row['concern_date']),
+            'approve_date' => !empty($row['approved_date']) ? new DateTime($row['approved_date']) : null,
             'section' => $row['section'],
             'type' => $row['type'],
             'details' => $row['details'],
             'status' => $row['concern_status'],
-            'email' => $row['email']
+            'email' => $row['email'],
         ];
     }
 
@@ -217,10 +230,13 @@ include('../database.php');
                             <?php foreach ($subjects as $subject): ?>
                                 <div class="card border rounded-3 shadow-sm mb-3 subject-card">
                                     <div class="card-body p-3">
-                                        <div class="d-flex justify-content-between align-items-start mb-2">
-                                            <h5 class="card-title mb-0 fw-bold"><?php echo $subject['subjectname'] ?></h5>
+                                        <div class="d-flex justify-content-between align-items-start">
+                                            <h6 class="card-title mb-0 fw-bold"><?php echo $subject['subjectname'] ?></h6>
+                                            <p class="text muted small">
+                                                <?php echo !empty($subject['prelim']) ? $subject['prelim'] : ' - ';  ?> | <?php echo !empty($subject['midterm']) ? $subject['midterm'] : ' - '; ?> | <?php echo !empty($subject['finals']) ? $subject['finals'] : ' - '; ?></p>
+
                                         </div>
-                                        <p class="card-text text-muted mb-3">
+                                        <p class="card-text text-muted mb-2">
                                             <i class="fas fa-user-tie me-1"></i><?php echo $subject['teachername'] ?>
                                         </p>
                                         <p class="d-none schoolyear"><?php echo $subject['schoolyear'] ?></p>
@@ -315,22 +331,26 @@ include('../database.php');
                                         <a class='btn btn-sm btn-outline-primary download-pdf-btn'
                                             data-num='<?php echo $concern['reference_num']; ?>'
                                             data-name='<?php echo $concern['fullname']; ?>'
+                                            data-teacher='<?php echo $concern['teacher_fullname']; ?>'
                                             data-section='<?php echo $concern['section']; ?>'
                                             data-email='<?php echo $concern['email']; ?>'
                                             data-type='<?php echo $concern['type']; ?>'
                                             data-status='<?php echo $concern['status']; ?>'
                                             data-details='<?php echo $concern['details']; ?>'
-                                            data-date='<?php echo $concern['date']->format('m-d-Y h:i A'); ?>'>
+                                            data-date='<?php echo $concern['date']->format('m-d-Y h:i A'); ?>'
+                                            data-approve='<?php echo $concern['approve_date'] ? $concern['approve_date']->format('m-d-Y h:i A') : 'Not approved yet'; ?>'>
                                             <i class='fas fa-download'></i>
                                         </a>
                                     </div>
                                     <div>
                                         <button class="btn btn-sm btn-outline-primary view-concern-btn"
                                             data-num='<?php echo $concern['reference_num']; ?>'
+                                            data-teacher='<?php echo $concern['teacher_fullname']; ?>'
                                             data-type='<?php echo $concern['type']; ?>'
                                             data-status='<?php echo $concern['status']; ?>'
                                             data-details='<?php echo $concern['details']; ?>'
                                             data-date='<?php echo $concern['date']->format('m-d-Y h:i A'); ?>'
+                                            data-approve='<?php echo $concern['approve_date'] ? $concern['approve_date']->format('m-d-Y h:i A') : 'Not approved yet'; ?>'
                                             data-bs-toggle='modal'
                                             data-bs-target='#viewConcernModal'>
                                             <i class="fas fa-eye me-1"></i>View Details
@@ -369,6 +389,12 @@ include('../database.php');
                                         </div>
                                         <p class="fs-6 mb-0"><span id='modalStatus'></span></p>
                                     </div>
+                                    <div class="p-4 rounded-3 bg-light mb-4">
+                                        <div class="d-flex mb-1 align-items-center" style="font-weight: 600; font-size: 0.9rem;">
+                                            <i class="fas fa-user me-2 fs-6 text-primary" style="font-size: 0.8rem;"></i>Teacher
+                                        </div>
+                                        <p class="fs-6 mb-0"><span id='modalTeacher'></span></p>
+                                    </div>
                                 </div>
                                 <div class="col">
                                     <div class="p-4 rounded-3 bg-light mb-4">
@@ -382,6 +408,12 @@ include('../database.php');
                                             <i class="fas fa-tag me-2 fs-6 text-primary" style="font-size: 0.8rem;"></i>Concern Type
                                         </div>
                                         <p class="fs-6 mb-0"><span id='modalConcernType'></span></p>
+                                    </div>
+                                    <div class="p-4 rounded-3 bg-light mb-4">
+                                        <div class="d-flex mb-1 align-items-center" style="font-weight: 600; font-size: 0.9rem;">
+                                            <i class="fas fa-check-circle me-2 fs-6 text-primary" style="font-size: 0.8rem;"></i>Approved Date
+                                        </div>
+                                        <p class="fs-6 mb-0"><span id='modalApprovedDate'></span></p>
                                     </div>
                                 </div>
                             </div>
@@ -420,11 +452,13 @@ include('../database.php');
                 const concernData = {
                     reference_num: btn.getAttribute('data-num'),
                     name: btn.getAttribute('data-name'),
+                    teacher: btn.getAttribute('data-teacher'),
                     section: btn.getAttribute('data-section'),
                     email: btn.getAttribute('data-email'),
                     type: btn.getAttribute('data-type'),
                     status: btn.getAttribute('data-status'),
                     details: btn.getAttribute('data-details'),
+                    approve: btn.getAttribute('data-approve'),
                     date: btn.getAttribute('data-date')
                 };
 
@@ -475,66 +509,74 @@ include('../database.php');
             doc.setTextColor(67, 97, 238);
             doc.text(`Reference: ${data.reference_num}`, 20, 50);
 
+            doc.setFontSize(12);
+            doc.setTextColor(100, 100, 100);
+            doc.text(`Teacher: ${data.teacher}`, 20, 60);
+
             // Add submission date
             doc.setFontSize(12);
             doc.setTextColor(100, 100, 100);
-            doc.text(`Submitted on: ${data.date}`, 20, 60);
+            doc.text(`Submitted on: ${data.date}`, 20, 65);
+
+            doc.setFontSize(12);
+            doc.setTextColor(100, 100, 100);
+            doc.text(`Approved Date: ${data.approve}`, 20, 70);
 
             // Add status with color coding
             doc.setFontSize(12);
             doc.setTextColor(0, 0, 0);
-            doc.text(`Status:`, 20, 70);
+            doc.text(`Status:`, 20, 80);
             doc.setFont(undefined, 'bold');
 
             // Color code based on status
             if (data.status === 'Approved') {
                 doc.setTextColor(0, 128, 0); // Green
-                doc.text(data.status, 45, 70);
+                doc.text(data.status, 45, 80);
             } else if (data.status === 'Case Closed') {
                 doc.setTextColor(0, 0, 255); // Blue
-                doc.text(data.status, 45, 70);
+                doc.text(data.status, 45, 80);
             } else {
                 doc.setTextColor(255, 165, 0); // Orange for pending
-                doc.text(data.status, 45, 70);
+                doc.text(data.status, 45, 80);
             }
 
             // Add divider line
             doc.setDrawColor(200, 200, 200);
-            doc.line(20, 80, 190, 80);
+            doc.line(20, 85, 190, 85);
 
             // Student Information Section
             doc.setFontSize(14);
             doc.setTextColor(67, 97, 238);
-            doc.text("STUDENT INFORMATION", 20, 95);
+            doc.text("STUDENT INFORMATION", 20, 100);
 
             doc.setFontSize(11);
             doc.setTextColor(0, 0, 0);
             doc.setFont(undefined, 'normal');
 
             // Student details
-            doc.text(`Name: ${data.name}`, 20, 105);
-            doc.text(`Section: ${data.section}`, 20, 115);
-            doc.text(`Email: ${data.email}`, 20, 125);
+            doc.text(`Name: ${data.name}`, 20, 110);
+            doc.text(`Section: ${data.section}`, 20, 120);
+            doc.text(`Email: ${data.email}`, 20, 130);
 
             // Concern Details Section
             doc.setFontSize(14);
             doc.setTextColor(67, 97, 238);
-            doc.text("CONCERN DETAILS", 20, 145);
+            doc.text("CONCERN DETAILS", 20, 150);
 
             doc.setFontSize(11);
             doc.setTextColor(0, 0, 0);
 
-            doc.text(`Type: ${data.type}`, 20, 155);
+            doc.text(`Type: ${data.type}`, 20, 160);
 
             // Concern details with text wrapping
             doc.text("Description:", 20, 170);
-            const splitDetails = doc.splitTextToSize(data.details, 170);
+            const splitDetails = doc.splitTextToSize(data.details, 180);
             doc.text(splitDetails, 20, 180);
 
             // Add footer
             doc.setFontSize(10);
             doc.setTextColor(100, 100, 100);
-            doc.text("Generated by SMATI Concern Portal", 105, 280, {
+            doc.text("Generated by SMATI - Education Portal", 105, 280, {
                 align: 'center'
             });
             doc.text(new Date().toLocaleDateString(), 105, 285, {
@@ -558,6 +600,8 @@ include('../database.php');
                 document.getElementById('modalConcernType').textContent = btn.getAttribute('data-type');
                 document.getElementById('modalDate').textContent = btn.getAttribute('data-date');
                 document.getElementById('modalDetails').textContent = btn.getAttribute('data-details');
+                document.getElementById('modalTeacher').textContent = btn.getAttribute('data-teacher');
+                document.getElementById('modalApprovedDate').textContent = btn.getAttribute('data-approve');
 
 
                 // Set status with background color

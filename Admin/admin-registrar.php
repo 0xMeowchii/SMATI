@@ -272,9 +272,8 @@ include '../includes/activity_logger.php';
                 <table class="table table-hover">
                     <thead>
                         <tr>
-                            <th>RegistrarID</th>
+                            <th>ID #</th>
                             <th>Name</th>
-                            <th>Email</th>
                             <th>Action</th>
                         </tr>
                     </thead>
@@ -288,9 +287,8 @@ include '../includes/activity_logger.php';
                             // output data of each row
                             while ($row = $result->fetch_assoc()) {
                                 echo "<tr>";
-                                echo "<td>" . $row["registrar_id"] . "</td>";
-                                echo "<td>" . $row["lastname"] . ", " . $row["firstname"] . "</td>";
                                 echo "<td>" . $row["email"] . "</td>";
+                                echo "<td>" . $row["lastname"] . ", " . $row["firstname"] . "</td>";
                                 echo "<td>
                                                 <a class='btn btn-sm btn-outline-primary me-1 view-registrar-btn'
                                                 data-id='" . $row["registrar_id"] . "'
@@ -358,8 +356,8 @@ include '../includes/activity_logger.php';
                                     <input type="text" class="form-control" name="lastname" id="lastname" required>
                                 </div>
                                 <div class="col">
-                                    <label for="email" class="form-label">Email</label>
-                                    <input type="email" class="form-control" name="email" id="email" required>
+                                    <label for="email" class="form-label">ID #</label>
+                                    <input type="text" class="form-control" name="email" id="email" required>
                                 </div>
                                 <h4 class="pb-2 border-bottom">User Account</h4>
                                 <div class="col-12">
@@ -416,8 +414,8 @@ include '../includes/activity_logger.php';
                                     <input type="text" class="form-control" name="editLname" id="editLname" required>
                                 </div>
                                 <div class="col">
-                                    <label for="email" class="form-label">Email</label>
-                                    <input type="email" class="form-control" name="editEmail" id="editEmail" required>
+                                    <label for="email" class="form-label">ID #</label>
+                                    <input type="text" class="form-control" name="editEmail" id="editEmail" required>
                                 </div>
                                 <h4 class="pb-2 border-bottom">User Account</h4>
                                 <div class="col-12">
@@ -504,6 +502,17 @@ include '../includes/activity_logger.php';
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="js/script.js"></script>
     <script>
+        // Apply to all inputs except those containing specific words in ID
+        document.querySelectorAll('input[type="text"]').forEach(input => {
+            const excludePatterns = ['username', 'email', 'editUsername', 'editEmail'];
+            const shouldExclude = excludePatterns.some(pattern => input.id.includes(pattern));
+
+            if (!shouldExclude) {
+                input.addEventListener('input', function() {
+                    this.value = this.value.toUpperCase();
+                });
+            }
+        });
         document.querySelectorAll('.view-registrar-btn').forEach(function(btn) {
             btn.addEventListener('click', function() {
                 document.getElementById('modalRegistrarId').textContent = btn.getAttribute('data-id');

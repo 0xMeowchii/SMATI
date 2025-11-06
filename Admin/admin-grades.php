@@ -34,10 +34,9 @@ include('../database.php'); ?>
             <div class="table-responsive flex-grow-1 overflow-auto" style="max-height:600px;">
                 <table class="table table-hover">
                     <thead>
-                        <th>StudentID</th>
+                        <th>ID #</th>
                         <th>Name</th>
                         <th>Set</th>
-                        <th>Email</th>
                         <th>Action</th>
                     </thead>
                     <tbody>
@@ -50,10 +49,9 @@ include('../database.php'); ?>
                             // output data of each row
                             while ($row = $result->fetch_assoc()) {
                                 echo "<tr>";
-                                echo "<td>" . $row["student_id"] . "</td>";
+                                echo "<td>" . $row["email"] . "</td>";
                                 echo "<td>" . $row["lastname"] . ", " . $row["firstname"] . "</td>";
                                 echo "<td>" . $row["course"] . "</td>";
-                                echo "<td>" . $row["email"] . "</td>";
                                 echo "<td>
                                         <a class='btn btn-sm btn-outline-primary'
                                         href='admin-grades-view.php?id=".$row['student_id']."'>

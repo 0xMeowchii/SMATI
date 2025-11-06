@@ -473,27 +473,25 @@ include '../includes/activity_logger.php';
                 <table class="table table-hover">
                     <thead>
                         <tr>
-                            <th>StudentID</th>
+                            <th>ID #</th>
                             <th>Name</th>
                             <th>Set</th>
-                            <th>Email</th>
                             <th>Action</th>
                         </tr>
                     </thead>
                     <tbody>
                         <?php
                         $conn = connectToDB();
-                        $sql = "SELECT * FROM students WHERE status = '1' ORDER BY lastname ASC";
+                        $sql = "SELECT * FROM students WHERE status = '1' ORDER BY lastname,firstname ASC";
                         $result = $conn->query($sql);
 
                         if ($result && $result->num_rows > 0) {
                             // output data of each row
                             while ($row = $result->fetch_assoc()) {
                                 echo "<tr>";
-                                echo "<td>" . $row["student_id"] . "</td>";
+                                echo "<td>" . $row["email"] . "</td>";
                                 echo "<td>" . $row["lastname"] . ", " . $row["firstname"] . "</td>";
                                 echo "<td>" . $row["course"] . "</td>";
-                                echo "<td>" . $row["email"] . "</td>";
                                 echo "<td>
                                                 <a class='btn btn-sm btn-outline-primary me-1 view-student-btn'
                                                 data-id='" . $row["student_id"] . "'
@@ -593,8 +591,8 @@ include '../includes/activity_logger.php';
                                     <input type="text" class="form-control" name="lastname" id="lastname" required>
                                 </div>
                                 <div class="col-md-6">
-                                    <label for="email" class="form-label">Email</label>
-                                    <input type="email" class="form-control" name="email" id="email" required>
+                                    <label for="email" class="form-label">ID #</label>
+                                    <input type="text" class="form-control" name="email" id="email" required>
                                 </div>
                                 <div class="col-md-6 mb-3">
                                     <label for="set" class="form-label">Set</label>
@@ -690,8 +688,8 @@ include '../includes/activity_logger.php';
                                     <input type="text" class="form-control" name="editLname" id="editLname" required>
                                 </div>
                                 <div class="col-md-6">
-                                    <label for="editEmail" class="form-label">Email</label>
-                                    <input type="email" class="form-control" name="editEmail" id="editEmail" required>
+                                    <label for="editEmail" class="form-label">ID #</label>
+                                    <input type="text" class="form-control" name="editEmail" id="editEmail" required>
                                 </div>
                                 <div class="col-md-6 mb-3">
                                     <label for="editCourse" class="form-label">Set</label>
@@ -761,10 +759,11 @@ include '../includes/activity_logger.php';
                                 <h5 class="border-bottom pb-2 mb-3">Personal Information</h5>
                                 <div class="row">
                                     <div class="col-6">
-                                        <p><strong>Student ID:</strong></p>
+                                        <p><strong>ID #:</strong></p>
                                     </div>
                                     <div class="col-6">
-                                        <p id="modalStudentId"></p>
+                                        <input type="hidden" id="modalStudentId">
+                                        <p id="modalStudentEmail"></p>
                                     </div>
                                 </div>
                                 <div class="row">
@@ -783,15 +782,6 @@ include '../includes/activity_logger.php';
                                         <p id="modalStudentCourse"></p>
                                     </div>
                                 </div>
-                                <div class="row">
-                                    <div class="col-6">
-                                        <p><strong>Email:</strong></p>
-                                    </div>
-                                    <div class="col-6">
-                                        <p id="modalStudentEmail"></p>
-                                    </div>
-                                </div>
-
                                 <h5 class="border-bottom pb-2 mb-3 mt-4">User Account</h5>
                                 <div class="row">
                                     <div class="col-6">
@@ -847,9 +837,20 @@ include '../includes/activity_logger.php';
     <script src="./js/darkmode.js"></script>
     <script src="js/script.js"></script>
     <script>
+        // Apply to all inputs except those containing specific words in ID
+        document.querySelectorAll('input[type="text"]').forEach(input => {
+            const excludePatterns = ['username', 'email','editUsername', 'editEmail'];
+            const shouldExclude = excludePatterns.some(pattern => input.id.includes(pattern));
+
+            if (!shouldExclude) {
+                input.addEventListener('input', function() {
+                    this.value = this.value.toUpperCase();
+                });
+            }
+        });
         document.querySelectorAll('.view-student-btn').forEach(function(btn) {
             btn.addEventListener('click', function() {
-                document.getElementById('modalStudentId').textContent = btn.getAttribute('data-id');
+                document.getElementById('modalStudentId').value = btn.getAttribute('data-id');
                 document.getElementById('modalStudentName').textContent = btn.getAttribute('data-name');
                 document.getElementById('modalStudentCourse').textContent = btn.getAttribute('data-course');
                 document.getElementById('modalStudentEmail').textContent = btn.getAttribute('data-email');

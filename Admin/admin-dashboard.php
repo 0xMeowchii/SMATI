@@ -19,6 +19,89 @@ $result = $stmt->get_result();
 
 $totalStudents = $result->num_rows;
 
+// Students created TODAY with latest timestamp
+$sql_today = "SELECT 
+                COUNT(*) as count,
+                MAX(createdAt) as latest_created
+              FROM students 
+              WHERE DATE(createdAt) = CURDATE()";
+$stmt_today = $conn->prepare($sql_today);
+$stmt_today->execute();
+$result_today = $stmt_today->get_result();
+$row_today = $result_today->fetch_assoc();
+
+$todayStudents = $row_today['count'];
+$latestStudentCreated = null;
+
+// Only set latest date if there are actually records from today
+if ($row_today['count'] > 0 && $row_today['latest_created']) {
+    $latestStudentCreated = new DateTime($row_today['latest_created']);
+}
+
+// Students created THIS MONTH
+$sql_month = "SELECT COUNT(*) as count FROM students WHERE YEAR(createdAt) = YEAR(CURDATE()) AND MONTH(createdAt) = MONTH(CURDATE())";
+$stmt_month = $conn->prepare($sql_month);
+$stmt_month->execute();
+$result_month = $stmt_month->get_result();
+$row_month = $result_month->fetch_assoc();
+$monthlyStudents = $row_month['count'];
+
+//GET TODAY'S TEACHER/REGISTRAR CREATED WITH SEPARATE COUNTS
+$sql = "SELECT 
+            COUNT(CASE WHEN action = 'CREATE_TEACHER' THEN 1 END) as teacher_count,
+            COUNT(CASE WHEN action = 'CREATE_REGISTRAR' THEN 1 END) as registrar_count,
+            MAX(created_at) as latest_created_at
+        FROM activity_logs 
+        WHERE user_type = 'admin' 
+        AND action IN ('CREATE_TEACHER', 'CREATE_REGISTRAR')
+        AND DATE(created_at) = CURDATE()";  // Added today filter
+
+$stmt = $conn->prepare($sql);
+$stmt->execute();
+$result = $stmt->get_result();
+
+if ($row = $result->fetch_assoc()) {
+    $teacherCount = $row['teacher_count'];
+    $registrarCount = $row['registrar_count'];
+    $totalCount = $teacherCount + $registrarCount;
+    $bothlastCreated = null;
+
+    // Only set latest date if there are actually records from TODAY
+    if ($totalCount > 0 && $row['latest_created_at']) {
+        $bothlastCreated = new DateTime($row['latest_created_at']);
+    }
+} else {
+    $teacherCount = 0;
+    $registrarCount = 0;
+    $totalCount = 0;
+    $bothlastCreated = null;
+}
+
+// Teachers created THIS MONTH
+$sql_month = "SELECT COUNT(*) as count FROM teachers WHERE YEAR(createdAt) = YEAR(CURDATE()) AND MONTH(createdAt) = MONTH(CURDATE())";
+$stmt_month = $conn->prepare($sql_month);
+$stmt_month->execute();
+$result_month = $stmt_month->get_result();
+$row_month = $result_month->fetch_assoc();
+$monthlyTeachers = $row_month['count'];
+
+// Registrars created THIS MONTH
+$sql_month = "SELECT COUNT(*) as count FROM registrars WHERE YEAR(createdAt) = YEAR(CURDATE()) AND MONTH(createdAt) = MONTH(CURDATE())";
+$stmt_month = $conn->prepare($sql_month);
+$stmt_month->execute();
+$result_month = $stmt_month->get_result();
+$row_month = $result_month->fetch_assoc();
+$monthlyRegistrars = $row_month['count'];
+
+//TOTAL REGISTRARS
+$conn = connectToDB();
+$sql = "SELECT * FROM registrars";
+$stmt = $conn->prepare($sql);
+$stmt->execute();
+$result = $stmt->get_result();
+
+$totalRegistrars = $result->num_rows;
+
 //ACTIVE TEACHERS
 $conn = connectToDB();
 $sql = "SELECT * FROM teachers WHERE status = '1'";
@@ -82,6 +165,24 @@ $stmt->execute();
 $result = $stmt->get_result();
 
 $todayActivitylogs = $result->num_rows;
+
+//GET LAST LOGIN
+$conn = connectToDB();
+$sql = "SELECT created_at 
+        FROM activity_logs 
+        WHERE user_type = 'admin' AND action = 'LOGIN' 
+        ORDER BY created_at DESC 
+        LIMIT 1 OFFSET 1";
+
+$stmt = $conn->prepare($sql);
+$stmt->execute();
+$result = $stmt->get_result();
+
+if ($row = $result->fetch_assoc()) {
+    $secondLastLogin = new DateTime($row['created_at']);
+} else {
+    echo "No previous login found";
+}
 
 ?>
 
@@ -205,7 +306,7 @@ $todayActivitylogs = $result->num_rows;
         ];
     }
 
-    //Fetch activity logs
+    //Fetch activity logs today
     $conn = connectToDB();
     $sql = "SELECT al.*,
             CASE
@@ -244,7 +345,7 @@ $todayActivitylogs = $result->num_rows;
             <div class="d-flex align-items-center gap-3">
                 <div>
                     <i class="bi bi-clock-history me-1"></i>
-                    Last Login: <?php echo $_SESSION['last_login'] ?>
+                    Last Login: <?php echo $secondLastLogin->format('m-d-Y h:i A'); ?>
                 </div>
             </div>
         </div>
@@ -260,6 +361,9 @@ $todayActivitylogs = $result->num_rows;
                         </div>
                         <div class="display-6 fw-bold text-primary mb-2"><?php echo $totalStudents; ?></div>
                         <div class="text-muted text-uppercase small mb-3 tracking-wide">Total Students</div>
+                        <div class="text-muted small bg-body-tertiary border-start border-4 border-primary-subtle rounded-3 fst-italic py-2">
+                            <i class="bi bi-arrow-up"></i><strong><?php echo $monthlyStudents; ?></strong> as of <strong>this month </strong>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -271,7 +375,11 @@ $todayActivitylogs = $result->num_rows;
                             <i class="bi bi-person-check-fill display-6"></i>
                         </div>
                         <div class="display-6 fw-bold text-primary mb-2"><?php echo $activeStudents; ?></div>
-                        <div class="text-muted text-uppercase small mb-3 tracking-wide">Active Students</div>
+                        <div class="text-muted text-uppercase small mb-3 tracking-wide">Active Students
+                        </div>
+                        <div class="text-muted small bg-body-tertiary border-start border-4 border-primary-subtle rounded-3 fst-italic py-2">
+                            <i class="bi bi-arrow-up"></i><strong><?php echo $todayStudents; ?></strong> as of <strong><?php echo $latestStudentCreated->format('m-d-Y h:i A'); ?></strong>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -282,8 +390,11 @@ $todayActivitylogs = $result->num_rows;
                         <div class="mb-3 text-primary opacity-75">
                             <i class="bi bi-person-badge display-6"></i>
                         </div>
-                        <div class="display-6 fw-bold text-primary mb-2"><?php echo $totalTeachers; ?></div>
-                        <div class="text-muted text-uppercase small mb-3 tracking-wide">Total Teachers</div>
+                        <div class="display-6 fw-bold text-primary mb-2"><?php echo $totalTeachers; ?> / <?php echo $totalRegistrars; ?> </div>
+                        <div class="text-muted text-uppercase small mb-3 tracking-wide">Total Teachers/Registrars</div>
+                        <div class="text-muted small bg-body-tertiary border-start border-4 border-primary-subtle rounded-3 fst-italic py-2">
+                            <i class="bi bi-arrow-up"></i><strong><?php echo $monthlyTeachers; ?>/<?php echo $monthlyRegistrars; ?></strong> as of <strong>this month</strong>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -294,8 +405,11 @@ $todayActivitylogs = $result->num_rows;
                         <div class="mb-3 text-primary opacity-75">
                             <i class="bi bi-person-check display-6"></i>
                         </div>
-                        <div class="display-6 fw-bold text-primary mb-2"><?php echo $activeTeachers; ?></div>
-                        <div class="text-muted text-uppercase small mb-3 tracking-wide">Active Teachers</div>
+                        <div class="display-6 fw-bold text-primary mb-2"><?php echo $activeTeachers; ?> / <?php echo $activeRegistrars; ?></div>
+                        <div class="text-muted text-uppercase small mb-3 tracking-wide">Active Teachers/Registrars</div>
+                        <div class="text-muted small bg-body-tertiary border-start border-4 border-primary-subtle rounded-3 fst-italic py-2">
+                            <i class="bi bi-arrow-up"></i><strong><?php echo $teacherCount; ?>/<?php echo $registrarCount; ?></strong> as of <strong><?php echo $bothlastCreated->format('m-d-Y h:i A'); ?></strong>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -590,6 +704,15 @@ $todayActivitylogs = $result->num_rows;
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="./js/darkmode.js"></script>
     <script>
+        function updateClock() {
+            const now = new Date();
+            document.querySelectorAll('.live-clock').forEach(clock => {
+                clock.textContent = now.toLocaleTimeString();
+            });
+        }
+        updateClock();
+        setInterval(updateClock, 1000);
+
         const barCtx = document.getElementById('accountChart');
         const pieCtx = document.getElementById('sectionChart');
 
@@ -906,11 +1029,25 @@ $todayActivitylogs = $result->num_rows;
                                 }, 300);
                             }
                         } else {
-                            Swal.fire({
-                                icon: 'error',
-                                title: 'Authentication Failed',
-                                text: data.message
-                            });
+                            // Check if forced logout is required
+                            if (data.force_logout) {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Authentication Failed',
+                                    text: data.message,
+                                    allowOutsideClick: false,
+                                    confirmButtonColor: '#d33'
+                                }).then(() => {
+                                    // Redirect to logout
+                                    window.location.href = 'includes/logout.php';
+                                });
+                            } else {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Authentication Failed',
+                                    text: data.message
+                                });
+                            }
                         }
                     })
                     .catch(error => {

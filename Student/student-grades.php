@@ -14,7 +14,7 @@ include('../database.php'); ?>
     <main class="main-content">
         <div class="page-header row">
             <div class="col-10">
-                <h4><i class="fas fa-user me-2"></i>My Grades</h4>
+                <h4><i class="fa fa-book me-2"></i>My Grades</h4>
             </div>
             <div class="col-2">
                 <a class="link-underline link-underline-opacity-0" href="student-concern-form.php?id=<?php echo $_SESSION['id'] ?>">

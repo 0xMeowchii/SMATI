@@ -2,6 +2,9 @@
 include('../database.php');
 
 $conn = connectToDB();
+
+$user_image = '';
+
 $sql = "SELECT * FROM students WHERE student_id = ?";
 $stmt = $conn->prepare($sql);
 $stmt->bind_param("i", $_GET['id']);
@@ -11,6 +14,20 @@ $result = $stmt->get_result();
 $students = array();
 while ($row = $result->fetch_assoc()) {
     $students[] = $row;
+}
+
+if ($conn) {
+
+    $stmt = $conn->prepare("SELECT image FROM students WHERE student_id = ?");
+
+    if (isset($stmt)) {
+        $stmt->bind_param("i", $_GET['id']);
+        $stmt->execute();
+        $stmt->bind_result($user_image);
+        $stmt->fetch();
+        $stmt->close();
+    }
+    $conn->close();
 }
 ?>
 <!DOCTYPE html>
@@ -29,6 +46,7 @@ while ($row = $result->fetch_assoc()) {
             <h4><i class="fas fa-file me-2"></i>Student Grades > <?php foreach ($students as $student) {
                                                                         echo $student['lastname'] . ", " . $student['firstname'];
                                                                     } ?></h4>
+            <img class="border border-2" src="<?php echo !empty($user_image) ? $user_image : '../images/logo5.png';  ?>" alt="Profile" width="100px" height="100px" style="object-fit: cover; cursor: pointer;" id="student_profile_image">
         </div>
         <div class="container">
             <div class="table-header">

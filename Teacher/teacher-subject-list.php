@@ -375,6 +375,12 @@ include '../includes/activity_logger.php';
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
+        // Apply to all inputs that should be uppercase
+        document.querySelectorAll('input[type="text"]').forEach(input => {
+            input.addEventListener('input', function() {
+                this.value = this.value.toUpperCase();
+            });
+        });
         document.querySelectorAll('.edit-subject-btn').forEach(function(btn) {
             btn.addEventListener('click', function() {
                 document.getElementById('editId').value = btn.getAttribute('data-id');

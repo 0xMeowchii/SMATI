@@ -1,8 +1,10 @@
 <?php
+require_once '../database.php';
 require_once '../session.php';
+
 $userSessionFound = false;
 foreach ($_COOKIE as $cookieName => $cookieValue) {
-    if (preg_match('/^(admin|student|teacher)_\d+$/', $cookieName)) {
+    if (preg_match('/^(admin)_\d+$/', $cookieName)) {
         // Found a user session cookie
         session_name($cookieName);
         session_start();
@@ -12,23 +14,6 @@ foreach ($_COOKIE as $cookieName => $cookieValue) {
 }
 header('Content-Type: application/json');
 
-// Include your database connection
-function connectToDB()
-{
-    // Your database connection code here
-    $servername = "localhost";
-    $username = "root";
-    $password = "";
-    $dbname = "dbsmati";
-
-    $conn = new mysqli($servername, $username, $password, $dbname);
-
-    if ($conn->connect_error) {
-        return false;
-    }
-    return $conn;
-}
-
 // Check if it's a POST request
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $conn = connectToDB();
@@ -37,6 +22,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         echo json_encode([
             'success' => false,
             'message' => 'Database connection failed'
+        ]);
+        exit;
+    }
+
+    // Initialize failed attempts counter
+    if (!isset($_SESSION['auth_failed_attempts'])) {
+        $_SESSION['auth_failed_attempts'] = 0;
+    }
+
+    // Check if user has exceeded max attempts
+    if ($_SESSION['auth_failed_attempts'] >= 3) {
+        echo json_encode([
+            'success' => false,
+            'message' => 'Maximum authentication attempts exceeded. You will be logged out.',
+            'force_logout' => true
         ]);
         exit;
     }
@@ -83,16 +83,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $_SESSION['authenticated'] = true;
             $_SESSION['auth_method'] = 'password';
             $_SESSION['auth_time'] = time();
+            $_SESSION['auth_failed_attempts'] = 0; // Reset on success
 
             echo json_encode([
                 'success' => true,
                 'message' => 'Authentication successful'
             ]);
         } else {
-            echo json_encode([
-                'success' => false,
-                'message' => 'Invalid password. Please try again.'
-            ]);
+            $_SESSION['auth_failed_attempts']++;
+            $attemptsLeft = 3 - $_SESSION['auth_failed_attempts'];
+            
+            if ($attemptsLeft > 0) {
+                echo json_encode([
+                    'success' => false,
+                    'message' => "Invalid password. $attemptsLeft attempt(s) remaining.",
+                    'attempts_left' => $attemptsLeft
+                ]);
+            } else {
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'Maximum authentication attempts exceeded. You will be logged out.',
+                    'force_logout' => true
+                ]);
+            }
         }
     } else if ($authMethod === 'pin') {
         $stmt = $conn->prepare("SELECT * FROM auth WHERE pin = ?");
@@ -105,16 +118,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $_SESSION['authenticated'] = true;
             $_SESSION['auth_method'] = 'pin';
             $_SESSION['auth_time'] = time();
+            $_SESSION['auth_failed_attempts'] = 0; // Reset on success
 
             echo json_encode([
                 'success' => true,
                 'message' => 'Authentication successful'
             ]);
         } else {
-            echo json_encode([
-                'success' => false,
-                'message' => 'Invalid PIN. Please try again.'
-            ]);
+            $_SESSION['auth_failed_attempts']++;
+            $attemptsLeft = 3 - $_SESSION['auth_failed_attempts'];
+            
+            if ($attemptsLeft > 0) {
+                echo json_encode([
+                    'success' => false,
+                    'message' => "Invalid PIN. $attemptsLeft attempt(s) remaining.",
+                    'attempts_left' => $attemptsLeft
+                ]);
+            } else {
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'Maximum authentication attempts exceeded. You will be logged out.',
+                    'force_logout' => true
+                ]);
+            }
         }
     } else {
         echo json_encode([
@@ -131,3 +157,4 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         'message' => 'Invalid request method'
     ]);
 }
+?>

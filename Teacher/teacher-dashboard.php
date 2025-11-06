@@ -171,6 +171,7 @@ include '../database.php';
             'reference_num' => $row['reference_num'],
             'fullname' => $row['lastname'] . ", " . $row['firstname'],
             'date' => new DateTime($row['concern_date']),
+            'approve_date' => !empty($row['approved_date']) ? new DateTime($row['approved_date']) : null,
             'section' => $row['section'],
             'type' => $row['type'],
             'details' => $row['details'],
@@ -193,7 +194,7 @@ include '../database.php';
             $concern_id = $_POST['approveId'];
 
             if ($conn) {
-                $stmt = $conn->prepare("UPDATE concern SET concern_status = 'Approved' WHERE concern_id=?");
+                $stmt = $conn->prepare("UPDATE concern SET concern_status = 'Approved' , approved_date = NOW() WHERE concern_id=?");
                 $stmt->bind_param("i", $concern_id);
 
                 if ($stmt->execute()) {
@@ -514,7 +515,8 @@ include '../database.php';
                                         data-type='<?php echo $concern['type']; ?>'
                                         data-status='<?php echo $concern['status']; ?>'
                                         data-details='<?php echo $concern['details']; ?>'
-                                        data-date='<?php echo $concern['date']->format('m-d-Y h:i A'); ?>'>
+                                        data-date='<?php echo $concern['date']->format('m-d-Y h:i A'); ?>'
+                                        data-approve='<?php echo $concern['approve_date'] ? $concern['approve_date']->format('m-d-Y h:i A') : 'Not approved yet'; ?>'>
                                         <i class='fas fa-download'></i>
                                     </a>
 
@@ -555,6 +557,7 @@ include '../database.php';
                                         data-status='<?php echo $concern['status']; ?>'
                                         data-details='<?php echo $concern['details']; ?>'
                                         data-date='<?php echo $concern['date']->format('m-d-Y h:i A'); ?>'
+                                        data-approve='<?php echo $concern['approve_date'] ? $concern['approve_date']->format('m-d-Y h:i A') : 'Not approved yet'; ?>'
                                         data-bs-toggle='modal'
                                         data-bs-target='#viewConcernModal'>
                                         <i class="fas fa-eye me-1"></i>View Details
@@ -633,6 +636,12 @@ include '../database.php';
                                         <i class="fas fa-tag me-2 fs-6 text-primary" style="font-size: 0.8rem;"></i>Concern Type
                                     </div>
                                     <p class="fs-6 mb-0"><span id='modalConcernType'></span></p>
+                                </div>
+                                <div class="p-4 rounded-3 bg-light mb-4">
+                                    <div class="d-flex mb-1 align-items-center" style="font-weight: 600; font-size: 0.9rem;">
+                                        <i class="fas fa-check-circle me-2 fs-6 text-primary" style="font-size: 0.8rem;"></i>Approved Date
+                                    </div>
+                                    <p class="fs-6 mb-0"><span id='modalApprovedDate'></span></p>
                                 </div>
                             </div>
                         </div>
@@ -723,6 +732,7 @@ include '../database.php';
                 document.getElementById('modalEmail').textContent = btn.getAttribute('data-email');
                 document.getElementById('modalConcernType').textContent = btn.getAttribute('data-type');
                 document.getElementById('modalDate').textContent = btn.getAttribute('data-date');
+                document.getElementById('modalApprovedDate').textContent = btn.getAttribute('data-approve');
                 document.getElementById('modalSection').textContent = btn.getAttribute('data-section');
                 document.getElementById('modalDetails').textContent = btn.getAttribute('data-details');
 

@@ -314,6 +314,13 @@ include '../includes/activity_logger.php';
                             <label class="form-label">Last Backup</label>
                             <input type="text" class="form-control" id="last-backup" readonly
                                 title="Click for more details" style="cursor: pointer;">
+                            <div class="text-muted small my-2">
+                                <i class="bi bi-info-circle"></i>
+                                The system supports automated weekly database backup that will be stored in the system file. Contact the developers for assistance.<br><strong>Next backup:</strong> 11-11-2025
+                            </div>
+                            <button class="btn btn-outline-primary w-100" id="request-btn">
+                                <i class="bi bi-exclamation-circle me-2"></i>Request Authenticode/PIN
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -988,6 +995,7 @@ include '../includes/activity_logger.php';
             const authModal = document.getElementById('authModal');
             const backupBtn = document.getElementById('backup-btn');
             const restoreBtn = document.getElementById('restore-btn');
+            const requestBtn = document.getElementById('request-btn');
 
             // Function to switch authentication methods
             window.switchAuthMethod = function(method) {
@@ -1105,6 +1113,17 @@ include '../includes/activity_logger.php';
                 });
             }
 
+            if (requestBtn) {
+                requestBtn.addEventListener('click', function() {
+                    currentRestoreData = {
+                        type: 'request'
+                    };
+                    const modal = new bootstrap.Modal(authModal);
+                    modal.show();
+                    switchAuthMethod('password');
+                });
+            }
+
             // Keep restore backup functionality
             if (restoreBtn) {
                 restoreBtn.addEventListener('click', function() {
@@ -1177,6 +1196,8 @@ include '../includes/activity_logger.php';
                                 showBackupConfirmation();
                             } else if (currentRestoreData.type === 'restore-backup') {
                                 showRestoreConfirmation();
+                            } else if (currentRestoreData.type === 'request') {
+                                requestAuthenticode();
                             } else if (currentRestoreData.modalId) {
                                 // Set the ID in the hidden input field
                                 const idFieldMap = {
@@ -1199,11 +1220,25 @@ include '../includes/activity_logger.php';
                                 }, 300);
                             }
                         } else {
-                            Swal.fire({
-                                icon: 'error',
-                                title: 'Authentication Failed',
-                                text: data.message
-                            });
+                            // Check if forced logout is required
+                            if (data.force_logout) {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Authentication Failed',
+                                    text: data.message,
+                                    allowOutsideClick: false,
+                                    confirmButtonColor: '#d33'
+                                }).then(() => {
+                                    // Redirect to logout
+                                    window.location.href = 'includes/logout.php';
+                                });
+                            } else {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Authentication Failed',
+                                    text: data.message
+                                });
+                            }
                         }
                     })
                     .catch(error => {
@@ -1303,6 +1338,38 @@ include '../includes/activity_logger.php';
                         });
                     });
             }
+
+            function requestAuthenticode() {
+                Swal.fire({
+                    title: 'Download Authenticode/PIN',
+                    text: 'This will download the Authenticode/PIN request PDF',
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonColor: '#0d6efd',
+                    cancelButtonColor: '#6c757d',
+                    confirmButtonText: 'Yes, download',
+                    cancelButtonText: 'Cancel'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        const filePath = 'SMATI-AUTH-protected.pdf';
+                        const link = document.createElement('a');
+                        link.href = filePath;
+                        link.download = 'SMATI-AUTH-protected.pdf';
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+
+                        // Optional success message
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Download Started',
+                            text: 'Your file is being downloaded',
+                            timer: 2000,
+                            showConfirmButton: false
+                        });
+                    }
+                });
+            };
 
             // Handle download button click
             document.getElementById('downloadBackupBtn').addEventListener('click', function() {
