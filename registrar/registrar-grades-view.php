@@ -2,6 +2,8 @@
 include('../database.php');
 
 $conn = connectToDB();
+$user_image = '';
+
 $sql = "SELECT * FROM students WHERE student_id = ?";
 $stmt = $conn->prepare($sql);
 $stmt->bind_param("i", $_GET['id']);
@@ -11,6 +13,20 @@ $result = $stmt->get_result();
 $students = array();
 while ($row = $result->fetch_assoc()) {
     $students[] = $row;
+}
+
+if ($conn) {
+
+    $stmt = $conn->prepare("SELECT image FROM students WHERE student_id = ?");
+
+    if (isset($stmt)) {
+        $stmt->bind_param("i", $_GET['id']);
+        $stmt->execute();
+        $stmt->bind_result($user_image);
+        $stmt->fetch();
+        $stmt->close();
+    }
+    $conn->close();
 }
 ?>
 <!DOCTYPE html>
@@ -49,6 +65,7 @@ while ($row = $result->fetch_assoc()) {
             <h4><i class="fas fa-file me-2"></i>Student Grades > <?php foreach ($students as $student) {
                                                                         echo $student['lastname'] . ", " . $student['firstname'];
                                                                     } ?></h4>
+            <img class="border border-2" src="<?php echo !empty($user_image) ? $user_image : '../images/logo5.png';  ?>" alt="Profile" width="100px" height="100px" style="object-fit: cover; cursor: pointer;" id="student_profile_image">
         </div>
         <div class="container">
             <div class="table-header">
@@ -67,7 +84,7 @@ while ($row = $result->fetch_assoc()) {
 
             <?php
             $conn = connectToDB();
-            $sql = "SELECT * FROM schoolyear WHERE status = '1' ORDER BY schoolyear_id DESC";
+            $sql = "SELECT * FROM schoolyear WHERE status = '1' ORDER BY schoolyear_id";
             $stmt = $conn->prepare($sql);
             $stmt->execute();
             $result = $stmt->get_result();
@@ -209,6 +226,119 @@ while ($row = $result->fetch_assoc()) {
             let signatoryName = '';
             let signatureImage = null;
 
+            // Image popup functionality for sidebar profile image
+            const studentProfileImage = document.getElementById('student_profile_image');
+
+            if (studentProfileImage) {
+                studentProfileImage.addEventListener('click', function() {
+                    const imageSrc = this.src;
+
+                    // Create popup overlay
+                    const popupOverlay = document.createElement('div');
+                    popupOverlay.className = 'image-popup-overlay';
+                    popupOverlay.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.9);
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                z-index: 9999;
+                cursor: zoom-out;
+            `;
+
+                    // Create popup content
+                    const popupContent = document.createElement('div');
+                    popupContent.style.cssText = `
+                position: relative;
+                max-width: 90%;
+                max-height: 90%;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+            `;
+
+                    // Create image element
+                    const popupImage = document.createElement('img');
+                    popupImage.src = imageSrc;
+                    popupImage.style.cssText = `
+                max-width: 100%;
+                max-height: 100%;
+                object-fit: contain;
+                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+                border: 4px solid white;
+            `;
+
+                    // Create close button
+                    const closeButton = document.createElement('button');
+                    closeButton.innerHTML = '&times;';
+                    closeButton.style.cssText = `
+                position: absolute;
+                top: -40px;
+                right: -40px;
+                background: rgba(255, 255, 255, 0.2);
+                border: none;
+                color: white;
+                font-size: 30px;
+                width: 40px;
+                height: 40px;
+                border-radius: 50%;
+                cursor: pointer;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                transition: background 0.3s ease;
+            `;
+
+                    // Add hover effect to close button
+                    closeButton.addEventListener('mouseenter', function() {
+                        this.style.background = 'rgba(255, 255, 255, 0.3)';
+                    });
+                    closeButton.addEventListener('mouseleave', function() {
+                        this.style.background = 'rgba(255, 255, 255, 0.2)';
+                    });
+
+                    // Close popup function
+                    function closePopup() {
+                        document.body.removeChild(popupOverlay);
+                        document.removeEventListener('keydown', handleKeyPress);
+                    }
+
+                    // Handle keyboard events
+                    function handleKeyPress(e) {
+                        if (e.key === 'Escape') {
+                            closePopup();
+                        }
+                    }
+
+                    // Add event listeners
+                    closeButton.addEventListener('click', closePopup);
+                    popupOverlay.addEventListener('click', function(e) {
+                        if (e.target === popupOverlay) {
+                            closePopup();
+                        }
+                    });
+                    document.addEventListener('keydown', handleKeyPress);
+
+                    // Assemble and append to body
+                    popupContent.appendChild(popupImage);
+                    popupContent.appendChild(closeButton);
+                    popupOverlay.appendChild(popupContent);
+                    document.body.appendChild(popupOverlay);
+
+                    // Add animation
+                    popupOverlay.style.opacity = '0';
+                    popupOverlay.style.transition = 'opacity 0.3s ease';
+
+                    setTimeout(() => {
+                        popupOverlay.style.opacity = '1';
+                    }, 10);
+                });
+            }
+
             // Export to PDF function
             document.getElementById('exportPdf').addEventListener('click', function() {
 
@@ -260,6 +390,22 @@ while ($row = $result->fetch_assoc()) {
                     format: 'a4'
                 });
 
+                // Load Century Gothic font (you need to have the font file)
+                // Option 1: If you have the font file locally
+                const centuryGothicNormal = '../fonts/centurygothic.ttf';
+                const centuryGothicBold = '../fonts/centurygothic_bold.ttf';
+
+                // Add the font to jsPDF (you need to load the font files first)
+                doc.addFont(centuryGothicNormal, 'CenturyGothic', 'normal');
+                doc.addFont(centuryGothicBold, 'CenturyGothic', 'bold');
+                doc.setFont('CenturyGothic');
+
+                // Option 2: Use built-in fonts that are similar to Century Gothic
+                // Since Century Gothic might not be available, use similar fonts:
+                // - "helvetica" is clean and similar
+                // - "arial" is widely available
+                // - "verdana" is also clean and modern
+
                 // Student information
                 const studentName = "<?php foreach ($students as $student) {
                                             echo $student['lastname'] . ', ' . $student['firstname'];
@@ -268,6 +414,7 @@ while ($row = $result->fetch_assoc()) {
                                         echo $student['student_id'];
                                     } ?>";
                 const currentDateTime = new Date().toLocaleString();
+
                 // Set document properties
                 doc.setProperties({
                     title: `Student Grades - ${studentName}`,
@@ -296,14 +443,14 @@ while ($row = $result->fetch_assoc()) {
 
                 // Add school information - School name BOLD, address normal
                 doc.setFontSize(12);
-                doc.setFont(undefined, 'bold'); // Bold for school name
+                doc.setFont(undefined, 'bold');
                 doc.setTextColor(100, 100, 100);
                 doc.text('St. Michael Arcangel Technological Institute, Inc.', 105, 30, {
                     align: 'center'
                 });
 
                 doc.setFontSize(10);
-                doc.setFont(undefined, 'normal'); // Normal for address
+                doc.setFont(undefined, 'normal');
                 doc.text('101 Rodriguez St. Santulan Rd., Malabon', 105, 36, {
                     align: 'center'
                 });
@@ -332,10 +479,8 @@ while ($row = $result->fetch_assoc()) {
 
                 // Add signature area if requested
                 if (includeSignature && (signatoryName || signatureImage)) {
-                    // Position for signature
                     let signatureY = 70;
 
-                    // Add signature image if available
                     if (signatureImage) {
                         try {
                             doc.addImage(signatureImage, 'PNG', 20, signatureY, 40, 15);
@@ -345,12 +490,10 @@ while ($row = $result->fetch_assoc()) {
                         }
                     }
 
-                    // Add signatory name if provided
                     if (signatoryName) {
                         doc.setFontSize(10);
                         doc.setTextColor(60, 60, 60);
 
-                        // Bold label
                         doc.setFont(undefined, 'bold');
                         doc.text('Signed by:', 20, signatureY);
                         doc.setFont(undefined, 'normal');
@@ -365,18 +508,16 @@ while ($row = $result->fetch_assoc()) {
                 const tables = document.querySelectorAll('.table');
 
                 tables.forEach((table, index) => {
-                    // Get school year from the card header
                     const cardHeader = table.closest('.custom-card').querySelector('.card-header h4');
                     const schoolYear = cardHeader ? cardHeader.textContent : `Semester ${index + 1}`;
 
-                    // Add school year header - BOLD
                     if (yPosition > 250) {
                         doc.addPage();
                         yPosition = 20;
                     }
 
                     doc.setFontSize(14);
-                    doc.setFont(undefined, 'bold'); // Bold for school year headers
+                    doc.setFont(undefined, 'bold');
                     doc.setTextColor(40, 40, 40);
                     doc.text(schoolYear, 20, yPosition);
                     yPosition += 10;
@@ -385,13 +526,11 @@ while ($row = $result->fetch_assoc()) {
                     const headers = [];
                     const rows = [];
 
-                    // Get table headers
                     const headerCells = table.querySelectorAll('thead th');
                     headerCells.forEach(cell => {
                         headers.push(cell.textContent.trim());
                     });
 
-                    // Get table rows
                     const tableRows = table.querySelectorAll('tbody tr');
                     tableRows.forEach(row => {
                         const rowData = [];
@@ -402,7 +541,7 @@ while ($row = $result->fetch_assoc()) {
                         rows.push(rowData);
                     });
 
-                    // Create table in PDF
+                    // Create table in PDF with Century Gothic font
                     doc.autoTable({
                         head: [headers],
                         body: rows,
@@ -412,13 +551,15 @@ while ($row = $result->fetch_assoc()) {
                             fontSize: 8,
                             cellPadding: 3,
                             overflow: 'linebreak',
-                            fontStyle: 'normal' // Normal for table content
+                            fontStyle: 'normal',
+                            font: 'CenturyGothic' // Set font for table
                         },
                         headStyles: {
                             fillColor: [41, 128, 185],
                             textColor: 255,
-                            fontStyle: 'bold', // Bold for table headers
-                            fontSize: 9
+                            fontStyle: 'bold',
+                            fontSize: 9,
+                            font: 'CenturyGothic' // Set font for table headers
                         },
                         alternateRowStyles: {
                             fillColor: [240, 240, 240]
@@ -426,16 +567,15 @@ while ($row = $result->fetch_assoc()) {
                         margin: {
                             top: 10
                         },
-                        // Optional: Make specific columns bold
                         didParseCell: function(data) {
-                            // Make first column (Subject) bold
                             if (data.section === 'body' && data.column.index === 0) {
                                 data.cell.styles.fontStyle = 'bold';
                             }
+                            // Ensure all cells use the same font
+                            data.cell.styles.font = 'CenturyGothic';
                         }
                     });
 
-                    // Update yPosition for next table
                     yPosition = doc.lastAutoTable.finalY + 15;
                 });
 
@@ -445,13 +585,12 @@ while ($row = $result->fetch_assoc()) {
                     doc.setPage(i);
                     doc.setFontSize(8);
                     doc.setTextColor(150, 150, 150);
+                    doc.setFont('CenturyGothic'); // Set font for footer
 
-                    // Page number
                     doc.text(`Page ${i} of ${pageCount}`, 105, 290, {
                         align: 'center'
                     });
 
-                    // Footer text
                     doc.text('Generated by SMATI - Educational Portal', 105, 293, {
                         align: 'center'
                     });

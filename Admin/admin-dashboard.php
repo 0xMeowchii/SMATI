@@ -19,26 +19,50 @@ $result = $stmt->get_result();
 
 $totalStudents = $result->num_rows;
 
-// Students created TODAY with latest timestamp
-$sql_today = "SELECT 
-                COUNT(*) as count,
-                MAX(createdAt) as latest_created
-              FROM students 
-              WHERE DATE(createdAt) = CURDATE()";
-$stmt_today = $conn->prepare($sql_today);
-$stmt_today->execute();
-$result_today = $stmt_today->get_result();
-$row_today = $result_today->fetch_assoc();
+// Students count with fallback logic (today -> yesterday -> overall)
+$conn = connectToDB();
+$sql = "SELECT 
+            COUNT(CASE WHEN action = 'CREATE_STUDENT' AND DATE(created_at) = CURDATE() THEN 1 END) as student_count_today,
+            COUNT(CASE WHEN action = 'CREATE_STUDENT' AND DATE(created_at) = DATE_SUB(CURDATE(), INTERVAL 1 DAY) THEN 1 END) as student_count_yesterday,
+            COUNT(CASE WHEN action = 'CREATE_STUDENT' AND created_at = (SELECT MAX(created_at) FROM activity_logs WHERE user_type = 'admin' AND action = 'CREATE_STUDENT') THEN 1 END) as student_count_overall,
+            MAX(CASE WHEN DATE(created_at) = CURDATE() THEN created_at END) as today_latest,
+            MAX(CASE WHEN DATE(created_at) = DATE_SUB(CURDATE(), INTERVAL 1 DAY) THEN created_at END) as yesterday_latest,
+            MAX(created_at) as overall_latest
+        FROM activity_logs
+        WHERE user_type = 'admin' 
+        AND action IN ('CREATE_STUDENT')";
 
-$todayStudents = $row_today['count'];
+$stmt = $conn->prepare($sql);
+$stmt->execute();
+$result = $stmt->get_result();
+
+$todayStudents = 0;
 $latestStudentCreated = null;
+$dataDate = "today"; // "today", "yesterday", or "overall"
 
-// Only set latest date if there are actually records from today
-if ($row_today['count'] > 0 && $row_today['latest_created']) {
-    $latestStudentCreated = new DateTime($row_today['latest_created']);
+if ($row = $result->fetch_assoc()) {
+    // Use today's data if available
+    if ($row['student_count_today'] > 0) {
+        $todayStudents = $row['student_count_today'];
+        $dataDate = "today";
+        $latestStudentCreated = $row['today_latest'] ? new DateTime($row['today_latest']) : null;
+    }
+    // Otherwise use yesterday's data
+    elseif ($row['student_count_yesterday'] > 0) {
+        $todayStudents = $row['student_count_yesterday'];
+        $dataDate = "yesterday";
+        $latestStudentCreated = $row['yesterday_latest'] ? new DateTime($row['yesterday_latest']) : null;
+    }
+    // If no data today or yesterday, get overall data
+    else {
+        $todayStudents = $row['student_count_overall'];
+        $dataDate = "overall";
+        $latestStudentCreated = $row['overall_latest'] ? new DateTime($row['overall_latest']) : null;
+    }
 }
 
 // Students created THIS MONTH
+$conn = connectToDB();
 $sql_month = "SELECT COUNT(*) as count FROM students WHERE YEAR(createdAt) = YEAR(CURDATE()) AND MONTH(createdAt) = MONTH(CURDATE())";
 $stmt_month = $conn->prepare($sql_month);
 $stmt_month->execute();
@@ -46,38 +70,60 @@ $result_month = $stmt_month->get_result();
 $row_month = $result_month->fetch_assoc();
 $monthlyStudents = $row_month['count'];
 
-//GET TODAY'S TEACHER/REGISTRAR CREATED WITH SEPARATE COUNTS
+//GET TEACHER/REGISTRAR CREATED WITH SEPARATE COUNTS
+$conn = connectToDB();
 $sql = "SELECT 
-            COUNT(CASE WHEN action = 'CREATE_TEACHER' THEN 1 END) as teacher_count,
-            COUNT(CASE WHEN action = 'CREATE_REGISTRAR' THEN 1 END) as registrar_count,
-            MAX(created_at) as latest_created_at
+            COUNT(CASE WHEN action = 'CREATE_TEACHER' AND DATE(created_at) = CURDATE() THEN 1 END) as teacher_count_today,
+            COUNT(CASE WHEN action = 'CREATE_REGISTRAR' AND DATE(created_at) = CURDATE() THEN 1 END) as registrar_count_today,
+            COUNT(CASE WHEN action = 'CREATE_TEACHER' AND DATE(created_at) = DATE_SUB(CURDATE(), INTERVAL 1 DAY) THEN 1 END) as teacher_count_yesterday,
+            COUNT(CASE WHEN action = 'CREATE_REGISTRAR' AND DATE(created_at) = DATE_SUB(CURDATE(), INTERVAL 1 DAY) THEN 1 END) as registrar_count_yesterday,
+            COUNT(CASE WHEN action = 'CREATE_TEACHER' THEN 1 END) as teacher_count_overall,
+            COUNT(CASE WHEN action = 'CREATE_REGISTRAR' THEN 1 END) as registrar_count_overall,
+            MAX(CASE WHEN DATE(created_at) = CURDATE() THEN created_at END) as today_latest,
+            MAX(CASE WHEN DATE(created_at) = DATE_SUB(CURDATE(), INTERVAL 1 DAY) THEN created_at END) as yesterday_latest,
+            MAX(created_at) as overall_latest
         FROM activity_logs 
         WHERE user_type = 'admin' 
-        AND action IN ('CREATE_TEACHER', 'CREATE_REGISTRAR')
-        AND DATE(created_at) = CURDATE()";  // Added today filter
+        AND action IN ('CREATE_TEACHER', 'CREATE_REGISTRAR')";
 
 $stmt = $conn->prepare($sql);
 $stmt->execute();
 $result = $stmt->get_result();
 
-if ($row = $result->fetch_assoc()) {
-    $teacherCount = $row['teacher_count'];
-    $registrarCount = $row['registrar_count'];
-    $totalCount = $teacherCount + $registrarCount;
-    $bothlastCreated = null;
+$teacherCount = 0;
+$registrarCount = 0;
+$totalCount = 0;
+$bothlastCreated = null;
+$dataDate = "today"; // "today", "yesterday", or "overall"
 
-    // Only set latest date if there are actually records from TODAY
-    if ($totalCount > 0 && $row['latest_created_at']) {
-        $bothlastCreated = new DateTime($row['latest_created_at']);
+if ($row = $result->fetch_assoc()) {
+    // Use today's data if available
+    if ($row['teacher_count_today'] > 0 || $row['registrar_count_today'] > 0) {
+        $teacherCount = $row['teacher_count_today'];
+        $registrarCount = $row['registrar_count_today'];
+        $dataDate = "today";
+        $bothlastCreated = $row['today_latest'] ? new DateTime($row['today_latest']) : null;
     }
-} else {
-    $teacherCount = 0;
-    $registrarCount = 0;
-    $totalCount = 0;
-    $bothlastCreated = null;
+    // Otherwise use yesterday's data
+    elseif ($row['teacher_count_yesterday'] > 0 || $row['registrar_count_yesterday'] > 0) {
+        $teacherCount = $row['teacher_count_yesterday'];
+        $registrarCount = $row['registrar_count_yesterday'];
+        $dataDate = "yesterday";
+        $bothlastCreated = $row['yesterday_latest'] ? new DateTime($row['yesterday_latest']) : null;
+    }
+    // If no data today or yesterday, get overall data
+    else {
+        $teacherCount = $row['teacher_count_overall'];
+        $registrarCount = $row['registrar_count_overall'];
+        $dataDate = "overall";
+        $bothlastCreated = $row['overall_latest'] ? new DateTime($row['overall_latest']) : null;
+    }
+
+    $totalCount = $teacherCount + $registrarCount;
 }
 
 // Teachers created THIS MONTH
+$conn = connectToDB();
 $sql_month = "SELECT COUNT(*) as count FROM teachers WHERE YEAR(createdAt) = YEAR(CURDATE()) AND MONTH(createdAt) = MONTH(CURDATE())";
 $stmt_month = $conn->prepare($sql_month);
 $stmt_month->execute();
@@ -85,7 +131,9 @@ $result_month = $stmt_month->get_result();
 $row_month = $result_month->fetch_assoc();
 $monthlyTeachers = $row_month['count'];
 
+
 // Registrars created THIS MONTH
+$conn = connectToDB();
 $sql_month = "SELECT COUNT(*) as count FROM registrars WHERE YEAR(createdAt) = YEAR(CURDATE()) AND MONTH(createdAt) = MONTH(CURDATE())";
 $stmt_month = $conn->prepare($sql_month);
 $stmt_month->execute();
@@ -183,6 +231,7 @@ if ($row = $result->fetch_assoc()) {
 } else {
     echo "No previous login found";
 }
+
 
 ?>
 
@@ -302,7 +351,32 @@ if ($row = $result->fetch_assoc()) {
         $announcements[] = [
             'title' => $row['title'],
             'details' => $row['details'],
+            'target' => $row['target'],
             'date' => new DateTime($row['createdAt'])
+        ];
+    }
+
+    //Fetch registrations
+    $conn = connectToDB();
+    $sql = "SELECT * FROM registrations ORDER BY reg_id DESC";
+    $stmt = $conn->prepare($sql);
+    $stmt->execute();
+    $result = $stmt->get_result();
+
+    $registrations = [];
+    while ($row = $result->fetch_assoc()) {
+        $registrations[] = [
+            'reg_number' => $row['reg_number'],
+            'fullname' => $row['firstname'] . ' ' . $row['lastname'],
+            'birthdate' => $row['birthdate'],
+            'gender' => $row['gender'],
+            'email' => $row['email'],
+            'phone' => $row['phone'],
+            'address' => $row['address'],
+            'school_visit' => $row['school_visit'],
+            'program' => $row['program'],
+            'program_details' => $row['program_details'],
+            'reg_date' => new DateTime($row['reg_date'])
         ];
     }
 
@@ -408,7 +482,7 @@ if ($row = $result->fetch_assoc()) {
                         <div class="display-6 fw-bold text-primary mb-2"><?php echo $activeTeachers; ?> / <?php echo $activeRegistrars; ?></div>
                         <div class="text-muted text-uppercase small mb-3 tracking-wide">Active Teachers/Registrars</div>
                         <div class="text-muted small bg-body-tertiary border-start border-4 border-primary-subtle rounded-3 fst-italic py-2">
-                            <i class="bi bi-arrow-up"></i><strong><?php echo $teacherCount; ?>/<?php echo $registrarCount; ?></strong> as of <strong><?php echo $bothlastCreated->format('m-d-Y h:i A'); ?></strong>
+                            <i class="bi bi-arrow-up"></i><strong><?php echo $teacherCount; ?> / <?php echo $registrarCount; ?></strong> as of <strong><?php echo $bothlastCreated->format('m-d-Y h:i A'); ?></strong>
                         </div>
                     </div>
                 </div>
@@ -501,18 +575,22 @@ if ($row = $result->fetch_assoc()) {
                     </div>
                     <div class="card-body d-flex flex-column">
                         <!-- Scrollable Announcements List -->
-                        <div class="flex-grow-1 overflow-auto" style="max-height: 400px;">
+                        <div class="flex-grow-1 overflow-auto" style="max-height: 500px;">
                             <?php foreach ($announcements as $announcement): ?>
                                 <div class="card list-card border-0 bg-light mb-3">
                                     <div class="card-body border-start rounded-4 border-4 border-primary py-3">
-                                        <div class="text-muted small mb-1"><?php echo $announcement['date']->format('m-d-Y h:i A l') ?></div>
+                                        <div class="d-flex justify-content-between align-items-start mb-2">
+                                            <div class="text-muted small mb-1"><?php echo $announcement['date']->format('m-d-Y h:i A l') ?></div>
+                                            <p class="card-text small"><i class="bi bi-person-fill me-1"></i><?php echo $announcement['target'] ?></p>
+                                        </div>
+
                                         <h6 class="card-title mb-1 fw-bold"><?php echo $announcement['title'] ?></h6>
-                                        <p class="card-text small mb-0"><?php echo $announcement['details'] ?></p>
+                                        <p class="card-text small mb-1"><?php echo $announcement['details'] ?></p>
+
                                     </div>
                                 </div>
                             <?php endforeach; ?>
                         </div>
-
                     </div>
                     <div class="card-footer">
                         <a href="admin-announcements.php" class="btn btn-outline-primary w-100">
@@ -521,57 +599,166 @@ if ($row = $result->fetch_assoc()) {
                     </div>
                 </div>
             </div>
+        </div>
 
-            <!-- Activity Logs Modal -->
-            <div class="modal modal-lg" id="view-activitylogs-modal">
-                <div class="modal-dialog">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h1 class="modal-title fs-5" id="exampleModalLabel">Activity Logs</h1>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        <!-- REG SUMMARY -->
+        <div class="filter-section bg-white rounded shadow-sm p-4 mb-4 sticky-top mt-5" style="top: 20px; z-index: 100;">
+            <div class="row">
+                <div class="col-md-3 mb-3">
+                    <label for="searchBar" class="form-label">Search</label>
+                    <input type="text" class="form-control" id="searchBar" placeholder="Search by name, program, etc.">
+                </div>
+                <div class="col-md-3 mb-3">
+                    <label for="filterProgram" class="form-label">Filter by Program</label>
+                    <select class="form-select" id="filterProgram">
+                        <option value="all">All Programs</option>
+                        <option value="shs">Senior High School</option>
+                        <option value="college">College</option>
+                    </select>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <label for="filterDate" class="form-label">Filter by Date</label>
+                    <input type="date" class="form-control" id="filterDate">
+                </div>
+                <div class="col-md-3 mb-3 d-flex align-items-end gap-2">
+                    <button type="button" class="btn btn-success" id="downloadAllPdf" title="Download all visible registrations">
+                        <i class="fas fa-file-pdf me-1"></i>Download All
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="flex-grow-1 overflow-auto" style="max-height: 500px;">
+            <?php foreach ($registrations as $reg): ?>
+                <div class="card border-0 shadow-sm mb-4 border-start border-4 border-primary" data-reg-number="<?php echo $reg['reg_number'] ?>"
+                    data-program="<?php echo strtolower($reg['program']) ?>"
+                    data-reg-date="<?php echo $reg['reg_date']->format('Y-m-d') ?>">
+                    <div class=" card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                        <span class="fw-semibold"><?php echo $reg['reg_number'] ?></span>
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-sm btn-outline-light download-single-btn" data-reg-number="<?php echo $reg['reg_number'] ?>">
+                                <i class="fas fa-download me-1"></i>Download
+                            </button>
+                            <button class="btn btn-sm btn-danger delete-btn" data-reg-number="<?php echo $reg['reg_number'] ?>">
+                                <i class="fas fa-trash me-1"></i>Delete
+                            </button>
                         </div>
-                        <div class="modal-body">
-                            <!-- Filters -->
-                            <div class="row mb-3 g-2">
-                                <div class="col-md-3">
-                                    <select class="form-control rounded-4 border-2" id="filterUserType">
-                                        <option value="">All User Types</option>
-                                        <option value="admin">Admin</option>
-                                        <option value="teacher">Teacher</option>
-                                        <option value="registrar">Registrar</option>
-                                    </select>
-                                </div>
-                                <div class="col-md-6">
-                                    <input type="text" class="form-control rounded-4 border-2" id="searchQuery" placeholder="Search...">
-                                </div>
-                                <div class="col-md-3">
-                                    <select class="form-control rounded-4 border-2" id="filterDate">
-                                        <option value="">Sort by: Date</option>
-                                        <option value="today">Today</option>
-                                        <option value="yesterday">Yesterday</option>
-                                        <option value="7days">Last 7 days</option>
-                                        <option value="month">Last month</option>
-                                    </select>
-                                </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <dl class="row mb-0">
+                                    <dt class="col-sm-5 text-muted">Registration Number: </dt>
+                                    <dd class="col-sm-7 fw-semibold"><?php echo $reg['reg_number'] ?></dd>
+
+                                    <dt class="col-sm-5 text-muted">Name:</dt>
+                                    <dd class="col-sm-7"><?php echo $reg['fullname'] ?></dd>
+
+                                    <dt class="col-sm-5 text-muted">Date of Birth:</dt>
+                                    <dd class="col-sm-7"><?php echo $reg['birthdate'] ?></dd>
+
+                                    <dt class="col-sm-5 text-muted">Gender:</dt>
+                                    <dd class="col-sm-7"><?php echo $reg['gender'] ?></dd>
+
+                                    <dt class="col-sm-5 text-muted">Email:</dt>
+                                    <dd class="col-sm-7"><?php echo $reg['email'] ?></dd>
+                                </dl>
                             </div>
+                            <div class="col-md-6">
+                                <dl class="row mb-0">
+                                    <dt class="col-sm-5 text-muted">Phone:</dt>
+                                    <dd class="col-sm-7"><?php echo $reg['phone'] ?></dd>
 
-                            <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
-                                <table class="table table-striped table-hover">
-                                    <thead style="position: sticky; top: 0; background: white; z-index: 1;">
-                                        <tr>
-                                            <th>Date/Time</th>
-                                            <th>User</th>
-                                            <th>Type</th>
-                                            <th>Action</th>
-                                            <th>Description</th>
-                                            <th>IP Address</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
+                                    <dt class="col-sm-5 text-muted">Address:</dt>
+                                    <dd class="col-sm-7"><?php echo $reg['address'] ?></dd>
+
+                                    <dt class="col-sm-5 text-muted">School Visitation:</dt>
+                                    <dd class="col-sm-7">
                                         <?php
+                                        if ($reg['school_visit'] === 'yes') {
+                                            echo 'Yes, I would like to schedule a school visit';
+                                        } elseif ($reg['school_visit'] === 'no') {
+                                            echo ' No, I do not need a school visit';
+                                        } else {
+                                            echo 'I have already visited the school';
+                                        }
+                                        ?>
+                                    </dd>
 
-                                        $conn = connectToDB();
-                                        $sql = "SELECT al.*,
+                                    <dt class="col-sm-5 text-muted">Program:</dt>
+                                    <dd class="col-sm-7"><?php echo $reg['program_details'] ?></dd>
+
+                                    <dt class="col-sm-5 text-muted">Registration Date:</dt>
+                                    <dd class="col-sm-7"><?php echo $reg['reg_date']->format('m-d-Y h:i A') ?></dd>
+                                </dl>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            <?php endforeach; ?>
+            <div class="no-registration-results text-center py-5 d-none" id="noRegistrationResults">
+                <div class="mb-4">
+                    <i class="fas fa-search mb-3" style="font-size: 4rem; color: #6c757d; opacity: 0.5;"></i>
+                </div>
+                <h4 class="text-muted mb-3">No Registrations Found</h4>
+                <p class="text-muted mb-4">No registration records match your current search criteria.</p>
+                <button type="button" class="btn btn-primary" onclick="clearRegistrationFilters()">
+                    <i class="fas fa-times me-2"></i>Clear Filters
+                </button>
+            </div>
+        </div>
+
+
+        <!-- Activity Logs Modal -->
+        <div class="modal modal-lg" id="view-activitylogs-modal">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h1 class="modal-title fs-5" id="exampleModalLabel">Activity Logs</h1>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <!-- Filters -->
+                        <div class="row mb-3 g-2">
+                            <div class="col-md-3">
+                                <select class="form-control rounded-4 border-2" id="filterUserType">
+                                    <option value="">All User Types</option>
+                                    <option value="admin">Admin</option>
+                                    <option value="teacher">Teacher</option>
+                                    <option value="registrar">Registrar</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <input type="text" class="form-control rounded-4 border-2" id="searchQuery" placeholder="Search...">
+                            </div>
+                            <div class="col-md-3">
+                                <select class="form-control rounded-4 border-2" id="filterDate">
+                                    <option value="">Sort by: Date</option>
+                                    <option value="today">Today</option>
+                                    <option value="yesterday">Yesterday</option>
+                                    <option value="7days">Last 7 days</option>
+                                    <option value="month">Last month</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+                            <table class="table table-striped table-hover">
+                                <thead style="position: sticky; top: 0; background: white; z-index: 1;">
+                                    <tr>
+                                        <th>Date/Time</th>
+                                        <th>User</th>
+                                        <th>Type</th>
+                                        <th>Action</th>
+                                        <th>Description</th>
+                                        <th>IP Address</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php
+
+                                    $conn = connectToDB();
+                                    $sql = "SELECT al.*,
                                                 CASE
                                                     WHEN al.user_type = 'admin' THEN a.username
                                                     WHEN al.user_type = 'teacher' THEN CONCAT(t.lastname, ', ', t.firstname)
@@ -584,118 +771,118 @@ if ($row = $result->fetch_assoc()) {
                                                 LEFT JOIN students s ON al.user_id = s.student_id AND al.user_type = 'student'
                                                 LEFT JOIN registrars r ON al.user_id = r.registrar_id AND al.user_type = 'registrar'
                                                 ORDER BY id DESC";
-                                        $stmt = $conn->prepare($sql);
-                                        $stmt->execute();
-                                        $result = $stmt->get_result();
+                                    $stmt = $conn->prepare($sql);
+                                    $stmt->execute();
+                                    $result = $stmt->get_result();
 
-                                        if ($result && $result->num_rows > 0) {
+                                    if ($result && $result->num_rows > 0) {
 
-                                            while ($row = $result->fetch_assoc()) {
-                                                $date = new DateTime($row['created_at']);
-                                                echo "<tr>";
-                                                echo "<td>" . $date->format('m-d-Y h:i A l') . "</td>";
-                                                echo "<td>" . $row["user_name"] . "</td>";
-                                                echo "<td>" . $row['user_type'] . "</td>";
-                                                echo "<td>" . $row['action'] . "</td>";
-                                                echo "<td>" . $row['description'] . "</td>";
-                                                echo "<td>" . $row['ip_address'] . "</td>";
-                                                echo "</tr>";
-                                            }
-                                        } else {
-                                            echo "<tr class='no-results-message'>";
-                                            echo "<td colspan='6' class='text-center py-4' style='color: #6c757d;'>";
-                                            echo "<i class='fas fa-search mb-2' style='font-size: 2em; opacity: 0.5;'></i>";
-                                            echo "<br>No activity logs found.";
-                                            echo "</td>";
+                                        while ($row = $result->fetch_assoc()) {
+                                            $date = new DateTime($row['created_at']);
+                                            echo "<tr>";
+                                            echo "<td>" . $date->format('m-d-Y h:i A l') . "</td>";
+                                            echo "<td>" . $row["user_name"] . "</td>";
+                                            echo "<td>" . $row['user_type'] . "</td>";
+                                            echo "<td>" . $row['action'] . "</td>";
+                                            echo "<td>" . $row['description'] . "</td>";
+                                            echo "<td>" . $row['ip_address'] . "</td>";
                                             echo "</tr>";
                                         }
+                                    } else {
+                                        echo "<tr class='no-results-message'>";
+                                        echo "<td colspan='6' class='text-center py-4' style='color: #6c757d;'>";
+                                        echo "<i class='fas fa-search mb-2' style='font-size: 2em; opacity: 0.5;'></i>";
+                                        echo "<br>No activity logs found.";
+                                        echo "</td>";
+                                        echo "</tr>";
+                                    }
 
-                                        ?>
-                                    </tbody>
-                                </table>
-                            </div>
+                                    ?>
+                                </tbody>
+                            </table>
                         </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                            <button id="exportPdf" class="btn btn-success">
-                                <i class="fas fa-file-pdf me-2"></i>Export to PDF
-                            </button>
-                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button id="exportPdf" class="btn btn-success">
+                            <i class="fas fa-file-pdf me-2"></i>Export to PDF
+                        </button>
                     </div>
                 </div>
             </div>
+        </div>
 
-            <!-- AUTHENTICATION MODAL -->
-            <div class="modal fade" id="authModal" tabindex="-1" aria-hidden="true">
-                <div class="modal-dialog modal-dialog-centered">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h2 class="modal-title">Authentication Required</h2>
+        <!-- AUTHENTICATION MODAL -->
+        <div class="modal fade" id="authModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h2 class="modal-title">Authentication Required</h2>
+                    </div>
+                    <div class="modal-body">
+                        <div class="text-center mb-4">
+                            <i class="fas fa-envelope-circle-check text-primary" style="font-size: 3rem;"></i>
+                            <h4 class="mt-3">SMATI Authentication</h4>
+                            <p class="text-muted">Choose your authentication method to proceed.</p>
                         </div>
-                        <div class="modal-body">
-                            <div class="text-center mb-4">
-                                <i class="fas fa-envelope-circle-check text-primary" style="font-size: 3rem;"></i>
-                                <h4 class="mt-3">SMATI Authentication</h4>
-                                <p class="text-muted">Choose your authentication method to proceed.</p>
+
+                        <div class="col-12 mb-2">
+                            <div class="auth-tabs" role="tablist">
+                                <button class="auth-tab active"
+                                    id="password-tab"
+                                    type="button"
+                                    role="tab"
+                                    onclick="switchAuthMethod('password')">
+                                    Authentication Key
+                                </button>
+                                <button class="auth-tab"
+                                    id="pin-tab"
+                                    type="button"
+                                    role="tab"
+                                    onclick="switchAuthMethod('pin')">
+                                    PIN
+                                </button>
+                            </div>
+                        </div>
+
+                        <form id="authForm">
+
+                            <input type="hidden" id="authMethod" name="authMethod" value="password">
+
+                            <!-- Authentication Key Section -->
+                            <div class="d-block" id="authPassword">
+                                <label class="form-label">SMATI Authentication Key</label>
+                                <div class="input-group">
+                                    <input type="password" class="form-control" placeholder="Enter SMATI Key" id="authKey" name="authKey">
+                                    <span class="input-group-text"
+                                        onmousedown="document.getElementById('authKey').type='text'"
+                                        onmouseup="document.getElementById('authKey').type='password'"
+                                        onmouseleave="document.getElementById('authKey').type='password'">
+                                        <i class="bi bi-eye"></i></span>
+                                </div>
                             </div>
 
-                            <div class="col-12 mb-2">
-                                <div class="auth-tabs" role="tablist">
-                                    <button class="auth-tab active"
-                                        id="password-tab"
-                                        type="button"
-                                        role="tab"
-                                        onclick="switchAuthMethod('password')">
-                                        Authentication Key
-                                    </button>
-                                    <button class="auth-tab"
-                                        id="pin-tab"
-                                        type="button"
-                                        role="tab"
-                                        onclick="switchAuthMethod('pin')">
-                                        PIN
-                                    </button>
-                                </div>
+                            <!-- PIN Section -->
+                            <div class="d-none" id="authPIN">
+                                <label class="form-label text-center">Enter 6-digit PIN</label>
+                                <input type="password"
+                                    class="form-control otp-input"
+                                    maxlength="6"
+                                    placeholder="000000"
+                                    name="authPIN"
+                                    inputmode="numeric"
+                                    pattern="[0-9]*"
+                                    onkeypress="return event.charCode >= 48 && event.charCode <= 57">
                             </div>
 
-                            <form id="authForm">
-
-                                <input type="hidden" id="authMethod" name="authMethod" value="password">
-
-                                <!-- Authentication Key Section -->
-                                <div class="d-block" id="authPassword">
-                                    <label class="form-label">SMATI Authentication Key</label>
-                                    <div class="input-group">
-                                        <input type="password" class="form-control" placeholder="Enter SMATI Key" id="authKey" name="authKey">
-                                        <span class="input-group-text"
-                                            onmousedown="document.getElementById('authKey').type='text'"
-                                            onmouseup="document.getElementById('authKey').type='password'"
-                                            onmouseleave="document.getElementById('authKey').type='password'">
-                                            <i class="bi bi-eye"></i></span>
-                                    </div>
-                                </div>
-
-                                <!-- PIN Section -->
-                                <div class="d-none" id="authPIN">
-                                    <label class="form-label text-center">Enter 6-digit PIN</label>
-                                    <input type="password"
-                                        class="form-control otp-input"
-                                        maxlength="6"
-                                        placeholder="000000"
-                                        name="authPIN"
-                                        inputmode="numeric"
-                                        pattern="[0-9]*"
-                                        onkeypress="return event.charCode >= 48 && event.charCode <= 57">
-                                </div>
-
-                        </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                            <button type="submit" class="btn btn-primary" id="btnAuth">Authenticate</button>
-                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary" id="btnAuth">Authenticate</button>
                     </div>
                 </div>
             </div>
+        </div>
 
     </main>
     <!-- Bootstrap JS Bundle with Popper -->
@@ -704,14 +891,431 @@ if ($row = $result->fetch_assoc()) {
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="./js/darkmode.js"></script>
     <script>
-        function updateClock() {
+        // Enhanced PDF Download Functions
+        function downloadRegistrationPDF(regNumber = null) {
+            const {
+                jsPDF
+            } = window.jspdf;
+
+            if (regNumber) {
+                // Single registration - detailed format
+                downloadSingleRegistrationPDF(regNumber);
+            } else {
+                // All registrations - table format
+                downloadAllRegistrationsPDF();
+            }
+        }
+
+        function downloadSingleRegistrationPDF(regNumber) {
+            const {
+                jsPDF
+            } = window.jspdf;
+
+            const centuryGothicNormal = '../fonts/centurygothic.ttf';
+            const centuryGothicBold = '../fonts/centurygothic_bold.ttf';
+
+            // Find the specific registration card
+            const card = document.querySelector(`[data-reg-number="${regNumber}"]`);
+            if (!card) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Not Found',
+                    text: 'Registration data not found.',
+                    confirmButtonColor: '#0d6efd'
+                });
+                return;
+            }
+
+            // Extract data from the card
+            const dl = card.querySelectorAll('dl.row.mb-0');
+            const leftData = dl[0].querySelectorAll('dd');
+            const rightData = dl[1].querySelectorAll('dd');
+
+            const registration = {
+                reg_number: card.querySelector('.fw-semibold').textContent,
+                name: leftData[1].textContent,
+                birthdate: leftData[2].textContent,
+                gender: leftData[3].textContent,
+                email: leftData[4].textContent,
+                phone: rightData[0].textContent,
+                address: rightData[1].textContent,
+                school_visit: rightData[2].textContent,
+                program: rightData[3].textContent,
+                reg_date: rightData[4].textContent
+            };
+
+            // Create PDF
+            const doc = new jsPDF('p', 'mm', 'a4');
             const now = new Date();
-            document.querySelectorAll('.live-clock').forEach(clock => {
-                clock.textContent = now.toLocaleTimeString();
+
+            // Add logo
+            const logoUrl = '../images/logo5.png';
+            try {
+                // Add logo to the top left and right
+                doc.addImage(logoUrl, 'PNG', 45, 10, 20, 20);
+            } catch (e) {
+                console.warn('Logo could not be loaded:', e);
+            }
+
+            // Add the font to jsPDF (you need to load the font files first)
+            doc.addFont(centuryGothicNormal, 'CenturyGothic', 'normal');
+            doc.addFont(centuryGothicBold, 'CenturyGothic', 'bold');
+            doc.setFont('CenturyGothic');
+
+            // Add title and header
+            doc.setFontSize(18);
+            doc.setFont(undefined, 'bold');
+            doc.setTextColor(13, 110, 253);
+            doc.text('REGISTRATION DETAILS', 105, 20, {
+                align: 'center'
+            });
+
+            doc.setFontSize(10);
+            doc.setFont(undefined, 'bold');
+            doc.setTextColor(100, 100, 100);
+            doc.text(`Generated on: ${now.toLocaleDateString()} ${now.toLocaleTimeString()}`, 105, 27, {
+                align: 'center'
+            });
+
+            // Registration number
+            doc.setFontSize(14);
+            doc.setFont(undefined, 'bold');
+            doc.setTextColor(0, 0, 0);
+            doc.text(`Registration Number: ${registration.reg_number}`, 20, 40);
+
+            // Personal Information Section
+            doc.setFontSize(12);
+            doc.setFont(undefined, 'bold');
+            doc.setTextColor(13, 110, 253);
+            doc.text('PERSONAL INFORMATION', 20, 55);
+
+            doc.setFontSize(10);
+            doc.setTextColor(0, 0, 0);
+            doc.setFont(undefined, 'bold');
+            doc.text('Full Name:', 20, 65);
+            doc.setFont(undefined, 'normal');
+            doc.text(registration.name, 40, 65);
+            doc.setFont(undefined, 'bold');
+            doc.text('Date of Birth:', 20, 72);
+            doc.setFont(undefined, 'normal');
+            doc.text(registration.birthdate, 45, 72);
+            doc.setFont(undefined, 'bold');
+            doc.text('Gender:', 20, 79);
+            doc.setFont(undefined, 'normal');
+            doc.text(registration.gender, 40, 79);
+
+            // Contact Information Section
+            doc.setFontSize(12);
+            doc.setFont(undefined, 'bold');
+            doc.setTextColor(13, 110, 253);
+            doc.text('CONTACT INFORMATION', 20, 94);
+
+            doc.setFontSize(10);
+            doc.setTextColor(0, 0, 0);
+            doc.setFont(undefined, 'bold');
+            doc.text('Email:', 20, 104);
+            doc.setFont(undefined, 'normal');
+            doc.text(registration.email, 40, 104);
+            doc.setFont(undefined, 'bold');
+            doc.text('Phone:', 20, 111);
+            doc.setFont(undefined, 'normal');
+            doc.text(registration.phone, 40, 111);
+            doc.setFont(undefined, 'bold');
+            doc.text('Address:', 20, 118);
+            doc.setFont(undefined, 'normal');
+            doc.text(registration.address, 40, 118);
+
+
+            // Program & Visit Information Section
+            doc.setFontSize(12);
+            doc.setFont(undefined, 'bold');
+            doc.setTextColor(13, 110, 253);
+            doc.text('PROGRAM INFORMATION', 20, 140);
+
+            doc.setFontSize(10);
+            doc.setTextColor(0, 0, 0);
+            doc.setFont(undefined, 'bold');
+            doc.text('Program', 20, 150);
+            doc.setFont(undefined, 'normal');
+            doc.text(registration.program, 40, 150);
+            doc.setFont(undefined, 'bold');
+            doc.text('Registration Date:', 20, 160);
+            doc.setFont(undefined, 'normal');
+            doc.text(registration.reg_date, 55, 160);
+
+            // Add border and styling
+            doc.setDrawColor(13, 110, 253);
+            doc.setLineWidth(0.5);
+            doc.rect(15, 5, 180, 175);
+
+            // Add footer
+            doc.setFontSize(8);
+            doc.setTextColor(150, 150, 150);
+            doc.text('SMATI Registration System - Confidential Document', 105, 185, {
+                align: 'center'
+            });
+
+            // Save PDF
+            const filename = `registration-details-${regNumber}-${now.toISOString().split('T')[0]}.pdf`;
+            doc.save(filename);
+        }
+
+        function downloadAllRegistrationsPDF() {
+            const {
+                jsPDF
+            } = window.jspdf;
+
+            // Get all visible registration data
+            let registrations = [];
+            const registrationCards = document.querySelectorAll('.card.border-0.shadow-sm.mb-4');
+
+            registrationCards.forEach(card => {
+                if (card.style.display !== 'none') { // Only include visible cards
+                    const dl = card.querySelectorAll('dl.row.mb-0');
+                    const leftData = dl[0].querySelectorAll('dd');
+                    const rightData = dl[1].querySelectorAll('dd');
+
+                    registrations.push({
+                        reg_number: card.querySelector('.fw-semibold').textContent,
+                        name: leftData[1].textContent,
+                        program: rightData[3].textContent,
+                        email: leftData[4].textContent,
+                        phone: rightData[0].textContent,
+                        reg_date: rightData[4].textContent
+                    });
+                }
+            });
+
+            if (registrations.length === 0) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'No Data',
+                    text: 'No registration data found to export.',
+                    confirmButtonColor: '#0d6efd'
+                });
+                return;
+            }
+
+            // Create PDF
+            const doc = new jsPDF('p', 'mm', 'a4');
+            const now = new Date();
+
+            // Add title
+            doc.setFontSize(16);
+            doc.text('REGISTRATION LIST REPORT', 105, 15, {
+                align: 'center'
+            });
+
+            // Add generation info
+            doc.setFontSize(10);
+            doc.text(`Generated on: ${now.toLocaleDateString()} ${now.toLocaleTimeString()}`, 105, 22, {
+                align: 'center'
+            });
+            doc.text(`Total Registrations: ${registrations.length}`, 105, 28, {
+                align: 'center'
+            });
+
+            // Prepare table data
+            const headers = [
+                ['Reg Number', 'Name', 'Program', 'Email', 'Phone', 'Reg Date']
+            ];
+            const data = registrations.map(reg => [
+                reg.reg_number,
+                reg.name,
+                reg.program,
+                reg.email,
+                reg.phone,
+                reg.reg_date
+            ]);
+
+            // Add table
+            doc.autoTable({
+                head: headers,
+                body: data,
+                startY: 35,
+                styles: {
+                    fontSize: 8
+                },
+                headStyles: {
+                    fillColor: [13, 110, 253],
+                    textColor: 255,
+                    fontStyle: 'bold'
+                },
+                columnStyles: {
+                    0: {
+                        cellWidth: 25
+                    },
+                    1: {
+                        cellWidth: 35
+                    },
+                    2: {
+                        cellWidth: 25
+                    },
+                    3: {
+                        cellWidth: 40
+                    },
+                    4: {
+                        cellWidth: 25
+                    },
+                    5: {
+                        cellWidth: 25
+                    }
+                },
+                margin: {
+                    left: 10,
+                    right: 10
+                },
+                didDrawPage: function(data) {
+                    // Add page numbers
+                    doc.setFontSize(8);
+                    doc.text(
+                        'Page ' + doc.internal.getNumberOfPages(),
+                        data.settings.margin.left,
+                        doc.internal.pageSize.height - 10
+                    );
+                }
+            });
+
+            // Save PDF
+            const filename = `all-registrations-${now.toISOString().split('T')[0]}.pdf`;
+            doc.save(filename);
+        }
+
+        // Delete Registration Function
+        function deleteRegistration(regNumber) {
+            Swal.fire({
+                title: 'Confirm Deletion',
+                text: `Are you sure you want to delete registration ${regNumber}? This action cannot be undone.`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Yes, delete it!',
+                cancelButtonText: 'Cancel'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Show loading
+                    Swal.fire({
+                        title: 'Deleting...',
+                        text: 'Please wait while we delete the registration.',
+                        allowOutsideClick: false,
+                        didOpen: () => {
+                            Swal.showLoading();
+                        }
+                    });
+
+                    // Send delete request
+                    fetch('delete_registration.php', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/x-www-form-urlencoded',
+                            },
+                            body: `reg_number=${encodeURIComponent(regNumber)}`
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Deleted!',
+                                    text: data.message,
+                                    confirmButtonColor: '#0d6efd'
+                                }).then(() => {
+                                    // Remove the card from DOM
+                                    const card = document.querySelector(`[data-reg-number="${regNumber}"]`).closest('.card.border-0.shadow-sm.mb-4');
+                                    if (card) {
+                                        card.remove();
+                                    }
+                                    // Reload page to refresh data
+                                    location.reload();
+                                });
+                            } else {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Error',
+                                    text: data.message,
+                                    confirmButtonColor: '#0d6efd'
+                                });
+                            }
+                        })
+                        .catch(error => {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Request Failed',
+                                text: 'Error: ' + error,
+                                confirmButtonColor: '#0d6efd'
+                            });
+                        });
+                }
             });
         }
-        updateClock();
-        setInterval(updateClock, 1000);
+
+        // Filter and Search Functions for Registration Section
+        function filterRegistrations() {
+            const searchTerm = document.getElementById('searchBar').value.toLowerCase().trim();
+            const programFilter = document.getElementById('filterProgram').value;
+            const dateFilter = document.getElementById('filterDate').value;
+
+            const registrationCards = document.querySelectorAll('.card.border-0.shadow-sm.mb-4');
+            const noResultsElement = document.getElementById('noRegistrationResults');
+
+            let visibleCount = 0;
+
+            registrationCards.forEach(card => {
+                const cardText = card.textContent.toLowerCase();
+                const name = card.querySelectorAll('dd')[1].textContent.toLowerCase();
+                const regNumber = card.getAttribute('data-reg-number').toLowerCase();
+                const program = card.getAttribute('data-program');
+                const regDate = card.getAttribute('data-reg-date');
+
+                // Check search term
+                const searchMatch = !searchTerm ||
+                    cardText.includes(searchTerm) ||
+                    regNumber.includes(searchTerm) ||
+                    name.includes(searchTerm);
+
+                // Check program filter
+                const programMatch = programFilter === 'all' ||
+                    (programFilter === 'shs' && program.includes('shs')) ||
+                    (programFilter === 'college' && program.includes('college'));
+
+                // Check date filter
+                const dateMatch = !dateFilter || regDate.includes(dateFilter);
+
+                // Show/hide card based on filters
+                if (searchMatch && programMatch && dateMatch) {
+                    card.style.display = 'block';
+                    visibleCount++;
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+
+            // Show/hide no results message
+            if (visibleCount === 0 && (searchTerm || programFilter !== 'all' || dateFilter)) {
+                noResultsElement.classList.remove('d-none');
+            } else {
+                noResultsElement.classList.add('d-none');
+            }
+
+            // Update download button state
+            const downloadAllBtn = document.getElementById('downloadAllPdf');
+            if (downloadAllBtn) {
+                downloadAllBtn.disabled = visibleCount === 0;
+                if (visibleCount === 0) {
+                    downloadAllBtn.title = 'No registrations to download';
+                } else {
+                    downloadAllBtn.title = `Download ${visibleCount} registration(s)`;
+                }
+            }
+        }
+
+        function clearRegistrationFilters() {
+            document.getElementById('searchBar').value = '';
+            document.getElementById('filterProgram').value = 'all';
+            document.getElementById('filterDate').value = '';
+            filterRegistrations();
+        }
 
         const barCtx = document.getElementById('accountChart');
         const pieCtx = document.getElementById('sectionChart');
@@ -952,6 +1556,41 @@ if ($row = $result->fetch_assoc()) {
             const authForm = document.getElementById('authForm');
             const authModal = document.getElementById('authModal');
             const viewLogsBtn = document.getElementById('view-all-activity-btn');
+
+            document.getElementById('searchBar').addEventListener('input', filterRegistrations);
+            document.getElementById('filterProgram').addEventListener('change', filterRegistrations);
+            document.getElementById('filterDate').addEventListener('change', filterRegistrations);
+
+            filterRegistrations();
+
+            // Add clear filters functionality (optional)
+            document.getElementById('searchBar').addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    this.value = '';
+                    filterRegistrations();
+                }
+            });
+
+            // Single registration download
+            document.addEventListener('click', function(e) {
+                if (e.target.closest('.download-single-btn')) {
+                    const regNumber = e.target.closest('.download-single-btn').getAttribute('data-reg-number');
+                    downloadRegistrationPDF(regNumber);
+                }
+            });
+
+            // Download all registrations
+            document.getElementById('downloadAllPdf').addEventListener('click', function() {
+                downloadRegistrationPDF();
+            });
+
+            // Delete registration
+            document.addEventListener('click', function(e) {
+                if (e.target.closest('.delete-btn')) {
+                    const regNumber = e.target.closest('.delete-btn').getAttribute('data-reg-number');
+                    deleteRegistration(regNumber);
+                }
+            });
 
             // Function to switch authentication methods
             window.switchAuthMethod = function(method) {

@@ -298,7 +298,7 @@ include '../includes/activity_logger.php';
                                                 data-department='" . $row["department"] . "'
                                                 data-email='" . $row["email"] . "'
                                                 data-username='" . $row["username"] . "'
-                                                data-createdAt='" . $row["createdAt"] . "'
+                                                data-createdAt='" . (new DateTime($row['createdAt']))->format('m-d-Y h:i A') . "'
                                                 data-bs-toggle='modal' 
                                                 data-bs-target='#viewTeacherModal'>
                                                     <i class='fas fa-eye'></i>
@@ -527,7 +527,7 @@ include '../includes/activity_logger.php';
     <script>
         // Apply to all inputs except those containing specific words in ID
         document.querySelectorAll('input[type="text"]').forEach(input => {
-            const excludePatterns = ['username', 'email','editUsername', 'editEmail', ];
+            const excludePatterns = ['username', 'email', 'editUsername', 'editEmail', ];
             const shouldExclude = excludePatterns.some(pattern => input.id.includes(pattern));
 
             if (!shouldExclude) {

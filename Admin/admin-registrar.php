@@ -295,7 +295,7 @@ include '../includes/activity_logger.php';
                                                 data-name='" . $row["lastname"] . ", " . $row["firstname"] . "'
                                                 data-email='" . $row["email"] . "'
                                                 data-username='" . $row["username"] . "'
-                                                data-createdAt='" . $row["createdAt"] . "'
+                                                data-createdAt='" . (new DateTime($row['createdAt']))->format('m-d-Y h:i A') . "'
                                                 data-bs-toggle='modal' 
                                                 data-bs-target='#viewRegistrarModal'>
                                                     <i class='fas fa-eye'></i>
@@ -459,9 +459,9 @@ include '../includes/activity_logger.php';
                     </div>
                     <div class="modal-body">
                         <?php
-                        echo "<p><strong>Registrar ID: </strong><span id='modalRegistrarId'></span></p>
-                              <p><strong>Name: </strong><span id='modalRegistrarName'></span></p>
-                              <p><strong>Email: </strong><span id='modalRegistrarEmail'></span></p>";
+                        echo "<input type='hidden' id='modalRegistrarId'> </input>
+                              <p><strong>ID #: </strong><span id='modalRegistrarEmail'></span></p>
+                              <p><strong>Name: </strong><span id='modalRegistrarName'></span></p>";
                         echo "<h3 class='pb-3 pt-3 border-bottom'>User Acccount</h3>
                               <p><strong>Username: </strong><span id='modalRegistrarUsername'></span></p>
                               <p><strong>createdAt: </strong><span id='createdAt'></span></p>";
@@ -515,7 +515,7 @@ include '../includes/activity_logger.php';
         });
         document.querySelectorAll('.view-registrar-btn').forEach(function(btn) {
             btn.addEventListener('click', function() {
-                document.getElementById('modalRegistrarId').textContent = btn.getAttribute('data-id');
+                document.getElementById('modalRegistrarId').value = btn.getAttribute('data-id');
                 document.getElementById('modalRegistrarName').textContent = btn.getAttribute('data-name');
                 document.getElementById('modalRegistrarEmail').textContent = btn.getAttribute('data-email');
                 document.getElementById('modalRegistrarUsername').textContent = btn.getAttribute('data-username');

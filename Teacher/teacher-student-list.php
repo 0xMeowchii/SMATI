@@ -8,63 +8,110 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnAdd'])) {
     $subject_id = $_POST['subject'];
 
     if ($conn) {
-        $stmt = $conn->prepare("INSERT INTO student_list (subject_id, student_set) 
-                                VALUES (?, ?)");
-        $stmt->bind_param("is", $subject_id, $set);
 
-        if ($stmt->execute()) {
+        $checkStmt = $conn->prepare("SELECT * FROM student_list WHERE subject_id = ? AND student_set = ?");
+        $checkStmt->bind_param("is", $subject_id, $set);
+        $checkStmt->execute();
+        $result = $checkStmt->get_result();
+
+        if ($result->num_rows > 0) {
             echo "<script>
                             document.addEventListener('DOMContentLoaded', function() {
                                 Swal.fire({
-                                    icon: 'success',
-                                    title: 'Success!',
-                                    text: 'Student List Created Successfully!',
-                                    timer: 2000,
-                                    showConfirmButton: false
+                                    icon: 'error',
+                                    title: 'Error!',
+                                    text: 'Class already exists!',
+                                    confirmButtonColor: '#d33'
                                 });
                             });
                         </script>";
         } else {
-            echo "<script>
-                            Swal.fire({
-                                icon: 'error',
-                                title: 'Error!',
-                                text: '" . addslashes($stmt->error) . "',
-                                confirmButtonColor: '#d33'
+            $stmt = $conn->prepare("INSERT INTO student_list (subject_id, student_set) 
+                                VALUES (?, ?)");
+            $stmt->bind_param("is", $subject_id, $set);
+
+            if ($stmt->execute()) {
+                echo "<script>
+                            document.addEventListener('DOMContentLoaded', function() {
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Success!',
+                                    text: 'Class created succesfully!',
+                                    confirmButtonColor: '#d33'
+                                }).then(() => {
+                                    // Refresh the page after SweetAlert closes
+                                    window.location.href = window.location.href;
+                                });
                             });
                         </script>";
-        }
+            } else {
+                echo "<script>
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error!',
+                        text: '" . addslashes($stmt->error) . "',
+                        confirmButtonColor: '#d33'
+                    });
+                </script>";
+            }
 
-        $stmt->close();
+            $stmt->close();
+        }
+        $checkStmt->close();
         $conn->close();
     } else {
         echo "<script>alert('Database connection failed');</script>";
     }
 }
 
-//DELETE QUERY
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnDelete'])) {
+//UPDATE QUERY
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnUpdate'])) {
     $conn = connectToDB();
     $list_id = $_POST['listId'];
+    $subject_id = $_GET['subject_id'];
+    $student_set = $_POST['editSet'];
 
     if ($conn) {
-        $stmt = $conn->prepare("DELETE FROM student_list WHERE list_id=?");
-        $stmt->bind_param("i", $list_id);
 
-        if ($stmt->execute()) {
+        $checkStmt = $conn->prepare("SELECT * FROM student_list WHERE subject_id = ? AND student_set = ?");
+        $checkStmt->bind_param("is", $subject_id, $student_set);
+        $checkStmt->execute();
+        $result = $checkStmt->get_result();
+
+        if ($result->num_rows > 0) {
             echo "<script>
                             document.addEventListener('DOMContentLoaded', function() {
                                 Swal.fire({
-                                    icon: 'success',
-                                    title: 'Success!',
-                                    text: 'Class Deleted Successfully!',
-                                    timer: 2000,
-                                    showConfirmButton: false
+                                    icon: 'error',
+                                    title: 'Error!',
+                                    text: 'Class already exists!',
+                                    confirmButtonColor: '#d33'
                                 });
                             });
                         </script>";
         } else {
-            echo "<script>
+
+            $stmt = $conn->prepare("UPDATE student_list SET student_set = ? WHERE list_id = ?");
+            $stmt->bind_param("si", $student_set, $list_id);
+
+            if ($stmt->execute()) {
+
+                echo "<script>
+                            document.addEventListener('DOMContentLoaded', function() {
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Success!',
+                                    text: 'Updated Successfully!',
+                                    timer: 2000,
+                                    showConfirmButton: false
+                                }).then(() => {
+                                    // Refresh the page after SweetAlert closes
+                                    window.location.href = window.location.href;
+                                });
+                            });
+                        </script>";
+            } else {
+                echo "<script>
                             Swal.fire({
                                 icon: 'error',
                                 title: 'Error!',
@@ -72,9 +119,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnDelete'])) {
                                 confirmButtonColor: '#d33'
                             });
                         </script>";
+            }
+            $stmt->close();
         }
-
-        $stmt->close();
+        $checkStmt->close();
         $conn->close();
     } else {
         echo "<script>alert('Database connection failed');</script>";
@@ -147,15 +195,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnDelete'])) {
                                 echo "<td>
                                       <a class='btn btn-sm btn-outline-primary' 
                                       href='teacher-input-grades.php?student_set=" . $row['student_set'] . "&subject_id=" . $subject .
-                                    "&sy=" . $sy . "'>
+                                    "&sy=" . $sy . "&list_id=" . $row['list_id'] . "'>
                                           <i class='fas fa-eye me-2'></i>View
                                       </a>
                                       
-                                      <a class='btn btn-sm btn-outline-danger me-1 drop-list-btn'
+                                      <a class='btn btn-sm btn-outline-secondary me-1 update-list-btn'
                                         data-id='" . $row['list_id'] . "'
+                                        data-set='" . $row['student_set'] . "'
                                         data-bs-toggle='modal' 
                                         data-bs-target='#dropListModal'>
-                                        <i class='fas fa-trash'></i>
+                                        <i class='fas fa-edit me-2'></i>Edit
                                         </a>
                                     </td>";
                                 echo "</tr>";
@@ -203,24 +252,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnDelete'])) {
             </div>
         </div>
 
-        <!-- Drop List Modal -->
+        <!-- Update List Modal -->
         <div class="modal fade" id="dropListModal" tabindex="-1" role="dialog" aria-labelledby="dropListModal" aria-hidden="true">
             <div class="modal-dialog">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 class="modal-title" id="dropListModal">Confirm Drop</h5>
+                        <h5 class="modal-title" id="dropListModal">Edit</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
-                        Are you sure you want to drop this Class?
+                        <form action="<?php htmlspecialchars($_SERVER['PHP_SELF']) ?>" method="post">
+                            <div class="row g-3">
+                                <div class="col-md-6 mb-3">
+                                    <input type="hidden" id="listId" name="listId">
+                                    <label for="course" class="form-label">Set</label>
+                                    <select class="form-select" name="editSet" id="editSet" required>
+                                        <option value="">Select Set</option>
+                                        <option value="A">A</option>
+                                        <option value="B">B</option>
+                                    </select>
+                                </div>
+                            </div>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">No</button>
-                        <form action="<?php htmlspecialchars($_SERVER['PHP_SELF']) ?>" method="post">
-                            <input type="hidden" name="listId" id="listId">
-                            <button type="submit" class="btn btn-danger" name="btnDelete">Yes</button>
-                        </form>
+                        <button type="submit" class="btn btn-success" name="btnUpdate">Yes</button>
                     </div>
+                    </form>
                 </div>
             </div>
         </div>
@@ -229,9 +287,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnDelete'])) {
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
-        document.querySelectorAll('.drop-list-btn').forEach(function(btn) {
+        document.querySelectorAll('.update-list-btn').forEach(function(btn) {
             btn.addEventListener('click', function() {
                 document.getElementById('listId').value = btn.getAttribute('data-id');
+                document.getElementById('editSet').value = btn.getAttribute('data-set');
             });
         });
 

@@ -1,13 +1,14 @@
 <?php
 include('../database.php');
 include '../includes/activity_logger.php';
+include 'includes/grade_submission_helper.php';
 
 //array student informations
 if (isset($_GET['student_set']) && isset($_GET['subject_id'])) {
     $set = $_GET['student_set'];;
     $conn = connectToDB();
 
-    $sql = "SELECT * FROM students WHERE course=? ORDER BY lastname ASC";
+    $sql = "SELECT * FROM students WHERE course=? AND status = '1' ORDER BY lastname ASC";
     $stmt = $conn->prepare($sql);
     $stmt->bind_param("s", $set);
     $stmt->execute();
@@ -76,6 +77,8 @@ if ($result->num_rows > 0) {
             $set = $_GET['student_set'];
             $subject = $_GET['subject_id'];
             $sy = $_GET['sy'];
+            $list_id = $_GET['list_id'];
+
             $conn = connectToDB();
             $sql = "SELECT s.*, g.prelim, g.midterm, g.finals, g.comment, g.average, g.equivalent, g.remarks
                     FROM students s
@@ -91,75 +94,159 @@ if ($result->num_rows > 0) {
                 $grades[$row['student_id']] = $row;
             }
 
-            //insert/update grades query
+
+            //insert/update grades
             $teacher_id = $_SESSION['id'] ?? null;
-            if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['request_approval'])) {
                 if (isset($_POST['grades']) && is_array($_POST['grades'])) {
                     $conn = connectToDB();
                     $subject_id = $_POST['subject_id'];
+                    $list_id = $_POST['list_id'];
                     $schoolyear_id = $_POST['sy_id'];
-                    $success = true;
-                    $error_message = '';
 
-                    foreach ($_POST['grades'] as $student_id => $gradeData) {
-                        $prelim = isset($gradeData['prelim']) && $gradeData['prelim'] !== '' ?
-                            $conn->real_escape_string($gradeData['prelim']) : NULL;
-                        $midterm = isset($gradeData['midterm']) && $gradeData['midterm'] !== '' ?
-                            $conn->real_escape_string($gradeData['midterm']) : NULL;
-                        $finals = isset($gradeData['finals']) && $gradeData['finals'] !== '' ?
-                            $conn->real_escape_string($gradeData['finals']) : NULL;
-                        $average = floatval($gradeData['average'] ?? 0);
-                        $equivalent = floatval($gradeData['equivalent'] ?? 0);
-                        $remarks = $conn->real_escape_string($gradeData['remarks'] ?? '');
-                        $comment = $conn->real_escape_string($gradeData['comment'] ?? '');
+                    // Check if teacher can submit
+                    $check = canSubmitGrades($conn, $teacher_id, $subject_id, $list_id, $schoolyear_id);
 
-                        $sql = "INSERT INTO grades 
-                                (subject_id, teacher_id, student_id, schoolyear_id, prelim, midterm, finals, average, equivalent, remarks, comment) 
-                                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                                ON DUPLICATE KEY UPDATE
-                                prelim = VALUES(prelim), 
-                                midterm = VALUES(midterm), 
-                                finals = VALUES(finals), 
-                                average = VALUES(average),
-                                equivalent = VALUES(equivalent),
-                                remarks = VALUES(remarks),
-                                comment = VALUES(comment)";
-
-                        $stmt = $conn->prepare($sql);
-                        $stmt->bind_param("iiiidddddss", $subject_id, $teacher_id, $student_id, $schoolyear_id, $prelim, $midterm, $finals, $average, $equivalent, $remarks, $comment);
-
-                        if (!$stmt->execute()) {
-                            $success = false;
-                            $error_message = $stmt->error;
-                            break;
-                        }
-                    }
-
-                    if ($success) {
-                        logActivity($conn, $teacher_id, $_SESSION['user_type'], 'SUBMIT_GRADE', "submitted a Grade:" . $detail['subject'] . " S.Y. - " . $detail['schoolyear'] . ", " . $detail['semester'] . " Semester");
-
+                    if (!$check['can_submit']) {
                         echo "<script>
                                 Swal.fire({
-                                    title: 'Success!',
-                                    text: 'Grades saved successfully!',
-                                    icon: 'success',
-                                    confirmButtonColor: '#0d6efd'
-                                }).then((result) => {
-                                    // Refresh the page while maintaining the same URL parameters
-                                    window.location.href = window.location.href;
+                                    title: 'Cannot Submit!',
+                                    text: '" . addslashes($check['reason']) . "',
+                                    icon: 'error',
+                                    confirmButtonColor: '#dc3545'
                                 });
                             </script>";
+                    } else {
+                        $success = true;
+                        $error_message = '';
+
+                        // Start transaction
+                        $conn->begin_transaction();
+
+                        try {
+                            foreach ($_POST['grades'] as $student_id => $gradeData) {
+                                $prelim = isset($gradeData['prelim']) && $gradeData['prelim'] !== '' ?
+                                    $conn->real_escape_string($gradeData['prelim']) : NULL;
+                                $midterm = isset($gradeData['midterm']) && $gradeData['midterm'] !== '' ?
+                                    $conn->real_escape_string($gradeData['midterm']) : NULL;
+                                $finals = isset($gradeData['finals']) && $gradeData['finals'] !== '' ?
+                                    $conn->real_escape_string($gradeData['finals']) : NULL;
+                                $average = floatval($gradeData['average'] ?? 0);
+                                $equivalent = floatval($gradeData['equivalent'] ?? 0);
+                                $remarks = $conn->real_escape_string($gradeData['remarks'] ?? '');
+                                $comment = $conn->real_escape_string($gradeData['comment'] ?? '');
+
+                                $sql = "INSERT INTO grades 
+                                        (subject_id, teacher_id, student_id, schoolyear_id, prelim, midterm, finals, average, equivalent, remarks, comment) 
+                                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                                        ON DUPLICATE KEY UPDATE
+                                        prelim = VALUES(prelim), 
+                                        midterm = VALUES(midterm), 
+                                        finals = VALUES(finals), 
+                                        average = VALUES(average),
+                                        equivalent = VALUES(equivalent),
+                                        remarks = VALUES(remarks),
+                                        comment = VALUES(comment)";
+
+                                $stmt = $conn->prepare($sql);
+                                $stmt->bind_param("iiiidddddss", $subject_id, $teacher_id, $student_id, $schoolyear_id, $prelim, $midterm, $finals, $average, $equivalent, $remarks, $comment);
+
+                                if (!$stmt->execute()) {
+                                    throw new Exception($stmt->error);
+                                }
+                                $stmt->close();
+                            }
+
+                            // Increment submission count
+                            if (!incrementSubmissionCount($conn, $subject_id, $teacher_id, $list_id, $schoolyear_id)) {
+                                throw new Exception("Failed to update submission count");
+                            }
+
+                            $conn->commit();
+
+                            // Get new count
+                            $new_count = getSubmissionCount($conn, $subject_id, $teacher_id, $list_id, $schoolyear_id);
+                            $submissions_left = 3 - $new_count;
+
+                            logActivity(
+                                $conn,
+                                $teacher_id,
+                                $_SESSION['user_type'],
+                                'SUBMIT_GRADE',
+                                "submitted grades for " . $detail['subject'] . " S.Y. - " .
+                                    $detail['schoolyear'] . ", " . $detail['semester'] . " Semester (Submission $new_count/3)"
+                            );
+
+                            $message = "Grades saved successfully! (Submission $new_count of 3)";
+                            if ($submissions_left > 0) {
+                                $message .= "You have $submissions_left more submission(s) left.";
+                            } else {
+                                $message .= "You have reached the maximum submissions. Further changes require admin approval.";
+                            }
+
+                            echo "<script>
+                                    Swal.fire({
+                                        title: 'Success!',
+                                        text: '" . addslashes($message) . "',
+                                        icon: 'success',
+                                        confirmButtonColor: '#0d6efd'
+                                    }).then((result) => {
+                                        window.location.href = window.location.href;
+                                    });
+                                </script>";
+                        } catch (Exception $e) {
+                            $conn->rollback();
+                            echo "<script>
+                                    Swal.fire({
+                                        title: 'Error!',
+                                        text: 'Failed to save grades: " . addslashes($e->getMessage()) . "',
+                                        icon: 'error',
+                                        confirmButtonColor: '#dc3545'
+                                    });
+                                </script>";
+                        }
+
+                        $conn->close();
                     }
-                    $stmt->close();
-                    $conn->close();
                 }
             }
 
             ?>
+            <div class="alert alert-info mb-3">
+                <?php
+                $conn = connectToDB();
+                $check = canSubmitGrades($conn, $teacher_id, $_GET['subject_id'], $_GET['list_id'], $_GET['sy']);
+                $conn->close();
+
+                if ($check['can_submit']) {
+                    echo "<strong>Submission Status:</strong> You have " . $check['submissions_left'] . " submission(s) remaining.";
+                } else {
+                    echo "<strong>Submission Status:</strong> " . $check['reason'];
+
+                    if (isset($check['needs_approval']) || isset($check['is_pending'])) {
+                        $conn = connectToDB();
+                        $has_pending = hasPendingRequest($conn, $teacher_id, $_GET['subject_id'],  $_GET['list_id'], $_GET['sy']);
+                        $conn->close();
+
+                        if (!$has_pending) {
+                            echo '<button type="button" class="btn btn-warning btn-sm ms-3" id="requestApprovalBtn">
+                                    <i class="fas fa-hand-paper me-1"></i>Request Approval
+                                </button>';
+                        } else {
+                            echo '<span class="badge bg-warning text-dark ms-3">
+                                    <i class="fas fa-clock me-1"></i>Approval Pending
+                                </span>';
+                        }
+                    }
+                }
+                ?>
+            </div>
+
             <div class="table-responsive">
                 <form id="gradesForm" action="<?php echo htmlspecialchars($_SERVER['PHP_SELF'] . '?' . $_SERVER['QUERY_STRING']); ?>" method="post">
                     <input type="hidden" name="subject_id" value="<?php echo htmlspecialchars($subject); ?>">
                     <input type="hidden" name="sy_id" value="<?php echo htmlspecialchars($sy); ?>">
+                    <input type="hidden" name="list_id" value="<?php echo htmlspecialchars($list_id); ?>">
                     <table class="table table-hover">
                         <thead>
                             <th>Student Name</th>
@@ -243,6 +330,89 @@ if ($result->num_rows > 0) {
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
+        <?php if (!$check['can_submit']): ?>
+            document.querySelector('#gradesForm button[type="submit"]').disabled = true;
+            document.querySelector('#gradesForm button[type="submit"]').classList.add('disabled');
+            document.querySelectorAll('#gradesForm input[type="number"]').forEach(input => {
+                input.readOnly = true;
+            });
+        <?php endif; ?>
+
+
+        // Request approval functionality
+        document.getElementById('requestApprovalBtn').addEventListener('click', function() {
+            Swal.fire({
+                title: 'Request Admin Approval',
+                input: 'textarea',
+                inputLabel: 'Please provide a reason for additional submission',
+                inputPlaceholder: 'Enter your reason here...',
+                inputAttributes: {
+                    'aria-label': 'Reason for approval request',
+                    'rows': 4
+                },
+                showCancelButton: true,
+                confirmButtonText: 'Submit Request',
+                confirmButtonColor: '#ffc107',
+                cancelButtonColor: '#6c757d',
+                inputValidator: (value) => {
+                    if (!value) {
+                        return 'You need to provide a reason!'
+                    }
+                }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Submit approval request
+                    const formData = new FormData();
+                    formData.append('subject_id', <?php echo $_GET['subject_id']; ?>);
+                    formData.append('sy_id', <?php echo $_GET['sy']; ?>);
+                    formData.append('list_id', <?php echo $_GET['list_id']; ?>);
+                    formData.append('reason', result.value);
+
+                    Swal.fire({
+                        title: 'Submitting...',
+                        allowOutsideClick: false,
+                        didOpen: () => {
+                            Swal.showLoading();
+                        }
+                    });
+
+                    fetch('api/request_approval.php', {
+                            method: 'POST',
+                            body: formData
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                Swal.fire({
+                                    title: 'Request Submitted!',
+                                    text: data.message,
+                                    icon: 'success',
+                                    confirmButtonColor: '#0d6efd'
+                                }).then(() => {
+                                    window.location.reload();
+                                });
+                            } else {
+                                Swal.fire({
+                                    title: 'Error',
+                                    text: data.message,
+                                    icon: 'error',
+                                    confirmButtonColor: '#dc3545'
+                                });
+                            }
+                        })
+                        .catch(error => {
+                            Swal.fire({
+                                title: 'Error',
+                                text: 'Failed to submit request. Please try again.',
+                                icon: 'error',
+                                confirmButtonColor: '#dc3545'
+                            });
+                        });
+                }
+            });
+        });
+
+
         document.getElementById('gradesForm').addEventListener('submit', function(e) {
             e.preventDefault(); // Stop immediate submission
 
@@ -349,16 +519,31 @@ if ($result->num_rows > 0) {
                     average = (prelimNum + midtermNum + finalsNum) / 3;
 
                     // Calculate equivalent and remarks only if average is valid
-                    if (average >= 90) {
+                    if (average >= 98) {
+                        equivalent = '1.00';
+                        remarks = 'Passed';
+                    } else if (average >= 95 && average <= 97) {
+                        equivalent = '1.25';
+                        remarks = 'Passed';
+                    } else if (average >= 92 && average <= 94) {
                         equivalent = '1.50';
                         remarks = 'Passed';
-                    } else if (average >= 85) {
+                    } else if (average >= 89 && average <= 91) {
+                        equivalent = '1.75';
+                        remarks = 'Passed';
+                    } else if (average >= 86 && average <= 88) {
                         equivalent = '2.00';
                         remarks = 'Passed';
-                    } else if (average >= 80) {
+                    } else if (average >= 83 && average <= 85) {
+                        equivalent = '2.25';
+                        remarks = 'Passed';
+                    } else if (average >= 80 && average <= 82) {
                         equivalent = '2.50';
                         remarks = 'Passed';
-                    } else if (average >= 75) {
+                    } else if (average >= 76 && average <= 79) {
+                        equivalent = '2.75';
+                        remarks = 'Passed';
+                    } else if (average == 75) {
                         equivalent = '3.00';
                         remarks = 'Passed';
                     } else {

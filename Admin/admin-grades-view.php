@@ -60,7 +60,7 @@ if ($conn) {
 
             <?php
             $conn = connectToDB();
-            $sql = "SELECT * FROM schoolyear WHERE status = '1' ORDER BY schoolyear_id DESC";
+            $sql = "SELECT * FROM schoolyear WHERE status = '1' ORDER BY schoolyear_id";
             $stmt = $conn->prepare($sql);
             $stmt->execute();
             $result = $stmt->get_result();
@@ -157,6 +157,119 @@ if ($conn) {
             const searchInput = document.getElementById('searchInput');
             const tableBody = document.querySelector('tbody');
             const tableRows = Array.from(tableBody.querySelectorAll('tr'));
+
+            // Image popup functionality for sidebar profile image
+            const studentProfileImage = document.getElementById('student_profile_image');
+
+            if (studentProfileImage) {
+                studentProfileImage.addEventListener('click', function() {
+                    const imageSrc = this.src;
+
+                    // Create popup overlay
+                    const popupOverlay = document.createElement('div');
+                    popupOverlay.className = 'image-popup-overlay';
+                    popupOverlay.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.9);
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                z-index: 9999;
+                cursor: zoom-out;
+            `;
+
+                    // Create popup content
+                    const popupContent = document.createElement('div');
+                    popupContent.style.cssText = `
+                position: relative;
+                max-width: 90%;
+                max-height: 90%;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+            `;
+
+                    // Create image element
+                    const popupImage = document.createElement('img');
+                    popupImage.src = imageSrc;
+                    popupImage.style.cssText = `
+                max-width: 100%;
+                max-height: 100%;
+                object-fit: contain;
+                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+                border: 4px solid white;
+            `;
+
+                    // Create close button
+                    const closeButton = document.createElement('button');
+                    closeButton.innerHTML = '&times;';
+                    closeButton.style.cssText = `
+                position: absolute;
+                top: -40px;
+                right: -40px;
+                background: rgba(255, 255, 255, 0.2);
+                border: none;
+                color: white;
+                font-size: 30px;
+                width: 40px;
+                height: 40px;
+                border-radius: 50%;
+                cursor: pointer;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                transition: background 0.3s ease;
+            `;
+
+                    // Add hover effect to close button
+                    closeButton.addEventListener('mouseenter', function() {
+                        this.style.background = 'rgba(255, 255, 255, 0.3)';
+                    });
+                    closeButton.addEventListener('mouseleave', function() {
+                        this.style.background = 'rgba(255, 255, 255, 0.2)';
+                    });
+
+                    // Close popup function
+                    function closePopup() {
+                        document.body.removeChild(popupOverlay);
+                        document.removeEventListener('keydown', handleKeyPress);
+                    }
+
+                    // Handle keyboard events
+                    function handleKeyPress(e) {
+                        if (e.key === 'Escape') {
+                            closePopup();
+                        }
+                    }
+
+                    // Add event listeners
+                    closeButton.addEventListener('click', closePopup);
+                    popupOverlay.addEventListener('click', function(e) {
+                        if (e.target === popupOverlay) {
+                            closePopup();
+                        }
+                    });
+                    document.addEventListener('keydown', handleKeyPress);
+
+                    // Assemble and append to body
+                    popupContent.appendChild(popupImage);
+                    popupContent.appendChild(closeButton);
+                    popupOverlay.appendChild(popupContent);
+                    document.body.appendChild(popupOverlay);
+
+                    // Add animation
+                    popupOverlay.style.opacity = '0';
+                    popupOverlay.style.transition = 'opacity 0.3s ease';
+
+                    setTimeout(() => {
+                        popupOverlay.style.opacity = '1';
+                    }, 10);
+                });
+            }
 
             // Function to perform the search
             function performSearch(searchTerm) {

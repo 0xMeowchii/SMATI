@@ -83,9 +83,8 @@ include '../includes/activity_logger.php';
                                 });
                             </script>";
                     } else {
-                        // Generate unique filename
                         $fileExtension = pathinfo($file['name'], PATHINFO_EXTENSION);
-                        $newFilename = uniqid() . '_' . preg_replace('/[^a-zA-Z0-9]/', '_', $firstname . '_' . $lastname) . '.' . $fileExtension;
+                        $newFilename = $firstname . '_' . $lastname . '.' . $fileExtension;
                         $destination = $uploadDir . $newFilename;
 
                         // Move uploaded file
@@ -269,7 +268,7 @@ include '../includes/activity_logger.php';
                     } else {
                         // Generate unique filename
                         $fileExtension = pathinfo($file['name'], PATHINFO_EXTENSION);
-                        $newFilename = uniqid() . '_' . preg_replace('/[^a-zA-Z0-9]/', '_', $firstname . '_' . $lastname) . '.' . $fileExtension;
+                        $newFilename = $firstname . '_' . $lastname . '.' . $fileExtension;
                         $destination = $uploadDir . $newFilename;
 
                         // Move uploaded file
@@ -499,7 +498,7 @@ include '../includes/activity_logger.php';
                                                 data-course='" . $row["course"] . "'
                                                 data-email='" . $row["email"] . "'
                                                 data-username='" . $row["username"] . "'
-                                                data-createdAt='" . $row["createdAt"] . "'
+                                                data-createdAt='" . (new DateTime($row['createdAt']))->format('m-d-Y h:i A') . "'
                                                 data-image='" . $row["image"] . "'
                                                 data-bs-toggle='modal' 
                                                 data-bs-target='#viewStudentModal'>
@@ -839,7 +838,7 @@ include '../includes/activity_logger.php';
     <script>
         // Apply to all inputs except those containing specific words in ID
         document.querySelectorAll('input[type="text"]').forEach(input => {
-            const excludePatterns = ['username', 'email','editUsername', 'editEmail'];
+            const excludePatterns = ['username', 'email', 'editUsername', 'editEmail'];
             const shouldExclude = excludePatterns.some(pattern => input.id.includes(pattern));
 
             if (!shouldExclude) {

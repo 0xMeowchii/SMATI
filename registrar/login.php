@@ -61,7 +61,7 @@ date_default_timezone_set('Asia/Manila');
                     // User is not locked out - proceed with login validation
                     // Validate inputs
                     if (empty($username)) {
-                        $errors[] = "Username is required.";
+                        $errors[] = "Username/ID # is required.";
                     }
 
                     if (empty($password)) {
@@ -69,8 +69,8 @@ date_default_timezone_set('Asia/Manila');
                     }
 
                     if (empty($errors)) {
-                        $stmt = $conn->prepare("SELECT * FROM registrars WHERE username = ?");
-                        $stmt->bind_param("s", $username);
+                        $stmt = $conn->prepare("SELECT * FROM registrars WHERE username = ? OR email = ?");
+                        $stmt->bind_param("ss", $username, $username);
                         $stmt->execute();
                         $result = $stmt->get_result();
                         $user = $result->fetch_assoc();
@@ -178,11 +178,11 @@ date_default_timezone_set('Asia/Manila');
             <form id="loginForm" method="POST" action="<?php echo htmlspecialchars($_SERVER['PHP_SELF']) ?>">
                 <div class="form-group">
                     <label for="username" class="form-label">
-                        <i class="fas fa-user"></i> Username
+                        <i class="fas fa-user"></i> ID # or Username
                     </label>
                     <div class="input-with-icon">
                         <i class="fas fa-user input-icon"></i>
-                        <input type="text" class="form-control" id="username" name="username" placeholder="Enter your username">
+                        <input type="text" class="form-control" id="username" name="username" placeholder="Enter your ID #/username">
                     </div>
                 </div>
 

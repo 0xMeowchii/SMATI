@@ -21,5 +21,5 @@ foreach ($sessionCookiesToDestroy as $cookieName) {
 }
 
 // Redirect to login page
-header('location:/SMATI/');
+header('location:/SMATI/login.php');
 exit();

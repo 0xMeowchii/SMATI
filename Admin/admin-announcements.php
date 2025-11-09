@@ -78,11 +78,12 @@ include '../includes/activity_logger.php';
             $title = $_POST['title'];
             $details = $_POST['details'];
             $type = $_POST['type'];
+            $target = $_POST['target'];
 
             if ($conn) {
-                $stmt = $conn->prepare("INSERT INTO announcements (title, details, type, createdAt) 
-                                            VALUES (?, ?, ?, NOW())");
-                $stmt->bind_param("sss", $title, $details, $type);
+                $stmt = $conn->prepare("INSERT INTO announcements (title, details, type, target, createdAt) 
+                                            VALUES (?, ?, ?, ?, NOW())");
+                $stmt->bind_param("ssss", $title, $details, $type, $target);
 
                 if ($stmt->execute()) {
 
@@ -124,14 +125,16 @@ include '../includes/activity_logger.php';
             $title = $_POST['editTitle'];
             $details = $_POST['editDetails'];
             $type = $_POST['editType'];
+            $target = $_POST['editTarget'];
 
             if ($conn) {
                 $stmt = $conn->prepare("UPDATE announcements 
                                         SET title=?,
                                             details=?,
-                                            type=?
+                                            type=?,
+                                            target=?
                                         WHERE announcement_id=?");
-                $stmt->bind_param("sssi", $title, $details, $type, $announcement_id);
+                $stmt->bind_param("ssssi", $title, $details, $type, $target, $announcement_id);
 
                 if ($stmt->execute()) {
 
@@ -263,6 +266,7 @@ include '../includes/activity_logger.php';
                             echo '<span class="badge ' . $badgeClass . ' priority-badge"><i class="' . $iconClass . '"></i>' . $row["type"] . '</span>';
                             echo '</div>';
                             echo '<p class="card-text details-text flex-grow-1">' . $row["details"] . '</p>';
+                            echo '<p class="card-text details-text"><i class="bi bi-person-fill me-2"></i>' . $row['target'] . '</p>';
                             echo '<p class="card-text details-text"><i class="bi bi-calendar-event-fill me-2"></i>' . $date->format('m-d-Y h:i A') . '</p>';
                             echo '<div class="action-buttons1 mt-3">';
                             echo '<a class="btn btn-sm btn-outline-primary me-1 view-announcement-btn"
@@ -270,6 +274,7 @@ include '../includes/activity_logger.php';
                             data-title="' . $row["title"] . '"
                             data-details="' . $row["details"] . '"
                             data-type="' . $row["type"] . '"
+                            data-target="' . $row["target"] . '"
                             data-bs-toggle="modal" 
                             data-bs-target="#view-announcement-modal">
                             <i class="fas fa-eye"></i>
@@ -279,6 +284,7 @@ include '../includes/activity_logger.php';
                             data-title="' . $row["title"] . '"
                             data-details="' . $row["details"] . '"
                             data-type="' . $row["type"] . '"
+                            data-target="' . $row["target"] . '"
                             data-bs-toggle="modal" 
                             data-bs-target="#edit-announcement-modal">
                             <i class="fas fa-edit"></i>
@@ -317,23 +323,32 @@ include '../includes/activity_logger.php';
                         <form action="<?php htmlspecialchars($_SERVER['PHP_SELF']) ?>" method="POST">
                             <div class="row g-3">
                                 <h4 class="pb-2 border-bottom">Announcement Details</h4>
-                                <div class="col-12 col-md-8">
+                                <div class="col-12 col-md-6">
                                     <div class="form-floating">
                                         <input class="form-control" placeholder="Title" id="floatingTextarea1" name="title" required> </input>
                                         <label for="floatingTextarea1">Title</label>
                                     </div>
                                 </div>
-                                <div class="col-12 col-md-4">
+                                <div class="col-12 col-md-3">
                                     <select class="form-control rounded-2" name="type" required>
                                         <option value="Low">Priority: Low</option>
                                         <option value="High">Priority: High</option>
                                     </select>
                                 </div>
-                                <div class="form-floating">
-                                    <textarea class="form-control" placeholder="Details" id="floatingTextarea2" style="height: 120px" name="details" required></textarea>
-                                    <label for="floatingTextarea2">Details</label>
+                                <div class="col-12 col-md-3">
+                                    <select class="form-control rounded-2" name="target" required>
+                                        <option value="All">Target: All</option>
+                                        <option value="Student">Target: Student</option>
+                                        <option value="Teacher">Target: Teacher</option>
+                                        <option value="Registrar">Target: Registrar</option>
+                                    </select>
                                 </div>
                             </div>
+                            <div class="form-floating mt-3">
+                                <textarea class="form-control" placeholder="Details" id="floatingTextarea2" style="height: 120px" name="details" required></textarea>
+                                <label for="floatingTextarea2">Details</label>
+                            </div>
+
                             <div class="modal-footer">
                                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                                 <button type="submit" class="btn btn-primary" name="btnAdd">Save</button>
@@ -358,6 +373,7 @@ include '../includes/activity_logger.php';
                             <?php
                             echo "<p><strong>Title: </strong><span id='viewAnnouncementTitle'></span></p>
                                     <p><strong>Details: </strong><span id='viewAnnouncementDetails'></span></p>
+                                    <p><strong>Target: </strong><span id='viewAnnouncementTarget'></span></p>
                                     <p><strong>Priority: </strong><span id='viewAnnouncementPriority'></span></p>";
                             ?>
                         </div>
@@ -382,22 +398,31 @@ include '../includes/activity_logger.php';
                             <input type="hidden" name="editId" id="editId">
                             <div class="row g-3">
                                 <h4 class="pb-2 border-bottom">Announcement Details</h4>
-                                <div class="col-12 col-md-8">
+                                <div class="col-12 col-md-6">
                                     <div class="form-floating">
                                         <input class="form-control" placeholder="Title" id="editTitle" name="editTitle"></input>
                                         <label for="editTitle">Title</label>
                                     </div>
                                 </div>
-                                <div class="col-12 col-md-4">
+                                <div class="col-12 col-md-3">
                                     <select class="form-control rounded-2" name="editType" id="editType" required>
                                         <option value="Low">Priority: Low</option>
                                         <option value="High">Priority: High</option>
                                     </select>
                                 </div>
-                                <div class="form-floating">
-                                    <textarea class="form-control" placeholder="Details" id="editDetails" style="height: 120px" name="editDetails"></textarea>
-                                    <label for="editDetails">Details</label>
+                                <div class="col-12 col-md-3">
+                                    <select class="form-control rounded-2" name="editTarget" id="editTarget" required>
+                                        <option value="All">Target: All</option>
+                                        <option value="Student">Target: Student</option>
+                                        <option value="Teacher">Target: Teacher</option>
+                                        <option value="Registrar">Target: Registrar</option>
+                                    </select>
                                 </div>
+
+                            </div>
+                            <div class="form-floating">
+                                <textarea class="form-control" placeholder="Details" id="editDetails" style="height: 120px" name="editDetails"></textarea>
+                                <label for="editDetails">Details</label>
                             </div>
                             <div class="modal-footer">
                                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>

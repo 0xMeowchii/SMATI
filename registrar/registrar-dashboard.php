@@ -15,7 +15,7 @@ include '../database.php';
 
     //Fetch Announcements
     $conn = connectToDB();
-    $sql = "SELECT * FROM announcements ORDER BY announcement_id DESC";
+    $sql = "SELECT * FROM announcements WHERE target = 'All' OR target = 'Registrar' ORDER BY announcement_id DESC";
     $stmt = $conn->prepare($sql);
     $stmt->execute();
     $result = $stmt->get_result();
