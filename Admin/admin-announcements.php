@@ -73,7 +73,7 @@ include '../includes/activity_logger.php';
         <?php
 
         //INSERT QUERY
-        if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnAdd'])) {
+        if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['title']) && isset($_POST['details']) && isset($_POST['type'])) {
             $conn = connectToDB();
             $title = $_POST['title'];
             $details = $_POST['details'];
@@ -461,30 +461,75 @@ include '../includes/activity_logger.php';
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
-        document.querySelectorAll('.view-announcement-btn').forEach(function(btn) {
-            btn.addEventListener('click', function() {
-                document.getElementById('viewAnnouncementTitle').textContent = btn.getAttribute('data-title');
-                document.getElementById('viewAnnouncementDetails').textContent = btn.getAttribute('data-details');
-                document.getElementById('viewAnnouncementPriority').textContent = btn.getAttribute('data-type');
-            });
-        });
-        document.querySelectorAll('.edit-announcement-btn').forEach(function(btn) {
-            btn.addEventListener('click', function() {
-                document.getElementById('editId').value = btn.getAttribute('data-id');
-                document.getElementById('editTitle').value = btn.getAttribute('data-title');
-                document.getElementById('editDetails').value = btn.getAttribute('data-details');
-                document.getElementById('editType').value = btn.getAttribute('data-type');
-            });
-        });
-
-        document.querySelectorAll('.drop-announcement-btn').forEach(function(btn) {
-            btn.addEventListener('click', function() {
-                document.getElementById('id').value = btn.getAttribute('data-id');
-            });
-        });
-
-        // Simplified version for date search
         document.addEventListener('DOMContentLoaded', function() {
+            // Handle form submission with SweetAlert confirmation
+            const addAnnouncementForm = document.querySelector('#add-announcement-modal form');
+
+            if (addAnnouncementForm) {
+                addAnnouncementForm.addEventListener('submit', function(e) {
+                    e.preventDefault(); // Prevent default form submission
+
+                    const formData = new FormData(this);
+                    const title = formData.get('title');
+                    const details = formData.get('details');
+                    const type = formData.get('type');
+                    const target = formData.get('target');
+
+                    // Show SweetAlert confirmation
+                    Swal.fire({
+                        title: 'Confirm Announcement Creation',
+                        html: `
+                    <div class="text-start">
+                        <p><strong>Title:</strong> ${title}</p>
+                        <p><strong>Priority:</strong> ${type}</p>
+                        <p><strong>Target:</strong> ${target}</p>
+                        <p><strong>Details:</strong> ${details}</p>
+                    </div>
+                `,
+                        icon: 'question',
+                        showCancelButton: true,
+                        confirmButtonColor: '#0d6efd',
+                        cancelButtonColor: '#6c757d',
+                        confirmButtonText: 'Yes, create it!',
+                        cancelButtonText: 'Cancel'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            // If confirmed, submit the form
+                            addAnnouncementForm.submit();
+                        }
+                    });
+                });
+            }
+
+            // View announcement button handlers
+            document.querySelectorAll('.view-announcement-btn').forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    document.getElementById('viewAnnouncementTitle').textContent = btn.getAttribute('data-title');
+                    document.getElementById('viewAnnouncementDetails').textContent = btn.getAttribute('data-details');
+                    document.getElementById('viewAnnouncementPriority').textContent = btn.getAttribute('data-type');
+                    document.getElementById('viewAnnouncementTarget').textContent = btn.getAttribute('data-target');
+                });
+            });
+
+            // Edit announcement button handlers
+            document.querySelectorAll('.edit-announcement-btn').forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    document.getElementById('editId').value = btn.getAttribute('data-id');
+                    document.getElementById('editTitle').value = btn.getAttribute('data-title');
+                    document.getElementById('editDetails').value = btn.getAttribute('data-details');
+                    document.getElementById('editType').value = btn.getAttribute('data-type');
+                    document.getElementById('editTarget').value = btn.getAttribute('data-target');
+                });
+            });
+
+            // Delete announcement button handlers
+            document.querySelectorAll('.drop-announcement-btn').forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    document.getElementById('id').value = btn.getAttribute('data-id');
+                });
+            });
+
+            // Search functionality
             const searchInput = document.getElementById('searchInput');
             const announcementsContainer = document.getElementById('announcements-container');
             const announcementCards = Array.from(announcementsContainer.querySelectorAll('.col-lg-4'));
@@ -494,16 +539,13 @@ include '../includes/activity_logger.php';
                 let visibleCards = 0;
 
                 announcementCards.forEach(function(card) {
-                    // Skip the "no announcements" message card
                     if (card.classList.contains('col-12') && card.querySelector('h4.text-muted')) {
                         card.style.display = 'none';
                         return;
                     }
 
-                    // Get all text content from the entire card
                     const cardText = card.textContent.toLowerCase();
 
-                    // Check if search term matches any part of the card content
                     if (query === '' || cardText.includes(query)) {
                         card.style.display = '';
                         visibleCards++;
@@ -512,7 +554,6 @@ include '../includes/activity_logger.php';
                     }
                 });
 
-                // Show/hide "No results" message
                 showNoResultsMessage(visibleCards === 0 && query !== '');
             }
 
@@ -541,7 +582,6 @@ include '../includes/activity_logger.php';
                 }
             }
 
-            // Event listeners
             if (searchInput) {
                 searchInput.addEventListener('input', function(e) {
                     performSearch(e.target.value);

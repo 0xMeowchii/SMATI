@@ -147,7 +147,7 @@ include '../includes/activity_logger.php';
                     <thead>
                         <tr>
                             <th>RegistrarID</th>
-                            <th>Email</th>
+                            <th>ID #</th>
                             <th>Action</th>
                         </tr>
                     </thead>
@@ -201,7 +201,7 @@ include '../includes/activity_logger.php';
                         <form action="<?php htmlspecialchars($_SERVER['PHP_SELF']) ?>" method="POST" id="editForm">
                             <div class="input-group mb-4">
                                 <input type="hidden" id="editId" name="editId">
-                                <span class="input-group-text fw-semibold">Email:</span>
+                                <span class="input-group-text fw-semibold">ID #:</span>
                                 <input type="email" class="form-control" placeholder="Enter email" name="editEmail" id="editEmail" required>
                             </div>
                             <div class="input-group">

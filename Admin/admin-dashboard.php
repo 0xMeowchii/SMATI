@@ -45,19 +45,19 @@ if ($row = $result->fetch_assoc()) {
     if ($row['student_count_today'] > 0) {
         $todayStudents = $row['student_count_today'];
         $dataDate = "today";
-        $latestStudentCreated = $row['today_latest'] ? new DateTime($row['today_latest']) : null;
+        $latestStudentCreated = $row['today_latest'] ? new DateTime($row['today_latest']) : 0;
     }
     // Otherwise use yesterday's data
     elseif ($row['student_count_yesterday'] > 0) {
         $todayStudents = $row['student_count_yesterday'];
         $dataDate = "yesterday";
-        $latestStudentCreated = $row['yesterday_latest'] ? new DateTime($row['yesterday_latest']) : null;
+        $latestStudentCreated = $row['yesterday_latest'] ? new DateTime($row['yesterday_latest']) : 0;
     }
     // If no data today or yesterday, get overall data
     else {
         $todayStudents = $row['student_count_overall'];
         $dataDate = "overall";
-        $latestStudentCreated = $row['overall_latest'] ? new DateTime($row['overall_latest']) : null;
+        $latestStudentCreated = $row['overall_latest'] ? new DateTime($row['overall_latest']) : new DateTime();
     }
 }
 
@@ -102,21 +102,21 @@ if ($row = $result->fetch_assoc()) {
         $teacherCount = $row['teacher_count_today'];
         $registrarCount = $row['registrar_count_today'];
         $dataDate = "today";
-        $bothlastCreated = $row['today_latest'] ? new DateTime($row['today_latest']) : null;
+        $bothlastCreated = $row['today_latest'] ? new DateTime($row['today_latest']) : 0;
     }
     // Otherwise use yesterday's data
     elseif ($row['teacher_count_yesterday'] > 0 || $row['registrar_count_yesterday'] > 0) {
         $teacherCount = $row['teacher_count_yesterday'];
         $registrarCount = $row['registrar_count_yesterday'];
         $dataDate = "yesterday";
-        $bothlastCreated = $row['yesterday_latest'] ? new DateTime($row['yesterday_latest']) : null;
+        $bothlastCreated = $row['yesterday_latest'] ? new DateTime($row['yesterday_latest']) : 0;
     }
     // If no data today or yesterday, get overall data
     else {
         $teacherCount = $row['teacher_count_overall'];
         $registrarCount = $row['registrar_count_overall'];
         $dataDate = "overall";
-        $bothlastCreated = $row['overall_latest'] ? new DateTime($row['overall_latest']) : null;
+        $bothlastCreated = $row['overall_latest'] ? new DateTime($row['overall_latest']) : new DateTime();
     }
 
     $totalCount = $teacherCount + $registrarCount;
@@ -229,7 +229,7 @@ $result = $stmt->get_result();
 if ($row = $result->fetch_assoc()) {
     $secondLastLogin = new DateTime($row['created_at']);
 } else {
-    echo "No previous login found";
+    $secondLastLogin = new DateTime();
 }
 
 
@@ -576,20 +576,30 @@ if ($row = $result->fetch_assoc()) {
                     <div class="card-body d-flex flex-column">
                         <!-- Scrollable Announcements List -->
                         <div class="flex-grow-1 overflow-auto" style="max-height: 500px;">
-                            <?php foreach ($announcements as $announcement): ?>
-                                <div class="card list-card border-0 bg-light mb-3">
-                                    <div class="card-body border-start rounded-4 border-4 border-primary py-3">
-                                        <div class="d-flex justify-content-between align-items-start mb-2">
-                                            <div class="text-muted small mb-1"><?php echo $announcement['date']->format('m-d-Y h:i A l') ?></div>
-                                            <p class="card-text small"><i class="bi bi-person-fill me-1"></i><?php echo $announcement['target'] ?></p>
+                            <?php if (!empty($announcements)): ?>
+                                <?php foreach ($announcements as $announcement): ?>
+                                    <div class="card list-card border-0 bg-light mb-3">
+                                        <div class="card-body border-start rounded-4 border-4 border-primary py-3">
+                                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                                <div class="text-muted small mb-1"><?php echo $announcement['date']->format('m-d-Y h:i A l') ?></div>
+                                                <p class="card-text small"><i class="bi bi-person-fill me-1"></i><?php echo $announcement['target'] ?></p>
+                                            </div>
+
+                                            <h6 class="card-title mb-1 fw-bold"><?php echo $announcement['title'] ?></h6>
+                                            <p class="card-text small mb-1"><?php echo $announcement['details'] ?></p>
+
                                         </div>
-
-                                        <h6 class="card-title mb-1 fw-bold"><?php echo $announcement['title'] ?></h6>
-                                        <p class="card-text small mb-1"><?php echo $announcement['details'] ?></p>
-
                                     </div>
+                                <?php endforeach; ?>
+                            <?php else: ?>
+                                <div class="text-center py-5">
+                                    <div class="mb-4">
+                                        <i class="fas fa-inbox mb-3" style="font-size: 4rem; color: #6c757d; opacity: 0.5;"></i>
+                                    </div>
+                                    <h4 class="text-muted mb-3">No Annoucement Yet</h4>
+                                    <p class="text-muted mb-4">Create your first announcement to get started.</p>
                                 </div>
-                            <?php endforeach; ?>
+                            <?php endif; ?>
                         </div>
                     </div>
                     <div class="card-footer">
@@ -629,73 +639,88 @@ if ($row = $result->fetch_assoc()) {
         </div>
 
         <div class="flex-grow-1 overflow-auto" style="max-height: 500px;">
-            <?php foreach ($registrations as $reg): ?>
-                <div class="card border-0 shadow-sm mb-4 border-start border-4 border-primary" data-reg-number="<?php echo $reg['reg_number'] ?>"
-                    data-program="<?php echo strtolower($reg['program']) ?>"
-                    data-reg-date="<?php echo $reg['reg_date']->format('Y-m-d') ?>">
-                    <div class=" card-header bg-primary text-white d-flex justify-content-between align-items-center">
-                        <span class="fw-semibold"><?php echo $reg['reg_number'] ?></span>
-                        <div class="d-flex gap-2">
-                            <button class="btn btn-sm btn-outline-light download-single-btn" data-reg-number="<?php echo $reg['reg_number'] ?>">
-                                <i class="fas fa-download me-1"></i>Download
-                            </button>
-                            <button class="btn btn-sm btn-danger delete-btn" data-reg-number="<?php echo $reg['reg_number'] ?>">
-                                <i class="fas fa-trash me-1"></i>Delete
-                            </button>
-                        </div>
-                    </div>
-                    <div class="card-body">
-                        <div class="row g-3">
-                            <div class="col-md-6">
-                                <dl class="row mb-0">
-                                    <dt class="col-sm-5 text-muted">Registration Number: </dt>
-                                    <dd class="col-sm-7 fw-semibold"><?php echo $reg['reg_number'] ?></dd>
-
-                                    <dt class="col-sm-5 text-muted">Name:</dt>
-                                    <dd class="col-sm-7"><?php echo $reg['fullname'] ?></dd>
-
-                                    <dt class="col-sm-5 text-muted">Date of Birth:</dt>
-                                    <dd class="col-sm-7"><?php echo $reg['birthdate'] ?></dd>
-
-                                    <dt class="col-sm-5 text-muted">Gender:</dt>
-                                    <dd class="col-sm-7"><?php echo $reg['gender'] ?></dd>
-
-                                    <dt class="col-sm-5 text-muted">Email:</dt>
-                                    <dd class="col-sm-7"><?php echo $reg['email'] ?></dd>
-                                </dl>
-                            </div>
-                            <div class="col-md-6">
-                                <dl class="row mb-0">
-                                    <dt class="col-sm-5 text-muted">Phone:</dt>
-                                    <dd class="col-sm-7"><?php echo $reg['phone'] ?></dd>
-
-                                    <dt class="col-sm-5 text-muted">Address:</dt>
-                                    <dd class="col-sm-7"><?php echo $reg['address'] ?></dd>
-
-                                    <dt class="col-sm-5 text-muted">School Visitation:</dt>
-                                    <dd class="col-sm-7">
-                                        <?php
-                                        if ($reg['school_visit'] === 'yes') {
-                                            echo 'Yes, I would like to schedule a school visit';
-                                        } elseif ($reg['school_visit'] === 'no') {
-                                            echo ' No, I do not need a school visit';
-                                        } else {
-                                            echo 'I have already visited the school';
-                                        }
-                                        ?>
-                                    </dd>
-
-                                    <dt class="col-sm-5 text-muted">Program:</dt>
-                                    <dd class="col-sm-7"><?php echo $reg['program_details'] ?></dd>
-
-                                    <dt class="col-sm-5 text-muted">Registration Date:</dt>
-                                    <dd class="col-sm-7"><?php echo $reg['reg_date']->format('m-d-Y h:i A') ?></dd>
-                                </dl>
+            <?php if (!empty($registrations)): ?>
+                <?php foreach ($registrations as $reg): ?>
+                    <div class="card border-0 shadow-sm mb-4 border-start border-4 border-primary" data-reg-number="<?php echo $reg['reg_number'] ?>"
+                        data-program="<?php echo strtolower($reg['program']) ?>"
+                        data-reg-date="<?php echo $reg['reg_date']->format('Y-m-d') ?>">
+                        <div class=" card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                            <span class="fw-semibold"><?php echo $reg['reg_number'] ?></span>
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-sm btn-outline-light download-single-btn" data-reg-number="<?php echo $reg['reg_number'] ?>">
+                                    <i class="fas fa-download me-1"></i>Download
+                                </button>
+                                <button class="btn btn-sm btn-danger delete-btn" data-reg-number="<?php echo $reg['reg_number'] ?>">
+                                    <i class="fas fa-trash me-1"></i>Delete
+                                </button>
                             </div>
                         </div>
+                        <div class="card-body">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <dl class="row mb-0">
+                                        <dt class="col-sm-5 text-muted">Registration Number: </dt>
+                                        <dd class="col-sm-7 fw-semibold"><?php echo $reg['reg_number'] ?></dd>
+
+                                        <dt class="col-sm-5 text-muted">Name:</dt>
+                                        <dd class="col-sm-7"><?php echo $reg['fullname'] ?></dd>
+
+                                        <dt class="col-sm-5 text-muted">Date of Birth:</dt>
+                                        <dd class="col-sm-7"><?php echo $reg['birthdate'] ?></dd>
+
+                                        <dt class="col-sm-5 text-muted">Gender:</dt>
+                                        <dd class="col-sm-7"><?php echo $reg['gender'] ?></dd>
+
+                                        <dt class="col-sm-5 text-muted">Email:</dt>
+                                        <dd class="col-sm-7"><?php echo $reg['email'] ?></dd>
+                                    </dl>
+                                </div>
+                                <div class="col-md-6">
+                                    <dl class="row mb-0">
+                                        <dt class="col-sm-5 text-muted">Phone:</dt>
+                                        <dd class="col-sm-7"><?php echo $reg['phone'] ?></dd>
+
+                                        <dt class="col-sm-5 text-muted">Address:</dt>
+                                        <dd class="col-sm-7"><?php echo $reg['address'] ?></dd>
+
+                                        <dt class="col-sm-5 text-muted">School Visitation:</dt>
+                                        <dd class="col-sm-7">
+                                            <?php
+                                            if ($reg['school_visit'] === 'yes') {
+                                                echo 'Yes, I would like to schedule a school visit';
+                                            } elseif ($reg['school_visit'] === 'no') {
+                                                echo ' No, I do not need a school visit';
+                                            } else {
+                                                echo 'I have already visited the school';
+                                            }
+                                            ?>
+                                        </dd>
+
+                                        <dt class="col-sm-5 text-muted">Program:</dt>
+                                        <dd class="col-sm-7"><?php echo $reg['program_details'] ?></dd>
+
+                                        <dt class="col-sm-5 text-muted">Registration Date:</dt>
+                                        <dd class="col-sm-7"><?php echo $reg['reg_date']->format('m-d-Y h:i A') ?></dd>
+                                    </dl>
+                                </div>
+                            </div>
+                        </div>
                     </div>
+                <?php endforeach; ?>
+            <?php else: ?>
+                <!-- No Data Message -->
+                <div class="text-center py-5">
+                    <div class="mb-4">
+                        <i class="fas fa-inbox mb-3" style="font-size: 4rem; color: #6c757d; opacity: 0.5;"></i>
+                    </div>
+                    <h4 class="text-muted mb-3">No Registrations Yet</h4>
+                    <p class="text-muted mb-4">There are no registration records in the system yet.</p>
+                    <button type="button" class="btn btn-primary" onclick="location.reload()">
+                        <i class="fas fa-refresh me-2"></i>Refresh Page
+                    </button>
                 </div>
-            <?php endforeach; ?>
+            <?php endif; ?>
+
             <div class="no-registration-results text-center py-5 d-none" id="noRegistrationResults">
                 <div class="mb-4">
                     <i class="fas fa-search mb-3" style="font-size: 4rem; color: #6c757d; opacity: 0.5;"></i>

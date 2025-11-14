@@ -325,7 +325,7 @@ include '../includes/activity_logger.php';
                             echo "<td colspan='5' class='text-center py-4' style='color: #6c757d;'>";
                             echo "<i class='fas fa-search mb-2' style='font-size: 2em; opacity: 0.5;'></i>";
                             echo "<br>";
-                            echo "No Registrar found matching your search";
+                            echo "No Registrar found.";
                             echo "</td>";
                         }
                         ?>

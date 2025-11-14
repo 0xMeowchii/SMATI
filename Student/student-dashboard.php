@@ -121,7 +121,7 @@ include('../database.php');
             <div class="card-body py-4">
                 <div class="row align-items-center">
                     <div class="col-12">
-                        <h1 class="card-title h2 mb-2 fw-bold">Welcome back, <?php echo $_SESSION['firstname'] ?>!</h1>
+                        <h1 class="card-title h2 mb-2 fw-bold">Welcome, <?php echo $_SESSION['firstname'] ?>!</h1>
                         <p class="card-text mb-1 opacity-75 fw-semibold">Education is the most powerful weapon which you can use to change the world.” — Nelson Mandela</p>
                         <p class="card-text mb-0 opacity-50 fst-italic">Good morning! Believe in your goals today — every class, every effort counts toward your dream.</p>
                     </div>
@@ -159,40 +159,50 @@ include('../database.php');
                             </div>
                         </div>
                         <div class="flex-grow-1 overflow-auto" id="announcementsListContainer" style="max-height:450px;">
-                            <?php foreach ($announcements as $announcement): ?>
-                                <?php
-                                // Determine badge class and icon based on status
-                                $badge_class = '';
+                            <?php if (!empty($announcements)): ?>
+                                <?php foreach ($announcements as $announcement): ?>
+                                    <?php
+                                    // Determine badge class and icon based on status
+                                    $badge_class = '';
 
-                                switch ($announcement['priority']) {
-                                    case 'Low':
-                                        $badge_class = 'bg-warning text-black';
-                                        break;
-                                    case 'High':
-                                        $badge_class = 'bg-danger text-white';
-                                        break;
-                                }
-                                ?>
-                                <div class="card mb-3 rounded-4 card-announcements"
-                                    data-announcement-title="<?php echo strtolower($announcement['title']); ?>"
-                                    data-announcement-priority="<?php echo strtolower($announcement['priority']); ?>">
-                                    <div class="card-body border-start border-5 rounded-4 border-warning">
-                                        <div class="d-flex justify-content-between align-items-start mb-2">
-                                            <h5 class="card-title mb-0 fw-bold announcement-title"><?php echo $announcement['title'] ?></h5>
-                                            <div class="d-flex gap-1">
-                                                <span class="badge <?php echo $badge_class; ?>"><?php echo $announcement['priority'] ?></span>
+                                    switch ($announcement['priority']) {
+                                        case 'Low':
+                                            $badge_class = 'bg-warning text-black';
+                                            break;
+                                        case 'High':
+                                            $badge_class = 'bg-danger text-white';
+                                            break;
+                                    }
+                                    ?>
+                                    <div class="card mb-3 rounded-4 card-announcements"
+                                        data-announcement-title="<?php echo strtolower($announcement['title']); ?>"
+                                        data-announcement-priority="<?php echo strtolower($announcement['priority']); ?>">
+                                        <div class="card-body border-start border-5 rounded-4 border-warning">
+                                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                                <h5 class="card-title mb-0 fw-bold announcement-title"><?php echo $announcement['title'] ?></h5>
+                                                <div class="d-flex gap-1">
+                                                    <span class="badge <?php echo $badge_class; ?>"><?php echo $announcement['priority'] ?></span>
+                                                </div>
+                                            </div>
+                                            <p class="card-text text-muted mb-3"><?php echo $announcement['details'] ?></p>
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <small class="text-muted">
+                                                    <i class="fas fa-user me-1"></i>Admin •
+                                                    <i class="fas fa-clock me-1 ms-2"></i><?php echo $announcement['date']->format('m-d-Y') ?>
+                                                </small>
                                             </div>
                                         </div>
-                                        <p class="card-text text-muted mb-3"><?php echo $announcement['details'] ?></p>
-                                        <div class="d-flex justify-content-between align-items-center">
-                                            <small class="text-muted">
-                                                <i class="fas fa-user me-1"></i>Admin •
-                                                <i class="fas fa-clock me-1 ms-2"></i><?php echo $announcement['date']->format('m-d-Y') ?>
-                                            </small>
-                                        </div>
                                     </div>
+                                <?php endforeach; ?>
+                            <?php else: ?>
+                                <div class="text-center py-5">
+                                    <div class="mb-4">
+                                        <i class="fas fa-inbox mb-3" style="font-size: 4rem; color: #6c757d; opacity: 0.5;"></i>
+                                    </div>
+                                    <h4 class="text-muted mb-3">No Annoucement Yet</h4>
+                                    <p>Wait for the school administration to post an announcement.</p>
                                 </div>
-                            <?php endforeach; ?>
+                            <?php endif; ?>
                         </div>
                     </div>
                 </div>
@@ -227,22 +237,32 @@ include('../database.php');
                             </select>
                         </div>
                         <div class="flex-grow-1 overflow-auto subject-container" style="max-height: 380px;">
-                            <?php foreach ($subjects as $subject): ?>
-                                <div class="card border rounded-3 shadow-sm mb-3 subject-card">
-                                    <div class="card-body p-3">
-                                        <div class="d-flex justify-content-between align-items-start">
-                                            <h6 class="card-title mb-0 fw-bold"><?php echo $subject['subjectname'] ?></h6>
-                                            <p class="text muted small">
-                                                <?php echo !empty($subject['prelim']) ? $subject['prelim'] : ' - ';  ?> | <?php echo !empty($subject['midterm']) ? $subject['midterm'] : ' - '; ?> | <?php echo !empty($subject['finals']) ? $subject['finals'] : ' - '; ?></p>
+                            <?php if (!empty($subjects)): ?>
+                                <?php foreach ($subjects as $subject): ?>
+                                    <div class="card border rounded-3 shadow-sm mb-3 subject-card">
+                                        <div class="card-body p-3">
+                                            <div class="d-flex justify-content-between align-items-start">
+                                                <h6 class="card-title mb-0 fw-bold"><?php echo $subject['subjectname'] ?></h6>
+                                                <p class="text muted small">
+                                                    <?php echo !empty($subject['prelim']) ? $subject['prelim'] : ' - ';  ?> | <?php echo !empty($subject['midterm']) ? $subject['midterm'] : ' - '; ?> | <?php echo !empty($subject['finals']) ? $subject['finals'] : ' - '; ?></p>
 
+                                            </div>
+                                            <p class="card-text text-muted mb-2">
+                                                <i class="fas fa-user-tie me-1"></i><?php echo $subject['teachername'] ?>
+                                            </p>
+                                            <p class="d-none schoolyear"><?php echo $subject['schoolyear'] ?></p>
                                         </div>
-                                        <p class="card-text text-muted mb-2">
-                                            <i class="fas fa-user-tie me-1"></i><?php echo $subject['teachername'] ?>
-                                        </p>
-                                        <p class="d-none schoolyear"><?php echo $subject['schoolyear'] ?></p>
                                     </div>
+                                <?php endforeach; ?>
+                            <?php else: ?>
+                                <div class="text-center py-5">
+                                    <div class="mb-4">
+                                        <i class="fas fa-book mb-3" style="font-size: 4rem; color: #6c757d; opacity: 0.5;"></i>
+                                    </div>
+                                    <h4 class="text-muted mb-3">No Grades Yet</h4>
+                                    <p class="text-muted mb-4">Wait for your teachers to submit a grade.</p>
                                 </div>
-                            <?php endforeach; ?>
+                            <?php endif; ?>
                         </div>
                         <div class="text-center mt-4 pt-3 border-top">
                             <a class="btn btn-outline-primary btn-sm" href="student-grades.php">
@@ -283,83 +303,94 @@ include('../database.php');
                 </div>
 
                 <div class="flex-grow-1 overflow-auto" id="concernListContainer" style="max-height:600px;">
-                    <?php foreach ($concerns as $concern): ?>
-                        <?php
-                        // Determine badge class and icon based on status
-                        $badge_class = '';
-                        $status_icon = '';
 
-                        switch ($concern['status']) {
-                            case 'Pending':
-                                $badge_class = 'bg-warning text-dark';
-                                $status_icon = 'fa-clock';
-                                break;
-                            case 'Approved':
-                                $badge_class = 'bg-success text-white';
-                                $status_icon = 'fa-check-circle';
-                                break;
-                            case 'Case Closed':
-                                $badge_class = 'bg-danger text-white';
-                                $status_icon = 'fa-archive';
-                                break;
-                        }
-                        ?>
+                    <?php if (!empty($concerns)): ?>
+                        <?php foreach ($concerns as $concern): ?>
+                            <?php
+                            // Determine badge class and icon based on status
+                            $badge_class = '';
+                            $status_icon = '';
 
-                        <div class="card concern-ticket-card rounded-4 mb-4"
-                            data-concern-status="<?php echo strtolower($concern['status']); ?>"
-                            data-concern-reference="<?php echo strtolower($concern['reference_num']); ?>">
-                            <div class="card-body rounded-start-4 border-start border-5 position-relative border-primary">
-                                <div class="d-flex justify-content-between align-items-start mb-3">
-                                    <div class="pt-3 mb-2">
-                                        <div class="h5 text-primary fw-bold concern-reference-num"><?php echo $concern['reference_num'] ?></div>
-                                        <div class="text-muted small">Submitted on <?php echo $concern['date']->format('m-d-Y h:i A') ?> </div>
-                                        <div class="badge bg-light text-primary px-3 py-2 mt-3">
-                                            <i class="fas fa-tag me-1"></i><?php echo $concern['type']; ?>
+                            switch ($concern['status']) {
+                                case 'Pending':
+                                    $badge_class = 'bg-warning text-dark';
+                                    $status_icon = 'fa-clock';
+                                    break;
+                                case 'Approved':
+                                    $badge_class = 'bg-success text-white';
+                                    $status_icon = 'fa-check-circle';
+                                    break;
+                                case 'Case Closed':
+                                    $badge_class = 'bg-danger text-white';
+                                    $status_icon = 'fa-archive';
+                                    break;
+                            }
+                            ?>
+
+                            <div class="card concern-ticket-card rounded-4 mb-4"
+                                data-concern-status="<?php echo strtolower($concern['status']); ?>"
+                                data-concern-reference="<?php echo strtolower($concern['reference_num']); ?>">
+                                <div class="card-body rounded-start-4 border-start border-5 position-relative border-primary">
+                                    <div class="d-flex justify-content-between align-items-start mb-3">
+                                        <div class="pt-3 mb-2">
+                                            <div class="h5 text-primary fw-bold concern-reference-num"><?php echo $concern['reference_num'] ?></div>
+                                            <div class="text-muted small">Submitted on <?php echo $concern['date']->format('m-d-Y h:i A') ?> </div>
+                                            <div class="badge bg-light text-primary px-3 py-2 mt-3">
+                                                <i class="fas fa-tag me-1"></i><?php echo $concern['type']; ?>
+                                            </div>
+                                        </div>
+                                        <div class="d-flex align-items-center">
+                                            <span class="badge <?php echo $badge_class; ?> px-3 py-2">
+                                                <i class="fas <?php echo $status_icon; ?> me-1"></i>
+                                                <?php echo $concern['status']; ?>
+                                            </span>
                                         </div>
                                     </div>
-                                    <div class="d-flex align-items-center">
-                                        <span class="badge <?php echo $badge_class; ?> px-3 py-2">
-                                            <i class="fas <?php echo $status_icon; ?> me-1"></i>
-                                            <?php echo $concern['status']; ?>
-                                        </span>
-                                    </div>
-                                </div>
 
-                                <div class="d-flex justify-content-between align-items-center pt-3 border-top">
-                                    <div class='position-relative d-inline-flex gap-1'>
-                                        <!-- PDF Download Button - Always visible -->
-                                        <a class='btn btn-sm btn-outline-primary download-pdf-btn'
-                                            data-num='<?php echo $concern['reference_num']; ?>'
-                                            data-name='<?php echo $concern['fullname']; ?>'
-                                            data-teacher='<?php echo $concern['teacher_fullname']; ?>'
-                                            data-section='<?php echo $concern['section']; ?>'
-                                            data-email='<?php echo $concern['email']; ?>'
-                                            data-type='<?php echo $concern['type']; ?>'
-                                            data-status='<?php echo $concern['status']; ?>'
-                                            data-details='<?php echo $concern['details']; ?>'
-                                            data-date='<?php echo $concern['date']->format('m-d-Y h:i A'); ?>'
-                                            data-approve='<?php echo $concern['approve_date'] ? $concern['approve_date']->format('m-d-Y h:i A') : 'Not approved yet'; ?>'>
-                                            <i class='fas fa-download'></i>
-                                        </a>
-                                    </div>
-                                    <div>
-                                        <button class="btn btn-sm btn-outline-primary view-concern-btn"
-                                            data-num='<?php echo $concern['reference_num']; ?>'
-                                            data-teacher='<?php echo $concern['teacher_fullname']; ?>'
-                                            data-type='<?php echo $concern['type']; ?>'
-                                            data-status='<?php echo $concern['status']; ?>'
-                                            data-details='<?php echo $concern['details']; ?>'
-                                            data-date='<?php echo $concern['date']->format('m-d-Y h:i A'); ?>'
-                                            data-approve='<?php echo $concern['approve_date'] ? $concern['approve_date']->format('m-d-Y h:i A') : 'Not approved yet'; ?>'
-                                            data-bs-toggle='modal'
-                                            data-bs-target='#viewConcernModal'>
-                                            <i class="fas fa-eye me-1"></i>View Details
-                                        </button>
+                                    <div class="d-flex justify-content-between align-items-center pt-3 border-top">
+                                        <div class='position-relative d-inline-flex gap-1'>
+                                            <!-- PDF Download Button - Always visible -->
+                                            <a class='btn btn-sm btn-outline-primary download-pdf-btn'
+                                                data-num='<?php echo $concern['reference_num']; ?>'
+                                                data-name='<?php echo $concern['fullname']; ?>'
+                                                data-teacher='<?php echo $concern['teacher_fullname']; ?>'
+                                                data-section='<?php echo $concern['section']; ?>'
+                                                data-email='<?php echo $concern['email']; ?>'
+                                                data-type='<?php echo $concern['type']; ?>'
+                                                data-status='<?php echo $concern['status']; ?>'
+                                                data-details='<?php echo $concern['details']; ?>'
+                                                data-date='<?php echo $concern['date']->format('m-d-Y h:i A'); ?>'
+                                                data-approve='<?php echo $concern['approve_date'] ? $concern['approve_date']->format('m-d-Y h:i A') : 'Not approved yet'; ?>'>
+                                                <i class='fas fa-download'></i>
+                                            </a>
+                                        </div>
+                                        <div>
+                                            <button class="btn btn-sm btn-outline-primary view-concern-btn"
+                                                data-num='<?php echo $concern['reference_num']; ?>'
+                                                data-teacher='<?php echo $concern['teacher_fullname']; ?>'
+                                                data-type='<?php echo $concern['type']; ?>'
+                                                data-status='<?php echo $concern['status']; ?>'
+                                                data-details='<?php echo $concern['details']; ?>'
+                                                data-date='<?php echo $concern['date']->format('m-d-Y h:i A'); ?>'
+                                                data-approve='<?php echo $concern['approve_date'] ? $concern['approve_date']->format('m-d-Y h:i A') : 'Not approved yet'; ?>'
+                                                data-bs-toggle='modal'
+                                                data-bs-target='#viewConcernModal'>
+                                                <i class="fas fa-eye me-1"></i>View Details
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
+                        <?php endforeach; ?>
+                    <?php else: ?>
+                        <div class="text-center py-5">
+                            <div class="mb-4">
+                                <i class="fas fa-inbox mb-3" style="font-size: 4rem; color: #6c757d; opacity: 0.5;"></i>
+                            </div>
+                            <h4 class="text-muted mb-3">No Concern Ticket Found</h4>
+                            <p class="text-muted mb-4">Create your first concern to get started.</p>
                         </div>
-                    <?php endforeach; ?>
+                    <?php endif; ?>
                 </div>
             </div>
         </div>

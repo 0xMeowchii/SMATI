@@ -1,11 +1,11 @@
-<?php 
+<?php
 
 include('../database.php'); ?>
 <!DOCTYPE html>
 <html lang="en">
 
 <head>
-<?php include 'includes/header.php' ?>
+    <?php include 'includes/header.php' ?>
 </head>
 
 <body>
@@ -57,14 +57,18 @@ include('../database.php'); ?>
                                 echo "<td>" . $row["email"] . "</td>";
                                 echo "<td>
                                         <a class='btn btn-sm btn-outline-primary'
-                                        href='registrar-grades-view.php?id=".$row['student_id']."'>
+                                        href='registrar-grades-view.php?id=" . $row['student_id'] . "'>
                                          <i class='fas fa-eye me-1'></i>View
                                         </a>
                                     </td>";
                                 echo "</tr>";
                             }
                         } else {
-                            echo "0 results";
+                            echo "<td colspan='5' class='text-center py-4' style='color: #6c757d;'>";
+                            echo "<i class='fas fa-search mb-2' style='font-size: 3rem; opacity: 0.5;'></i>";
+                            echo "<br>";
+                            echo "No students found.";
+                            echo "</td>";
                         }
                         ?>
 

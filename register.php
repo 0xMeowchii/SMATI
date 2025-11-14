@@ -559,7 +559,7 @@
                     <div class="form-check mb-4">
                         <input class="form-check-input" type="checkbox" id="agreeTerms" required>
                         <label class="form-check-label" for="agreeTerms">
-                            I agree to the terms and conditions
+                            I agree to the <a href="#" data-bs-toggle="modal" data-bs-target="#termsAndCondition">terms and conditions </a>
                         </label>
                         <div class="invalid-feedback">
                             You must agree before submitting.
@@ -582,6 +582,35 @@
         </div>
     </footer>
 
+    <!-- Terms and Condition modal -->
+    <div class="modal fade" id="termsAndCondition" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h1 class="modal-title fs-5" id="exampleModalLabel">Terms and Condition</h1>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>
+                        Thank you for choosing to register with us! Please note that all your personal information is securely stored and managed on the admin side of our platform. We prioritize your privacy and ensure that your data is protected through strict security measures.<br><br>
+
+                        Key points:<br>
+                        • Your information will only be accessible to authorized admin personnel.<br>
+                        • We utilize industry-standard encryption and security protocols to safeguard your data.<br>
+                        • You can manage your preferences and update your information at any time through your account settings.<br><br>
+
+                        We’re committed to providing a safe and secure registration experience. Should you have any questions or concerns about the registration process or your data security, please feel free to contact us.<br><br>
+
+                        Thank you for trusting us!
+                    </p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
     <!-- SweetAlert2 -->
@@ -590,6 +619,246 @@
     <script src="https://www.google.com/recaptcha/api.js" async defer></script>
 
     <script>
+        let duplicateFlags = {
+            email: false,
+            phone: false,
+            firstname: false,
+            lastname: false,
+            combined: false
+        };
+
+        // Debounce function to prevent too many API calls
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+
+        // Check if field value exists in database
+        async function checkFieldExists(field, value) {
+            if (!value || value.trim() === '') {
+                return {
+                    exists: false
+                };
+            }
+
+            try {
+                const response = await fetch(`check-duplicate.php?field=${field}&value=${encodeURIComponent(value)}`);
+                const data = await response.json();
+                return data;
+            } catch (error) {
+                console.error('Error checking field:', error);
+                return {
+                    exists: false,
+                    error: true
+                };
+            }
+        }
+
+        // Show validation feedback
+        function showFieldFeedback(inputElement, exists, message) {
+            const feedbackDiv = inputElement.nextElementSibling;
+
+            if (exists) {
+                inputElement.classList.add('is-invalid');
+                inputElement.classList.remove('is-valid');
+
+                if (feedbackDiv && feedbackDiv.classList.contains('invalid-feedback')) {
+                    feedbackDiv.textContent = message;
+                    feedbackDiv.style.display = 'block';
+                }
+            } else {
+                inputElement.classList.remove('is-invalid');
+                inputElement.classList.add('is-valid');
+
+                if (feedbackDiv && feedbackDiv.classList.contains('invalid-feedback')) {
+                    feedbackDiv.style.display = 'none';
+                }
+            }
+        }
+
+        // Live validation for email
+        const checkEmailExists = debounce(async function(e) {
+            const email = e.target.value.trim();
+
+            if (!email || !validateEmailFormat(email)) {
+                duplicateFlags.email = false;
+                return;
+            }
+
+            const result = await checkFieldExists('email', email);
+
+            if (result.exists) {
+                duplicateFlags.email = true;
+                showFieldFeedback(e.target, true, result.message || 'This email is already registered');
+            } else {
+                duplicateFlags.email = false;
+                showFieldFeedback(e.target, false, '');
+            }
+        }, 800);
+
+        // Live validation for phone
+        const checkPhoneExists = debounce(async function(e) {
+            const phone = e.target.value.trim();
+
+            if (!phone || phone.length < 10) {
+                duplicateFlags.phone = false;
+                return;
+            }
+
+            const result = await checkFieldExists('phone', phone);
+
+            if (result.exists) {
+                duplicateFlags.phone = true;
+                showFieldFeedback(e.target, true, result.message || 'This phone number is already registered');
+            } else {
+                duplicateFlags.phone = false;
+                showFieldFeedback(e.target, false, '');
+            }
+        }, 800);
+
+        // Live validation for firstname
+        const checkFirstNameExists = debounce(async function(e) {
+            const firstName = e.target.value.trim();
+
+            if (!firstName) {
+                duplicateFlags.firstname = false;
+                return;
+            }
+
+            const result = await checkFieldExists('firstname', firstName);
+
+            if (result.exists) {
+                duplicateFlags.firstname = true;
+                showFieldFeedback(e.target, true, result.message || 'This first name is already registered');
+            } else {
+                duplicateFlags.firstname = false;
+                showFieldFeedback(e.target, false, '');
+            }
+        }, 800);
+
+        // Live validation for lastname
+        const checkLastNameExists = debounce(async function(e) {
+            const lastName = e.target.value.trim();
+
+            if (!lastName) {
+                duplicateFlags.lastname = false;
+                return;
+            }
+
+            const result = await checkFieldExists('lastname', lastName);
+
+            if (result.exists) {
+                duplicateFlags.lastname = true;
+                showFieldFeedback(e.target, true, result.message || 'This last name is already registered');
+            } else {
+                duplicateFlags.lastname = false;
+                showFieldFeedback(e.target, false, '');
+            }
+        }, 800);
+
+        // Check combination of firstname + lastname + phone
+        const checkFullNameAndPhone = debounce(async function() {
+            const firstName = document.getElementById('firstName').value.trim();
+            const lastName = document.getElementById('lastName').value.trim();
+            const phone = document.getElementById('phone').value.trim();
+
+            if (!firstName || !lastName || !phone || phone.length < 10) {
+                duplicateFlags.combined = false;
+                return;
+            }
+
+            try {
+                const response = await fetch('check-duplicate.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        firstname: firstName,
+                        lastname: lastName,
+                        phone: phone
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.exists) {
+                    duplicateFlags.combined = true;
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Duplicate Registration',
+                        text: 'A registration with this name and phone number already exists.',
+                        confirmButtonColor: '#001f3f'
+                    });
+                } else {
+                    duplicateFlags.combined = false;
+                }
+            } catch (error) {
+                console.error('Error checking duplicate:', error);
+                duplicateFlags.combined = false;
+            }
+        }, 1000);
+
+        // Helper function to validate email format
+        function validateEmailFormat(email) {
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            return emailRegex.test(email);
+        }
+
+        // Enhanced validation functions with duplicate checking
+        function validateStep1Enhanced() {
+            let isValid = validateStep1(); // Call original validation
+
+            if (!isValid) {
+                return false;
+            }
+
+            // Check for duplicates
+            if (duplicateFlags.firstname || duplicateFlags.lastname) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Duplicate Information Detected',
+                    text: 'Please correct the duplicate information before proceeding.',
+                    confirmButtonColor: '#001f3f'
+                });
+                return false;
+            }
+
+            return true;
+        }
+
+        function validateStep2Enhanced() {
+            let isValid = validateStep2(); // Call original validation
+
+            if (!isValid) {
+                return false;
+            }
+
+            // Check for duplicates
+            if (duplicateFlags.email || duplicateFlags.phone || duplicateFlags.combined) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Duplicate Information Detected',
+                    html: '<p>The following information is already registered:</p>' +
+                        (duplicateFlags.email ? '<p>• Email address</p>' : '') +
+                        (duplicateFlags.phone ? '<p>• Contact number</p>' : '') +
+                        (duplicateFlags.combined ? '<p>• Name and phone combination</p>' : '') +
+                        '<p class="mt-2">Please use different information or contact the administration if you believe this is an error.</p>',
+                    confirmButtonColor: '#001f3f'
+                });
+                return false;
+            }
+
+            return true;
+        }
+
         // Function to generate registration number from server
         function generateRegisterNumber() {
             fetch('generate-reg-number.php')
@@ -733,17 +1002,28 @@
 
         // Form navigation
         document.addEventListener('DOMContentLoaded', function() {
+
+            document.getElementById('email').addEventListener('input', checkEmailExists);
+            document.getElementById('phone').addEventListener('input', checkPhoneExists);
+            document.getElementById('firstName').addEventListener('input', checkFirstNameExists);
+            document.getElementById('lastName').addEventListener('input', checkLastNameExists);
+
+            // Check combination when user finishes entering name and phone
+            document.getElementById('firstName').addEventListener('blur', checkFullNameAndPhone);
+            document.getElementById('lastName').addEventListener('blur', checkFullNameAndPhone);
+            document.getElementById('phone').addEventListener('blur', checkFullNameAndPhone);
+
             generateRegisterNumber();
 
             // Step navigation
             document.getElementById('next-to-step2').addEventListener('click', function() {
-                if (validateStep1()) {
+                if (validateStep1Enhanced()) {
                     showStep(2);
                 }
             });
 
             document.getElementById('next-to-step3').addEventListener('click', function() {
-                if (validateStep2()) {
+                if (validateStep2Enhanced()) {
                     showStep(3);
                 }
             });

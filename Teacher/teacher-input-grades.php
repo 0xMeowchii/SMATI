@@ -330,89 +330,6 @@ if ($result->num_rows > 0) {
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
-        <?php if (!$check['can_submit']): ?>
-            document.querySelector('#gradesForm button[type="submit"]').disabled = true;
-            document.querySelector('#gradesForm button[type="submit"]').classList.add('disabled');
-            document.querySelectorAll('#gradesForm input[type="number"]').forEach(input => {
-                input.readOnly = true;
-            });
-        <?php endif; ?>
-
-
-        // Request approval functionality
-        document.getElementById('requestApprovalBtn').addEventListener('click', function() {
-            Swal.fire({
-                title: 'Request Admin Approval',
-                input: 'textarea',
-                inputLabel: 'Please provide a reason for additional submission',
-                inputPlaceholder: 'Enter your reason here...',
-                inputAttributes: {
-                    'aria-label': 'Reason for approval request',
-                    'rows': 4
-                },
-                showCancelButton: true,
-                confirmButtonText: 'Submit Request',
-                confirmButtonColor: '#ffc107',
-                cancelButtonColor: '#6c757d',
-                inputValidator: (value) => {
-                    if (!value) {
-                        return 'You need to provide a reason!'
-                    }
-                }
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    // Submit approval request
-                    const formData = new FormData();
-                    formData.append('subject_id', <?php echo $_GET['subject_id']; ?>);
-                    formData.append('sy_id', <?php echo $_GET['sy']; ?>);
-                    formData.append('list_id', <?php echo $_GET['list_id']; ?>);
-                    formData.append('reason', result.value);
-
-                    Swal.fire({
-                        title: 'Submitting...',
-                        allowOutsideClick: false,
-                        didOpen: () => {
-                            Swal.showLoading();
-                        }
-                    });
-
-                    fetch('api/request_approval.php', {
-                            method: 'POST',
-                            body: formData
-                        })
-                        .then(response => response.json())
-                        .then(data => {
-                            if (data.success) {
-                                Swal.fire({
-                                    title: 'Request Submitted!',
-                                    text: data.message,
-                                    icon: 'success',
-                                    confirmButtonColor: '#0d6efd'
-                                }).then(() => {
-                                    window.location.reload();
-                                });
-                            } else {
-                                Swal.fire({
-                                    title: 'Error',
-                                    text: data.message,
-                                    icon: 'error',
-                                    confirmButtonColor: '#dc3545'
-                                });
-                            }
-                        })
-                        .catch(error => {
-                            Swal.fire({
-                                title: 'Error',
-                                text: 'Failed to submit request. Please try again.',
-                                icon: 'error',
-                                confirmButtonColor: '#dc3545'
-                            });
-                        });
-                }
-            });
-        });
-
-
         document.getElementById('gradesForm').addEventListener('submit', function(e) {
             e.preventDefault(); // Stop immediate submission
 
@@ -488,15 +405,36 @@ if ($result->num_rows > 0) {
                 });
             });
         });
+
         document.addEventListener('DOMContentLoaded', function() {
             const gradeInputs = document.querySelectorAll('.grade-input');
 
             gradeInputs.forEach(input => {
                 input.addEventListener('input', calculateGrades);
+
+                // Add input validation
+                input.addEventListener('blur', function() {
+                    let value = parseFloat(this.value);
+                    if (isNaN(value)) {
+                        this.value = '';
+                        calculateGrades.call(this);
+                        return;
+                    }
+
+                    // Validate range
+                    if (value < 0) this.value = 0;
+                    if (value > 100) this.value = 100;
+
+                    // Round to 2 decimal places
+                    this.value = parseFloat(this.value).toFixed(2);
+                    calculateGrades.call(this);
+                });
             });
 
             function calculateGrades() {
                 const studentRow = this.closest('tr');
+                if (!studentRow) return;
+
                 const prelimInput = studentRow.querySelector('input[name*="[prelim]"]');
                 const midtermInput = studentRow.querySelector('input[name*="[midterm]"]');
                 const finalsInput = studentRow.querySelector('input[name*="[finals]"]');
@@ -515,35 +453,36 @@ if ($result->num_rows > 0) {
                     const midtermNum = parseFloat(midterm) || 0;
                     const finalsNum = parseFloat(finals) || 0;
 
-                    // Calculate average
+                    // Calculate average with proper rounding
                     average = (prelimNum + midtermNum + finalsNum) / 3;
+                    average = Math.round(average * 100) / 100;
 
-                    // Calculate equivalent and remarks only if average is valid
+                    // Calculate equivalent with proper decimal ranges
                     if (average >= 98) {
                         equivalent = '1.00';
                         remarks = 'Passed';
-                    } else if (average >= 95 && average <= 97) {
+                    } else if (average >= 95) {
                         equivalent = '1.25';
                         remarks = 'Passed';
-                    } else if (average >= 92 && average <= 94) {
+                    } else if (average >= 92) {
                         equivalent = '1.50';
                         remarks = 'Passed';
-                    } else if (average >= 89 && average <= 91) {
+                    } else if (average >= 89) {
                         equivalent = '1.75';
                         remarks = 'Passed';
-                    } else if (average >= 86 && average <= 88) {
+                    } else if (average >= 86) {
                         equivalent = '2.00';
                         remarks = 'Passed';
-                    } else if (average >= 83 && average <= 85) {
+                    } else if (average >= 83) {
                         equivalent = '2.25';
                         remarks = 'Passed';
-                    } else if (average >= 80 && average <= 82) {
+                    } else if (average >= 80) {
                         equivalent = '2.50';
                         remarks = 'Passed';
-                    } else if (average >= 76 && average <= 79) {
+                    } else if (average >= 76) {
                         equivalent = '2.75';
                         remarks = 'Passed';
-                    } else if (average == 75) {
+                    } else if (average >= 75) {
                         equivalent = '3.00';
                         remarks = 'Passed';
                     } else {
@@ -552,24 +491,33 @@ if ($result->num_rows > 0) {
                     }
                 }
 
-                // Update display
-                studentRow.querySelector('span:first-child').textContent = average.toFixed(2);
-                studentRow.querySelector('input[name*="[average]"]').value = average.toFixed(2);
+                // Update display with proper selectors
+                const averageDisplay = studentRow.querySelector('td:nth-child(5) span');
+                const equivalentDisplay = studentRow.querySelector('td:nth-child(6) span');
+                const remarksDisplay = studentRow.querySelector('td:nth-child(7) span');
 
-                studentRow.querySelectorAll('span')[1].textContent = equivalent;
-                studentRow.querySelector('input[name*="[equivalent]"]').value = equivalent;
+                if (averageDisplay) averageDisplay.textContent = average.toFixed(2);
+                if (equivalentDisplay) equivalentDisplay.textContent = equivalent;
+                if (remarksDisplay) remarksDisplay.textContent = remarks;
 
-                studentRow.querySelectorAll('span')[2].textContent = remarks;
-                studentRow.querySelector('input[name*="[remarks]"]').value = remarks;
+                // Update hidden inputs
+                const averageInput = studentRow.querySelector('input[name*="[average]"]');
+                const equivalentInput = studentRow.querySelector('input[name*="[equivalent]"]');
+                const remarksInput = studentRow.querySelector('input[name*="[remarks]"]');
+
+                if (averageInput) averageInput.value = average.toFixed(2);
+                if (equivalentInput) equivalentInput.value = equivalent;
+                if (remarksInput) remarksInput.value = remarks;
             }
 
             // Calculate initial values on page load
             gradeInputs.forEach(input => {
                 if (input.value) {
-                    calculateGrades.call(input);
+                    setTimeout(() => calculateGrades.call(input), 100);
                 }
             });
         });
+
         document.addEventListener('DOMContentLoaded', function() {
             const searchInput = document.getElementById('searchInput');
             const tableBody = document.querySelector('tbody');
@@ -648,6 +596,98 @@ if ($result->num_rows > 0) {
                 });
             }
         });
+
+        <?php if (!$check['can_submit']): ?>
+            const gradesForm = document.querySelector('#gradesForm');
+            if (gradesForm) {
+                const submitBtn = gradesForm.querySelector('button[type="submit"]');
+                if (submitBtn) {
+                    submitBtn.disabled = true;
+                    submitBtn.classList.add('disabled');
+                }
+
+                const gradeInputs = gradesForm.querySelectorAll('input[type="number"]');
+                gradeInputs.forEach(input => {
+                    input.readOnly = true;
+                });
+            }
+        <?php endif; ?>
+
+        // Request approval functionality - WITH NULL CHECK
+        const requestApprovalBtn = document.getElementById('requestApprovalBtn');
+        if (requestApprovalBtn) {
+            requestApprovalBtn.addEventListener('click', function() {
+                Swal.fire({
+                    title: 'Request Admin Approval',
+                    input: 'textarea',
+                    inputLabel: 'Please provide a reason for additional submission',
+                    inputPlaceholder: 'Enter your reason here...',
+                    inputAttributes: {
+                        'aria-label': 'Reason for approval request',
+                        'rows': 4
+                    },
+                    showCancelButton: true,
+                    confirmButtonText: 'Submit Request',
+                    confirmButtonColor: '#ffc107',
+                    cancelButtonColor: '#6c757d',
+                    inputValidator: (value) => {
+                        if (!value) {
+                            return 'You need to provide a reason!'
+                        }
+                    }
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        // Submit approval request
+                        const formData = new FormData();
+                        formData.append('subject_id', <?php echo $_GET['subject_id']; ?>);
+                        formData.append('sy_id', <?php echo $_GET['sy']; ?>);
+                        formData.append('list_id', <?php echo $_GET['list_id']; ?>);
+                        formData.append('reason', result.value);
+
+                        Swal.fire({
+                            title: 'Submitting...',
+                            allowOutsideClick: false,
+                            didOpen: () => {
+                                Swal.showLoading();
+                            }
+                        });
+
+                        fetch('api/request_approval.php', {
+                                method: 'POST',
+                                body: formData
+                            })
+                            .then(response => response.json())
+                            .then(data => {
+                                if (data.success) {
+                                    Swal.fire({
+                                        title: 'Request Submitted!',
+                                        text: data.message,
+                                        icon: 'success',
+                                        confirmButtonColor: '#0d6efd'
+                                    }).then(() => {
+                                        window.location.reload();
+                                    });
+                                } else {
+                                    Swal.fire({
+                                        title: 'Error',
+                                        text: data.message,
+                                        icon: 'error',
+                                        confirmButtonColor: '#dc3545'
+                                    });
+                                }
+                            })
+                            .catch(error => {
+                                Swal.fire({
+                                    title: 'Error',
+                                    text: 'Failed to submit request. Please try again.',
+                                    icon: 'error',
+                                    confirmButtonColor: '#dc3545'
+                                });
+                            });
+                    }
+                });
+            });
+        }
     </script>
 </body>
 

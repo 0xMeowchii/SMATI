@@ -95,80 +95,91 @@ if ($conn) {
             }
             ?>
 
-            <?php foreach ($schoolyearlist as $schoolyear): ?>
+            <?php if (!empty($schoolyearlist)): ?>
 
-                <div class="col mt-3 shadow rounded-bottom-3 bg-white">
-                    <div class="card-border-0 custom-card mb-4">
-                        <div class="card-header px-4 py-3 bg-primary text-white rounded-top-3">
-                            <h4 class="card-title mb-0"><?php echo htmlspecialchars($schoolyear['schoolyear'] . ', ' . $schoolyear['semester']) . ' Semester'; ?></h4>
-                        </div>
-                        <div class="card-body p-4">
-                            <div class="table-responsive">
-                                <table class="table table-hover">
-                                    <thead>
-                                        <th>Subject</th>
-                                        <th>Teacher</th>
-                                        <th>Prelim</th>
-                                        <th>Midterm</th>
-                                        <th>Finals</th>
-                                        <th>Average</th>
-                                        <th>Equivalent</th>
-                                        <th>Remarks</th>
-                                        <th>Comment</th>
-                                    </thead>
-                                    <tbody>
-                                        <?php
-                                        $conn = connectToDB();
-                                        $sql = "SELECT * 
+                <?php foreach ($schoolyearlist as $schoolyear): ?>
+
+                    <div class="col mt-3 shadow rounded-bottom-3 bg-white">
+                        <div class="card-border-0 custom-card mb-4">
+                            <div class="card-header px-4 py-3 bg-primary text-white rounded-top-3">
+                                <h4 class="card-title mb-0"><?php echo htmlspecialchars($schoolyear['schoolyear'] . ', ' . $schoolyear['semester']) . ' Semester'; ?></h4>
+                            </div>
+                            <div class="card-body p-4">
+                                <div class="table-responsive">
+                                    <table class="table table-hover">
+                                        <thead>
+                                            <th>Subject</th>
+                                            <th>Teacher</th>
+                                            <th>Prelim</th>
+                                            <th>Midterm</th>
+                                            <th>Finals</th>
+                                            <th>Average</th>
+                                            <th>Equivalent</th>
+                                            <th>Remarks</th>
+                                            <th>Comment</th>
+                                        </thead>
+                                        <tbody>
+                                            <?php
+                                            $conn = connectToDB();
+                                            $sql = "SELECT * 
                                                 FROM grades g
                                                 INNER JOIN teachers t ON g.teacher_id = t.teacher_id
                                                 INNER JOIN subjects s ON g.subject_id = s.subject_id
                                                 WHERE g.student_id = ? AND g.schoolyear_id = ?";
-                                        $stmt = $conn->prepare($sql);
-                                        $stmt->bind_param("ii", $_GET['id'], $schoolyear['schoolyear_id']);
-                                        $stmt->execute();
-                                        $result = $stmt->get_result();
+                                            $stmt = $conn->prepare($sql);
+                                            $stmt->bind_param("ii", $_GET['id'], $schoolyear['schoolyear_id']);
+                                            $stmt->execute();
+                                            $result = $stmt->get_result();
 
-                                        if ($result && $result->num_rows > 0) {
-                                            while ($row = $result->fetch_assoc()) {
-                                                $badgeClass = '';
-                                                if ($row['remarks'] === 'Passed') {
-                                                    $badgeClass = 'badge bg-success';
-                                                } elseif ($row['remarks'] === 'Pending') {
-                                                    $badgeClass = 'badge bg-warning text-dark';
-                                                } elseif ($row['remarks'] === 'Failed') {
-                                                    $badgeClass = 'badge bg-danger';
-                                                } else {
-                                                    $badgeClass = 'badge bg-secondary';
+                                            if ($result && $result->num_rows > 0) {
+                                                while ($row = $result->fetch_assoc()) {
+                                                    $badgeClass = '';
+                                                    if ($row['remarks'] === 'Passed') {
+                                                        $badgeClass = 'badge bg-success';
+                                                    } elseif ($row['remarks'] === 'Pending') {
+                                                        $badgeClass = 'badge bg-warning text-dark';
+                                                    } elseif ($row['remarks'] === 'Failed') {
+                                                        $badgeClass = 'badge bg-danger';
+                                                    } else {
+                                                        $badgeClass = 'badge bg-secondary';
+                                                    }
+                                                    echo "<tr>";
+                                                    echo "<td>" . $row['subject'] . "</td>";
+                                                    echo "<td>" . $row["lastname"] . ", " . $row["firstname"] . "</td>";
+                                                    echo "<td>" . ($row['prelim'] !== null ? $row['prelim'] : '-') . "</td>";
+                                                    echo "<td>" . ($row['midterm'] !== null ? $row['midterm'] : '-') . "</td>";
+                                                    echo "<td>" . ($row['finals'] !== null ? $row['finals'] : '-') . "</td>";
+                                                    echo "<td>" . $row['average'] . "</td>";
+                                                    echo "<td>" . $row['equivalent'] . "</td>";
+                                                    echo "<td><span class='$badgeClass'>" . $row['remarks'] . "</span></td>";
+                                                    echo "<td>" . $row['comment'] . "</td>";
+                                                    echo "</tr>";
                                                 }
-                                                echo "<tr>";
-                                                echo "<td>" . $row['subject'] . "</td>";
-                                                echo "<td>" . $row["lastname"] . ", " . $row["firstname"] . "</td>";
-                                                echo "<td>" . ($row['prelim'] !== null ? $row['prelim'] : '-') . "</td>";
-                                                echo "<td>" . ($row['midterm'] !== null ? $row['midterm'] : '-') . "</td>";
-                                                echo "<td>" . ($row['finals'] !== null ? $row['finals'] : '-') . "</td>";
-                                                echo "<td>" . $row['average'] . "</td>";
-                                                echo "<td>" . $row['equivalent'] . "</td>";
-                                                echo "<td><span class='$badgeClass'>" . $row['remarks'] . "</span></td>";
-                                                echo "<td>" . $row['comment'] . "</td>";
-                                                echo "</tr>";
+                                            } else {
+                                                echo "<td colspan='10' class='text-center py-4' style='color: #6c757d;'>";
+                                                echo "<i class='fas fa-search mb-2' style='font-size: 2em; opacity: 0.5;'></i>";
+                                                echo "<br>";
+                                                echo "No submitted Grades yet.";
+                                                echo "</td>";
                                             }
-                                        } else {
-                                            echo "<td colspan='10' class='text-center py-4' style='color: #6c757d;'>";
-                                            echo "<i class='fas fa-search mb-2' style='font-size: 2em; opacity: 0.5;'></i>";
-                                            echo "<br>";
-                                            echo "No submitted Grades yet.";
-                                            echo "</td>";
-                                        }
 
-                                        ?>
-                                    </tbody>
-                                </table>
+                                            ?>
+                                        </tbody>
+                                    </table>
+                                </div>
                             </div>
                         </div>
                     </div>
+                <?php endforeach; ?>
+            <?php else: ?>
+                <div class="text-center py-5">
+                    <div class="mb-4">
+                        <i class="fas fa-book mb-3" style="font-size: 4rem; color: #6c757d; opacity: 0.5;"></i>
+                    </div>
+                    <h4 class="text-muted mb-3">No Grades Submitted Yet.</h4>
+                    <p>The teachers has not submitted any grades for the student yet.</p>
                 </div>
-            <?php endforeach; ?>
+            <?php endif; ?>
         </div>
     </main>
 

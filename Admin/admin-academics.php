@@ -470,7 +470,11 @@ include 'set-grade-deadline.php';
                                 echo "</tr>";
                             }
                         } else {
-                            echo "0 results";
+                            echo "<td colspan='5' class='text-center py-4' style='color: #6c757d;'>";
+                            echo "<i class='fas fa-search mb-2' style='font-size: 3rem; opacity: 0.5;'></i>";
+                            echo "<br>";
+                            echo "No Subjects found.";
+                            echo "</td>";
                         }
                         ?>
                     </tbody>
@@ -667,32 +671,43 @@ include 'set-grade-deadline.php';
                             </tr>
                         </thead>
                         <tbody id="tblDeadline">
-                            <?php foreach ($subjects as $subject): ?>
+                            <?php if (!empty($subjects)): ?>
+                                <?php foreach ($subjects as $subject): ?>
+                                    <tr>
+                                        <td><?php echo htmlspecialchars($subject['subject_code'] . ' - ' . $subject['subject']); ?></td>
+                                        <td><?php echo htmlspecialchars($subject['teacher_firstname'] . ' ' . $subject['teacher_lastname']); ?></td>
+                                        <td><?php echo htmlspecialchars($subject['schoolyear'] . ', ' . $subject['semester'] . ' Sem'); ?></td>
+                                        <td>
+                                            <?php
+                                            if ($subject['submission_due_date']) {
+                                                echo date('M d, Y h:i A', strtotime($subject['submission_due_date']));
+                                            } else {
+                                                echo '<em class="text-muted">Not set</em>';
+                                            }
+                                            ?>
+                                        </td>
+                                        <td>
+                                            <button class="btn btn-primary btn-sm set-deadline-btn"
+                                                data-subject-id="<?php echo $subject['subject_id']; ?>"
+                                                data-sy-id="<?php echo $subject['schoolyear_id']; ?>"
+                                                data-subject-name="<?php echo htmlspecialchars($subject['subject']); ?>"
+                                                data-current-deadline="<?php echo $subject['submission_due_date'] ?? ''; ?>">
+                                                <i class="fas fa-calendar-plus me-1"></i>
+                                                <?php echo $subject['submission_due_date'] ? 'Update' : 'Set'; ?> Deadline
+                                            </button>
+                                        </td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            <?php else: ?>
                                 <tr>
-                                    <td><?php echo htmlspecialchars($subject['subject_code'] . ' - ' . $subject['subject']); ?></td>
-                                    <td><?php echo htmlspecialchars($subject['teacher_firstname'] . ' ' . $subject['teacher_lastname']); ?></td>
-                                    <td><?php echo htmlspecialchars($subject['schoolyear'] . ', ' . $subject['semester'] . ' Sem'); ?></td>
-                                    <td>
-                                        <?php
-                                        if ($subject['submission_due_date']) {
-                                            echo date('M d, Y h:i A', strtotime($subject['submission_due_date']));
-                                        } else {
-                                            echo '<em class="text-muted">Not set</em>';
-                                        }
-                                        ?>
-                                    </td>
-                                    <td>
-                                        <button class="btn btn-primary btn-sm set-deadline-btn"
-                                            data-subject-id="<?php echo $subject['subject_id']; ?>"
-                                            data-sy-id="<?php echo $subject['schoolyear_id']; ?>"
-                                            data-subject-name="<?php echo htmlspecialchars($subject['subject']); ?>"
-                                            data-current-deadline="<?php echo $subject['submission_due_date'] ?? ''; ?>">
-                                            <i class="fas fa-calendar-plus me-1"></i>
-                                            <?php echo $subject['submission_due_date'] ? 'Update' : 'Set'; ?> Deadline
-                                        </button>
+                                    <td colspan="5" class="text-center py-4">
+                                        <div class="mb-3">
+                                            <i class="fas fa-book-open mb-3" style="font-size: 3rem; color: #6c757d; opacity: 0.5;"></i>
+                                        </div>
+                                        <h5 class="text-muted mb-2">No Subjects Found</h5>
                                     </td>
                                 </tr>
-                            <?php endforeach; ?>
+                            <?php endif; ?>
                         </tbody>
                     </table>
                 </div>
@@ -753,7 +768,11 @@ include 'set-grade-deadline.php';
                                 echo "</tr>";
                             }
                         } else {
-                            echo "0 results";
+                            echo "<td colspan='5' class='text-center py-4' style='color: #6c757d;'>";
+                            echo "<i class='fas fa-search mb-2' style='font-size: 3rem; opacity: 0.5;'></i>";
+                            echo "<br>";
+                            echo "School hasn't started yet.";
+                            echo "</td>";
                         }
                         ?>
                     </tbody>

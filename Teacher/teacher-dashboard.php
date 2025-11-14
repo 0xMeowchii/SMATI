@@ -351,40 +351,50 @@ include '../database.php';
                         </div>
                     </div>
                     <div class="flex-grow-1 overflow-auto" id="announcementsListContainer" style="max-height:300px;">
-                        <?php foreach ($announcements as $announcement): ?>
-                            <?php
-                            // Determine badge class and icon based on status
-                            $badge_class = '';
+                        <?php if (!empty($announcements)): ?>
+                            <?php foreach ($announcements as $announcement): ?>
+                                <?php
+                                // Determine badge class and icon based on status
+                                $badge_class = '';
 
-                            switch ($announcement['priority']) {
-                                case 'Low':
-                                    $badge_class = 'bg-warning text-black';
-                                    break;
-                                case 'High':
-                                    $badge_class = 'bg-danger text-white';
-                                    break;
-                            }
-                            ?>
-                            <div class="card mb-3 rounded-4 card-announcements"
-                                data-announcement-title="<?php echo strtolower($announcement['title']); ?>"
-                                data-announcement-priority="<?php echo strtolower($announcement['priority']); ?>">
-                                <div class="card-body border-start border-5 rounded-4 border-primary">
-                                    <div class="d-flex justify-content-between align-items-start mb-2">
-                                        <h5 class="card-title mb-0 fw-bold announcement-title"><?php echo $announcement['title'] ?></h5>
-                                        <div class="d-flex gap-1">
-                                            <span class="badge <?php echo $badge_class; ?>"><?php echo $announcement['priority'] ?></span>
+                                switch ($announcement['priority']) {
+                                    case 'Low':
+                                        $badge_class = 'bg-warning text-black';
+                                        break;
+                                    case 'High':
+                                        $badge_class = 'bg-danger text-white';
+                                        break;
+                                }
+                                ?>
+                                <div class="card mb-3 rounded-4 card-announcements"
+                                    data-announcement-title="<?php echo strtolower($announcement['title']); ?>"
+                                    data-announcement-priority="<?php echo strtolower($announcement['priority']); ?>">
+                                    <div class="card-body border-start border-5 rounded-4 border-primary">
+                                        <div class="d-flex justify-content-between align-items-start mb-2">
+                                            <h5 class="card-title mb-0 fw-bold announcement-title"><?php echo $announcement['title'] ?></h5>
+                                            <div class="d-flex gap-1">
+                                                <span class="badge <?php echo $badge_class; ?>"><?php echo $announcement['priority'] ?></span>
+                                            </div>
+                                        </div>
+                                        <p class="card-text text-muted mb-3"><?php echo $announcement['details'] ?></p>
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <small class="text-muted">
+                                                <i class="fas fa-user me-1"></i>Admin •
+                                                <i class="fas fa-clock me-1 ms-2"></i><?php echo $announcement['date']->format('m-d-Y') ?>
+                                            </small>
                                         </div>
                                     </div>
-                                    <p class="card-text text-muted mb-3"><?php echo $announcement['details'] ?></p>
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <small class="text-muted">
-                                            <i class="fas fa-user me-1"></i>Admin •
-                                            <i class="fas fa-clock me-1 ms-2"></i><?php echo $announcement['date']->format('m-d-Y') ?>
-                                        </small>
-                                    </div>
                                 </div>
+                            <?php endforeach; ?>
+                        <?php else: ?>
+                            <div class="text-center py-5">
+                                <div class="mb-4">
+                                    <i class="fas fa-inbox mb-3" style="font-size: 4rem; color: #6c757d; opacity: 0.5;"></i>
+                                </div>
+                                <h4 class="text-muted mb-3">No Annoucement Yet</h4>
+                                <p class="text-muted mb-4">wait for the school administration to post an announcement.</p>
                             </div>
-                        <?php endforeach; ?>
+                        <?php endif; ?>
                     </div>
                 </div>
             </div>

@@ -145,7 +145,7 @@ include '../database.php';
                     <thead>
                         <tr>
                             <th>TeacherID</th>
-                            <th>Email</th>
+                            <th>ID #</th>
                             <th>Action</th>
                         </tr>
                     </thead>
@@ -193,7 +193,7 @@ include '../database.php';
                         <form action="<?php echo htmlspecialchars($_SERVER['PHP_SELF']) ?>" method="post" id="editForm">
                             <div class="input-group mb-4">
                                 <input type="hidden" id="editId" name="editId">
-                                <span class="input-group-text fw-semibold">Email:</span>
+                                <span class="input-group-text fw-semibold">ID #:</span>
                                 <input type="email" class="form-control" placeholder="Enter email" name="editEmail" id="editEmail" required>
                             </div>
                             <div class="input-group">

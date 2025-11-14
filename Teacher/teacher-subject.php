@@ -58,7 +58,11 @@ include('../database.php'); ?>
                                 echo "</tr>";
                             }
                         } else {
-                            echo "0 results";
+                            echo "<td colspan='5' class='text-center py-4' style='color: #6c757d;'>";
+                            echo "<i class='fas fa-search mb-2' style='font-size: 3rem; opacity: 0.5;'></i>";
+                            echo "<br>";
+                            echo "School hasn't started yet.";
+                            echo "</td>";
                         }
                         ?>
                     </tbody>
