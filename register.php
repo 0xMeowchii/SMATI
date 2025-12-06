@@ -433,9 +433,12 @@
 
                     <div class="mb-3">
                         <label for="phone" class="form-label">Contact Number</label>
-                        <input type="tel" class="form-control" id="phone" required>
+                        <input type="tel" class="form-control" id="phone"
+                            pattern="[0-9]{11}"
+                            maxlength="11"
+                            required>
                         <div class="invalid-feedback">
-                            Please provide a valid phone number.
+                            Please provide a valid 11-digit phone number.
                         </div>
                     </div>
 
@@ -470,38 +473,25 @@
                 <div class="form-section hidden" id="step3-form">
                     <h3 class="section-title"><i class="fas fa-book-open"></i> Program Selection</h3>
 
-                    <div class="mb-4">
-                        <label class="form-label">Select Program Category</label>
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="program-option" data-category="shs">
-                                    <div class="program-icon">
-                                        <i class="fas fa-user-graduate"></i>
-                                    </div>
-                                    <div class="program-title">Senior High School</div>
-                                    <p>Complete your secondary education with specialized tracks</p>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="program-option" data-category="college">
-                                    <div class="program-icon">
-                                        <i class="fas fa-university"></i>
-                                    </div>
-                                    <div class="program-title">College</div>
-                                    <p>Pursue higher education with our degree programs</p>
-                                </div>
-                            </div>
+                    <div class="mb-3">
+                        <label for="programCategory" class="form-label">Select Program Category</label>
+                        <select class="form-select" id="programCategory" required>
+                            <option value="" selected disabled>Select Program Category</option>
+                            <option value="college">College</option>
+                            <option value="senior-high">Senior High</option>
+                            <option value="short-course">Short Course</option>
+                        </select>
+                        <div class="invalid-feedback">
+                            Please select a program category.
                         </div>
                     </div>
 
-                    <div class="mb-3" id="shsPrograms">
+                    <!-- Senior High School Programs (Hidden by default) -->
+                    <div class="mb-3 hidden" id="shsPrograms">
                         <label for="shsTrack" class="form-label">Select SHS Track</label>
-                        <select class="form-select" id="shsTrack" required>
+                        <select class="form-select" id="shsTrack">
                             <option value="" selected disabled>Select Track</option>
                             <option value="academic">Academic Track</option>
-                            <option value="tvl">TVL Track</option>
-                            <option value="arts">Arts & Design</option>
-                            <option value="sports">Sports Track</option>
                         </select>
                         <div class="invalid-feedback">
                             Please select a track.
@@ -511,23 +501,37 @@
                             <label for="academicStrand" class="form-label">Select Academic Strand</label>
                             <select class="form-select" id="academicStrand">
                                 <option value="" selected disabled>Select Strand</option>
-                                <option value="abm">ABM - Accountancy, Business, and Management</option>
-                                <option value="stem">STEM - Science, Technology, Engineering, and Mathematics</option>
-                                <option value="humss">HUMSS - Humanities and Social Sciences</option>
                                 <option value="gas">GAS - General Academic Strand</option>
+                                <option value="he">HE - Home Economics Strand</option>
                             </select>
                         </div>
                     </div>
 
+                    <!-- College Programs (Hidden by default) -->
                     <div class="mb-3 hidden" id="collegePrograms">
                         <label for="collegeProgram" class="form-label">Select College Program</label>
                         <select class="form-select" id="collegeProgram">
                             <option value="" selected disabled>Select Program</option>
-                            <option value="cist">CIST - Computer Science and Information Technology</option>
-                            <option value="hrt">HRT - Hotel and Restaurant Technology</option>
+                            <option value="cist">CIST - Computer System and Information Technology</option>
+                            <option value="dhrt">DHRT - Diploma in Hotel and Restaurant Technology</option>
+                            <option value="bstm">BSTM - Bachelor of Science Tourism Management</option>
+                            <option value="hrs">HRS - Hotel and Restaurant services</option>
                         </select>
                         <div class="invalid-feedback">
                             Please select a program.
+                        </div>
+                    </div>
+
+                    <!-- Short Course Programs (Hidden by default) -->
+                    <div class="mb-3 hidden" id="shortCoursePrograms">
+                        <label for="shortCourseProgram" class="form-label">Select Short Course</label>
+                        <select class="form-select" id="shortCourseProgram">
+                            <option value="" selected disabled>Select Short Course</option>
+                            <option value="bpp">BPP - Bread and Pastry Production</option>
+                            <option value="cookery">Cookery</option>
+                        </select>
+                        <div class="invalid-feedback">
+                            Please select a short course.
                         </div>
                     </div>
 
@@ -706,9 +710,18 @@
         // Live validation for phone
         const checkPhoneExists = debounce(async function(e) {
             const phone = e.target.value.trim();
+            const phoneRegex = /^[0-9]{10,11}$/; // Allow 10-11 digits
 
-            if (!phone || phone.length < 10) {
+            // Only check if we have 10-11 digits
+            if (!phone || !phoneRegex.test(phone)) {
                 duplicateFlags.phone = false;
+
+                // Show format error if not empty but invalid
+                if (phone && (phone.length < 10 || phone.length > 11)) {
+                    showFieldFeedback(e.target, true, 'Contact number must be exactly 10-11 digits');
+                } else {
+                    showFieldFeedback(e.target, false, '');
+                }
                 return;
             }
 
@@ -722,7 +735,6 @@
                 showFieldFeedback(e.target, false, '');
             }
         }, 800);
-
         // Live validation for firstname
         const checkFirstNameExists = debounce(async function(e) {
             const firstName = e.target.value.trim();
@@ -905,7 +917,7 @@
             submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Submitting...';
             submitBtn.disabled = true;
 
-            // Collect all form data
+            // Collect all form data - FIXED VERSION
             const formData = {
                 reg_number: document.getElementById('registerNumberDisplay').textContent,
                 firstname: document.getElementById('firstName').value,
@@ -916,8 +928,8 @@
                 phone: document.getElementById('phone').value,
                 address: document.getElementById('address').value,
                 school_visit: document.getElementById('schoolVisitation').value,
-                program: document.querySelector('.program-option.selected').getAttribute('data-category'),
-                program_details: getProgramDetails()
+                program: document.getElementById('programCategory').value,
+                program_category: getProgramDetails()
             };
 
             // Submit to server
@@ -935,10 +947,10 @@
                             icon: 'success',
                             title: 'Registration Successful!',
                             html: `
-            <p>Your registration has been submitted successfully.</p>
-            <p><strong>Registration Number:</strong> ${formData.reg_number}</p>
-            <p>We will contact you soon regarding the next steps.</p>
-        `,
+                        <p>Your registration has been submitted successfully.</p>
+                        <p><strong>Registration Number:</strong> ${formData.reg_number}</p>
+                        <p>We will contact you soon regarding the next steps.</p>
+    `,
                             confirmButtonColor: '#001f3f',
                             confirmButtonText: 'OK'
                         }).then(() => {
@@ -952,9 +964,9 @@
                                 icon: 'warning',
                                 title: 'Already Registered',
                                 html: `
-                <p>${data.message}</p>
-                <p class="small mt-2">If you believe this is an error, please contact the administration.</p>
-            `,
+            <p>${data.message}</p>
+            <p class="small mt-2">If you believe this is an error, please contact the administration.</p>
+        `,
                                 confirmButtonColor: '#001f3f',
                                 confirmButtonText: 'OK'
                             });
@@ -979,26 +991,6 @@
                 });
         });
 
-        // Helper function to get program details string
-        function getProgramDetails() {
-            const selectedCategory = document.querySelector('.program-option.selected');
-            const programCategory = selectedCategory ? selectedCategory.getAttribute('data-category') : '';
-
-            if (programCategory === 'shs') {
-                const shsTrack = document.getElementById('shsTrack').value;
-                let program = getTrackName(shsTrack);
-
-                if (shsTrack === 'academic') {
-                    const academicStrand = document.getElementById('academicStrand').value;
-                    program += ' - ' + getStrandName(academicStrand);
-                }
-
-                return program;
-            } else {
-                const collegeProgram = document.getElementById('collegeProgram').value;
-                return getProgramName(collegeProgram);
-            }
-        }
 
         // Form navigation
         document.addEventListener('DOMContentLoaded', function() {
@@ -1048,30 +1040,30 @@
             });
 
             // Program category selection
-            document.querySelectorAll('.program-option').forEach(option => {
-                option.addEventListener('click', function() {
-                    // Remove selected class from all options
-                    document.querySelectorAll('.program-option').forEach(opt => {
-                        opt.classList.remove('selected');
-                    });
+            document.getElementById('programCategory').addEventListener('change', function() {
+                const selectedCategory = this.value;
 
-                    // Add selected class to clicked option
-                    this.classList.add('selected');
+                // Hide all program type sections first
+                document.getElementById('shsPrograms').classList.add('hidden');
+                document.getElementById('collegePrograms').classList.add('hidden');
+                document.getElementById('shortCoursePrograms').classList.add('hidden');
 
-                    const category = this.getAttribute('data-category');
+                // Reset required attributes
+                document.getElementById('shsTrack').required = false;
+                document.getElementById('collegeProgram').required = false;
+                document.getElementById('shortCourseProgram').required = false;
 
-                    if (category === 'shs') {
-                        document.getElementById('shsPrograms').classList.remove('hidden');
-                        document.getElementById('collegePrograms').classList.add('hidden');
-                        document.getElementById('shsTrack').required = true;
-                        document.getElementById('collegeProgram').required = false;
-                    } else {
-                        document.getElementById('shsPrograms').classList.add('hidden');
-                        document.getElementById('collegePrograms').classList.remove('hidden');
-                        document.getElementById('shsTrack').required = false;
-                        document.getElementById('collegeProgram').required = true;
-                    }
-                });
+                // Show relevant program type section
+                if (selectedCategory === 'senior-high') {
+                    document.getElementById('shsPrograms').classList.remove('hidden');
+                    document.getElementById('shsTrack').required = true;
+                } else if (selectedCategory === 'college') {
+                    document.getElementById('collegePrograms').classList.remove('hidden');
+                    document.getElementById('collegeProgram').required = true;
+                } else if (selectedCategory === 'short-course') {
+                    document.getElementById('shortCoursePrograms').classList.remove('hidden');
+                    document.getElementById('shortCourseProgram').required = true;
+                }
             });
 
             // Academic track selection
@@ -1085,7 +1077,20 @@
 
             // Input validation
             document.getElementById('phone').addEventListener('input', function() {
+                // Remove any non-digit characters
                 this.value = this.value.replace(/[^0-9]/g, '');
+
+                // Limit to 11 digits (maximum allowed)
+                if (this.value.length > 11) {
+                    this.value = this.value.slice(0, 11);
+                }
+
+                // Trigger duplicate check if we have 10-11 digits
+                if (this.value.length >= 10 && this.value.length <= 11) {
+                    checkPhoneExists({
+                        target: this
+                    });
+                }
             });
 
             document.getElementById('email').addEventListener('blur', function() {
@@ -1180,7 +1185,11 @@
                 isValid = false;
             }
 
-            if (!phone.value.trim() || phone.value.length < 10) {
+            // Enhanced phone validation for 10-11 digits
+            const phoneValue = phone.value.trim();
+            const phoneRegex = /^[0-9]{10,11}$/; // Updated regex
+
+            if (!phoneValue || !phoneRegex.test(phoneValue)) {
                 phone.classList.add('is-invalid');
                 isValid = false;
             } else {
@@ -1217,45 +1226,51 @@
             let isValid = true;
 
             // Check if a program category is selected
-            const selectedCategory = document.querySelector('.program-option.selected');
-            if (!selectedCategory) {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Program Selection Required',
-                    text: 'Please select a program category.',
-                    confirmButtonColor: '#001f3f'
-                });
-                return false;
-            }
+            const programCategory = document.getElementById('programCategory');
+            if (!programCategory.value) {
+                programCategory.classList.add('is-invalid');
+                isValid = false;
+            } else {
+                programCategory.classList.remove('is-invalid');
 
-            const programCategory = selectedCategory.getAttribute('data-category');
+                // Validate specific program type based on category
+                const selectedCategory = programCategory.value;
 
-            if (programCategory === 'shs') {
-                const shsTrack = document.getElementById('shsTrack');
-                if (!shsTrack.value) {
-                    shsTrack.classList.add('is-invalid');
-                    isValid = false;
-                } else {
-                    shsTrack.classList.remove('is-invalid');
+                if (selectedCategory === 'senior-high') {
+                    const shsTrack = document.getElementById('shsTrack');
+                    if (!shsTrack.value) {
+                        shsTrack.classList.add('is-invalid');
+                        isValid = false;
+                    } else {
+                        shsTrack.classList.remove('is-invalid');
 
-                    // If academic track, validate strand selection
-                    if (shsTrack.value === 'academic') {
-                        const academicStrand = document.getElementById('academicStrand');
-                        if (!academicStrand.value) {
-                            academicStrand.classList.add('is-invalid');
-                            isValid = false;
-                        } else {
-                            academicStrand.classList.remove('is-invalid');
+                        // If academic track, validate strand selection
+                        if (shsTrack.value === 'academic') {
+                            const academicStrand = document.getElementById('academicStrand');
+                            if (!academicStrand.value) {
+                                academicStrand.classList.add('is-invalid');
+                                isValid = false;
+                            } else {
+                                academicStrand.classList.remove('is-invalid');
+                            }
                         }
                     }
-                }
-            } else {
-                const collegeProgram = document.getElementById('collegeProgram');
-                if (!collegeProgram.value) {
-                    collegeProgram.classList.add('is-invalid');
-                    isValid = false;
-                } else {
-                    collegeProgram.classList.remove('is-invalid');
+                } else if (selectedCategory === 'college') {
+                    const collegeProgram = document.getElementById('collegeProgram');
+                    if (!collegeProgram.value) {
+                        collegeProgram.classList.add('is-invalid');
+                        isValid = false;
+                    } else {
+                        collegeProgram.classList.remove('is-invalid');
+                    }
+                } else if (selectedCategory === 'short-course') {
+                    const shortCourseProgram = document.getElementById('shortCourseProgram');
+                    if (!shortCourseProgram.value) {
+                        shortCourseProgram.classList.add('is-invalid');
+                        isValid = false;
+                    } else {
+                        shortCourseProgram.classList.remove('is-invalid');
+                    }
                 }
             }
 
@@ -1263,7 +1278,7 @@
                 Swal.fire({
                     icon: 'error',
                     title: 'Validation Error',
-                    text: 'Please select your program details.',
+                    text: 'Please fill in all required program details.',
                     confirmButtonColor: '#001f3f'
                 });
             }
@@ -1325,86 +1340,95 @@
             const phone = document.getElementById('phone').value;
             const address = document.getElementById('address').value;
             const schoolVisitation = document.getElementById('schoolVisitation').value;
-            const selectedCategory = document.querySelector('.program-option.selected');
-            const programCategory = selectedCategory ? selectedCategory.getAttribute('data-category') : '';
+            const programCategory = document.getElementById('programCategory').value;
 
-            let programDetails = '';
-            if (programCategory === 'shs') {
+            let programDetails = getProgramCategoryName(programCategory);
+
+            // Add specific program details based on category
+            if (programCategory === 'senior-high') {
                 const shsTrack = document.getElementById('shsTrack').value;
-                programDetails = `Senior High School - ${getTrackName(shsTrack)}`;
+                programDetails += ` - ${getTrackName(shsTrack)}`;
 
                 if (shsTrack === 'academic') {
                     const academicStrand = document.getElementById('academicStrand').value;
                     programDetails += ` - ${getStrandName(academicStrand)}`;
                 }
-            } else {
+            } else if (programCategory === 'college') {
                 const collegeProgram = document.getElementById('collegeProgram').value;
-                programDetails = `College - ${getProgramName(collegeProgram)}`;
+                programDetails += ` - ${getProgramName(collegeProgram)}`;
+            } else if (programCategory === 'short-course') {
+                const shortCourseProgram = document.getElementById('shortCourseProgram').value;
+                programDetails += ` - ${getShortCourseName(shortCourseProgram)}`;
             }
 
-            // FIX: Use registerNumberDisplay instead of reg-number
             const registerNumber = document.getElementById('registerNumberDisplay').textContent;
 
             summaryContent.innerHTML = `
-            <div class="summary-item">
-                <div class="summary-label">Registration Number</div>
-                <div class="summary-value gold-highlight">${registerNumber}</div>
-            </div>
-            <div class="summary-item">
-                <div class="summary-label">Name</div>
-                <div class="summary-value">${firstName} ${lastName}</div>
-            </div>
-            <div class="summary-item">
-                <div class="summary-label">Date of Birth</div>
-                <div class="summary-value">${birthDate}</div>
-            </div>
-            <div class="summary-item">
-                <div class="summary-label">Gender</div>
-                <div class="summary-value">${gender.charAt(0).toUpperCase() + gender.slice(1)}</div>
-            </div>
-            <div class="summary-item">
-                <div class="summary-label">Email</div>
-                <div class="summary-value">${email}</div>
-            </div>
-            <div class="summary-item">
-                <div class="summary-label">Phone</div>
-                <div class="summary-value">${phone}</div>
-            </div>
-            <div class="summary-item">
-                <div class="summary-label">Address</div>
-                <div class="summary-value">${address}</div>
-            </div>
-            <div class="summary-item">
-                <div class="summary-label">School Visitation</div>
-                <div class="summary-value">${getVisitationOption(schoolVisitation)}</div>
-            </div>
-            <div class="summary-item">
-                <div class="summary-label">Program</div>
-                <div class="summary-value">${programDetails}</div>
-            </div>
-            <div class="summary-item">
-                <div class="summary-label">Registration Date</div>
-                <div class="summary-value">${new Date().toLocaleString()}</div>
-            </div>
-    `;
+                <div class="summary-item">
+                    <div class="summary-label">Registration Number</div>
+                    <div class="summary-value gold-highlight">${registerNumber}</div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-label">Name</div>
+                    <div class="summary-value">${firstName} ${lastName}</div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-label">Date of Birth</div>
+                    <div class="summary-value">${birthDate}</div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-label">Gender</div>
+                    <div class="summary-value">${gender.charAt(0).toUpperCase() + gender.slice(1)}</div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-label">Email</div>
+                    <div class="summary-value">${email}</div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-label">Phone</div>
+                    <div class="summary-value">${phone}</div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-label">Address</div>
+                    <div class="summary-value">${address}</div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-label">School Visitation</div>
+                    <div class="summary-value">${getVisitationOption(schoolVisitation)}</div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-label">Program</div>
+                    <div class="summary-value">${programDetails}</div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-label">Registration Date</div>
+                    <div class="summary-value">${new Date().toLocaleString()}</div>
+                </div>
+            `;
         }
 
+
+
         // Helper functions for program names
+        function getProgramCategoryName(category) {
+            const categories = {
+                'college': 'College',
+                'senior-high': 'Senior High School',
+                'short-course': 'Short Course'
+            };
+            return categories[category] || category;
+        }
+
         function getTrackName(track) {
             const tracks = {
-                'academic': 'Academic Track',
-                'tvl': 'TVL Track',
-                'arts': 'Arts & Design',
-                'sports': 'Sports Track'
+                'academic': 'Academic Track'
             };
             return tracks[track] || track;
         }
 
         function getStrandName(strand) {
             const strands = {
-                'abm': 'ABM - Accountancy, Business, and Management',
-                'stem': 'STEM - Science, Technology, Engineering, and Mathematics',
-                'humss': 'HUMSS - Humanities and Social Sciences',
+                'he': 'HE - Home Economics Strand',
                 'gas': 'GAS - General Academic Strand'
             };
             return strands[strand] || strand;
@@ -1412,10 +1436,20 @@
 
         function getProgramName(program) {
             const programs = {
-                'cist': 'CIST - Computer Science and Information Technology',
-                'hrt': 'HRT - Hotel and Restaurant Technology'
+                'cist': 'CIST - Computer System and Information Technology',
+                'dhrt': 'DHRT - Diploma in Hotel and Restaurant Technology',
+                'bstm': 'BSTM - Bachelor in Science Tourism Management',
+                'hrs': 'HRS - Hotel and Restaurant Services'
             };
             return programs[program] || program;
+        }
+
+        function getShortCourseName(course) {
+            const courses = {
+                'bpp': 'BPP - Bread and Pastry Production',
+                'cookery': 'Cookery'
+            };
+            return courses[course] || course;
         }
 
         function getVisitationOption(option) {
@@ -1428,23 +1462,27 @@
         }
 
         function getProgramDetails() {
-            const selectedCategory = document.querySelector('.program-option.selected');
-            const programCategory = selectedCategory ? selectedCategory.getAttribute('data-category') : '';
+            const programCategory = document.getElementById('programCategory').value;
 
-            if (programCategory === 'shs') {
+            if (programCategory === 'senior-high') {
                 const shsTrack = document.getElementById('shsTrack').value;
-                let program = getTrackName(shsTrack);
+                let programDetails = getTrackName(shsTrack);
 
                 if (shsTrack === 'academic') {
                     const academicStrand = document.getElementById('academicStrand').value;
-                    program += ` - ${getStrandName(academicStrand)}`;
+                    programDetails += ` - ${getStrandName(academicStrand)}`;
                 }
 
-                return program;
-            } else {
+                return programDetails;
+            } else if (programCategory === 'college') {
                 const collegeProgram = document.getElementById('collegeProgram').value;
                 return getProgramName(collegeProgram);
+            } else if (programCategory === 'short-course') {
+                const shortCourseProgram = document.getElementById('shortCourseProgram').value;
+                return getShortCourseName(shortCourseProgram);
             }
+
+            return '';
         }
     </script>
 </body>

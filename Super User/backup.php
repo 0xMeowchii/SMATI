@@ -1,6 +1,17 @@
 <?php
-require_once 'includes/session.php';
 require_once '../database.php';
+require_once '../session.php';
+
+$userSessionFound = false;
+foreach ($_COOKIE as $cookieName => $cookieValue) {
+    if (preg_match('/^(superuser)_\d+$/', $cookieName)) {
+        // Found a user session cookie
+        session_name($cookieName);
+        session_start();
+        $userSessionFound = true;
+        break;
+    }
+}
 
 header('Content-Type: application/json');
 

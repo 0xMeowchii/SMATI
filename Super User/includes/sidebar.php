@@ -1,16 +1,37 @@
 <?php
+require_once '../session.php';
+// **FIX: Start session with a temporary name first to check cookies**
+if (session_status() === PHP_SESSION_NONE) {
+    // Check if there's an admin session cookie
+    $adminCookie = null;
+    foreach ($_COOKIE as $name => $value) {
+        if (strpos($name, 'superuser') === 0) {
+            $adminCookie = $name;
+            break;
+        }
+    }
 
-require_once 'session.php';
+    if ($adminCookie) {
+        // Found admin cookie, use that session name
+        session_name($adminCookie);
+        session_start();
+    } else {
+        // No admin cookie found, redirect to login
+        header("Location: /SMATI/Super User/login.php");
+        exit();
+    }
+}
 
-// Resume and validate the unique session
+// Check if required session variables exist
 if (!isset($_SESSION['id']) || !isset($_SESSION['user_type'])) {
-    header("Location: /SMATI/Super User/login.php");
+    session_destroy();
+    header("Location: /SMATI/Super user/login.php");
     exit();
 }
 
-startUniqueSession($_SESSION['user_type'], $_SESSION['id']);
-
+// Validate the session
 if (!validateSession($_SESSION['user_type'], $_SESSION['id'])) {
+    session_destroy();
     header("Location: /SMATI/Super User/login.php");
     exit();
 }

@@ -29,7 +29,7 @@ date_default_timezone_set('Asia/Manila');
     require_once '../session.php';
     require_once '../LoginSecurity.php';
 
-    initGuestSession();
+    checkExistingSessionAndRedirect('registrar', 'registrar-dashboard.php');
 
     $errors = [];
     $showSuccess = false;

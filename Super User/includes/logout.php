@@ -2,27 +2,27 @@
  
     <?php
 
-    // logout.php
+    $sessionCookiesToDestroy = [];
 
-    include 'session.php';
+    // Collect ALL user session cookies (don't break after first match)
+    foreach ($_COOKIE as $cookieName => $cookieValue) {
+        if (preg_match('/^(superuser)_\d+$/', $cookieName)) {
+            $sessionCookiesToDestroy[] = $cookieName;
 
-    // Start the user's unique session to access their data
-    if (isset($_SESSION['user_id']) && isset($_SESSION['user_type'])) {
-        startUniqueSession($_SESSION['user_type'], $_SESSION['user_id']);
+            // Start each session to destroy it properly
+            session_name($cookieName);
+            session_start();
+            session_unset();
+            session_destroy();
+        }
     }
 
-    // Unset all session variables
-    $_SESSION = array();
-
-    // Delete the session cookie
-    if (isset($_COOKIE[session_name()])) {
-        setcookie(session_name(), '', time() - 3600, '/');
+    // Clear ALL user session cookies from browser
+    foreach ($sessionCookiesToDestroy as $cookieName) {
+        setcookie($cookieName, '', time() - 3600, '/');
+        unset($_COOKIE[$cookieName]);
     }
-
-    // Destroy the session
-    session_destroy();
 
     // Redirect to login page
-    header('location:/SMATI/Super User/login.php');
+    header("Location: /SMATI/Super User/login.php");
     exit();
-    ?>

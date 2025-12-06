@@ -108,6 +108,34 @@ include 'set-grade-deadline.php';
             opacity: 0.3;
             margin-bottom: 15px;
         }
+        
+        .auth-tabs {
+            display: flex;
+            width: 100%;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .auth-tab {
+            flex: 1;
+            padding: 0.5rem 1rem;
+            border: none;
+            background: none;
+            border-bottom: 2px solid transparent;
+            cursor: pointer;
+        }
+
+        .auth-tab.active {
+            border-bottom-color: #007bff;
+            color: #007bff;
+        }
+
+        .otp-input {
+            letter-spacing: 30px;
+            text-align: center;
+            font-size: 24px;
+            font-weight: bold;
+            padding: 10px 20px;
+        }
     </style>
 </head>
 
@@ -461,9 +489,7 @@ include 'set-grade-deadline.php';
                                 <a class='btn btn-sm btn-outline-danger me-1 drop-subject-btn'
                                 data-id='" . $row['subject_id'] . "'
                                 data-name='" . $row['subject'] . "'
-                                data-schoolyear='" . $row['schoolyear'] . ", " . $row['semester'] . " Semester" . "'
-                                data-bs-toggle='modal' 
-                                 data-bs-target='#dropSubjectModal'>
+                                data-schoolyear='" . $row['schoolyear'] . ", " . $row['semester'] . " Semester" . "'>
                                     <i class='fas fa-trash'></i>
                                 </a>
                                 </td>";
@@ -758,9 +784,7 @@ include 'set-grade-deadline.php';
                                                 </a>
 
                                                 <a class='btn btn-sm btn-outline-danger me-1 delete-schoolyear-btn'
-                                                data-id='" . $row["schoolyear_id"] . "'
-                                                data-bs-toggle='modal' 
-                                                data-bs-target='#deleteSchoolyearModal'>
+                                                data-id='" . $row["schoolyear_id"] . "'>
                                                     <i class='fa fa-trash'></i>
                                                 </a>
 
@@ -990,6 +1014,78 @@ include 'set-grade-deadline.php';
                             <input type="hidden" name="dropSchoolyear" id="dropSchoolyear">
                             <button type="submit" class="btn btn-danger" name="btnDrop">Yes</button>
                         </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- AUTHENTICATION MODAL -->
+        <div class="modal fade" id="authModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h2 class="modal-title">Authentication Required</h2>
+                    </div>
+                    <div class="modal-body">
+                        <div class="text-center mb-4">
+                            <i class="fas fa-envelope-circle-check text-primary" style="font-size: 3rem;"></i>
+                            <h4 class="mt-3">SMATI Authentication</h4>
+                            <p class="text-muted">Choose your authentication method to proceed.</p>
+                        </div>
+
+                        <div class="col-12 mb-2">
+                            <div class="auth-tabs" role="tablist">
+                                <button class="auth-tab active"
+                                    id="password-tab"
+                                    type="button"
+                                    role="tab"
+                                    onclick="switchAuthMethod('password')">
+                                    Authentication Key
+                                </button>
+                                <button class="auth-tab"
+                                    id="pin-tab"
+                                    type="button"
+                                    role="tab"
+                                    onclick="switchAuthMethod('pin')">
+                                    PIN
+                                </button>
+                            </div>
+                        </div>
+
+                        <form id="authForm">
+
+                            <input type="hidden" id="authMethod" name="authMethod" value="password">
+
+                            <!-- Authentication Key Section -->
+                            <div class="d-block" id="authPassword">
+                                <label class="form-label">SMATI Authentication Key</label>
+                                <div class="input-group">
+                                    <input type="password" class="form-control" placeholder="Enter SMATI Key" id="authKey" name="authKey">
+                                    <span class="input-group-text"
+                                        onmousedown="document.getElementById('authKey').type='text'"
+                                        onmouseup="document.getElementById('authKey').type='password'"
+                                        onmouseleave="document.getElementById('authKey').type='password'">
+                                        <i class="bi bi-eye"></i></span>
+                                </div>
+                            </div>
+
+                            <!-- PIN Section -->
+                            <div class="d-none" id="authPIN">
+                                <label class="form-label text-center">Enter 6-digit PIN</label>
+                                <input type="password"
+                                    class="form-control otp-input"
+                                    maxlength="6"
+                                    placeholder="000000"
+                                    name="authPIN"
+                                    inputmode="numeric"
+                                    pattern="[0-9]*"
+                                    onkeypress="return event.charCode >= 48 && event.charCode <= 57">
+                            </div>
+
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary" id="btnAuth">Authenticate</button>
                     </div>
                 </div>
             </div>

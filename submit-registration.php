@@ -91,7 +91,7 @@ function submitRegistration($data)
             $data['address'],
             $data['school_visit'],
             $data['program'],
-            $data['program_details'],
+            $data['program_category'],
             $ipAddress
         );
 
@@ -134,7 +134,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         'address',
         'school_visit',
         'program',
-        'program_details'
+        'program_category'
     ];
 
     foreach ($required_fields as $field) {

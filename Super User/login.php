@@ -1,7 +1,8 @@
 <?php
-include 'includes/session.php';
+include '../session.php';
 include '../database.php';
 
+checkExistingSessionAndRedirect('superuser', 'admin-list.php');
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -96,7 +97,7 @@ include '../database.php';
                         $loginSecurity->clearAttempts($lockout_user);
 
                         $userId = $user['id'];
-                        $userType = 'superuser'; // Use 'admin' as the user type
+                        $userType = 'superuser';
 
                         // Start unique session for this admin user
                         startUniqueSession($userType, $userId);

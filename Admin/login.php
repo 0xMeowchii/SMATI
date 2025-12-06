@@ -79,7 +79,7 @@ if (isset($_POST['check_reset_limit']) && !empty($_POST['check_email'])) {
     require_once '../session.php';
     require_once '../LoginSecurity.php';
 
-    initGuestSession();
+    checkExistingSessionAndRedirect('admin', 'admin-dashboard.php');
 
     $errors = [];
     $showSuccess = false;
@@ -1043,7 +1043,6 @@ if (isset($_POST['check_reset_limit']) && !empty($_POST['check_email'])) {
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
     <script src="login.js"></script>
     <script>
-
         function generatePasswordPDF(email, password) {
             // Create new jsPDF instance
             const {

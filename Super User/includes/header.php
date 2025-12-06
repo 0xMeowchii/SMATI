@@ -14,6 +14,7 @@
 <link rel="icon" type="image/png" href="../images/logo5.png">
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script src="js/inactivity-timeout.js"></script>
+<script src="js/script.js"></script>
 <script>
     // This ensures it runs after page loads
     document.addEventListener('DOMContentLoaded', function() {

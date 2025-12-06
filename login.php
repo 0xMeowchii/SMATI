@@ -28,6 +28,18 @@ include 'includes/activity_logger.php';
     require_once 'session.php';
     require_once 'LoginSecurity.php';
 
+    // Check both session types and redirect accordingly
+    if (checkExistingSession('student')) {
+        header("Location: ./Student/student-dashboard.php");
+        exit();
+    }
+
+    if (checkExistingSession('teacher')) {
+        header("Location: ./Teacher/teacher-dashboard.php");
+        exit();
+    }
+
+    // No sessions found, initialize guest session
     initGuestSession();
 
     // Initialize variables
@@ -368,7 +380,6 @@ include 'includes/activity_logger.php';
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.all.min.js"></script>
     <script src="script1.js"></script>
     <script>
-        
         <?php if (isset($lockoutStatus) && $lockoutStatus['locked']): ?>
             document.addEventListener('DOMContentLoaded', function() {
                 const remainingTime = <?php echo $lockoutStatus['remaining_time']; ?>;

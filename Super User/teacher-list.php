@@ -1,5 +1,4 @@
 <?php
-require_once 'includes/session.php';
 include '../database.php';
 ?>
 
@@ -199,11 +198,16 @@ include '../database.php';
                             <div class="input-group">
                                 <span class="input-group-text fw-semibold">Password:</span>
                                 <input type="password" class="form-control" placeholder="Enter new password" name="editPassword" id="editPassword">
-                                <span class="input-group-text password-toggle" id="password-toggle"
+                                <span class="input-group-text password-toggle" id="password-toggle" title="Show Password"
                                     onmousedown="document.getElementById('editPassword').type='text'"
                                     onmouseup="document.getElementById('editPassword').type='password'"
                                     onmouseleave="document.getElementById('editPassword').type='password'">
                                     <i class="fas fa-eye"></i></span>
+                                <span class="input-group-text generate-password" style="cursor: pointer;" title="Generate Password">
+                                    <i class="fas fa-key"></i></span>
+                                <span class="input-group-text copy-password" style="cursor: pointer;" title="Copy to clipboard">
+                                    <i class="fas fa-copy"></i>
+                                </span>
                             </div>
                             <div id="editError">
 
@@ -221,7 +225,6 @@ include '../database.php';
     <!-- Bootstrap JS Bundle with Popper -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script src="js/script1.js"></script>
     <script>
         document.querySelectorAll('.edit-teacher-btn').forEach(function(btn) {
             btn.addEventListener('click', function() {

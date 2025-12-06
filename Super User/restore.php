@@ -1,7 +1,18 @@
 <?php
 
-require_once 'includes/session.php';
 require_once '../database.php';
+require_once '../session.php';
+
+$userSessionFound = false;
+foreach ($_COOKIE as $cookieName => $cookieValue) {
+    if (preg_match('/^(superuser)_\d+$/', $cookieName)) {
+        // Found a user session cookie
+        session_name($cookieName);
+        session_start();
+        $userSessionFound = true;
+        break;
+    }
+}
 
 header('Content-Type: application/json');
 
@@ -11,7 +22,8 @@ if ($_SESSION['user_type'] !== 'superuser') {
     exit;
 }
 
-function sendError($message) {
+function sendError($message)
+{
     echo json_encode(['success' => false, 'message' => $message]);
     exit;
 }
@@ -47,15 +59,19 @@ if (empty($sql_content)) {
 }
 
 // Check if this is a valid SQL backup (not mysqldump error output)
-if (strpos($sql_content, 'mysqldump:') !== false || 
-    strpos($sql_content, 'Deprecated program name') !== false) {
+if (
+    strpos($sql_content, 'mysqldump:') !== false ||
+    strpos($sql_content, 'Deprecated program name') !== false
+) {
     sendError('Invalid backup file. This appears to be a mysqldump error message, not a valid SQL backup.');
 }
 
 // Check for SQL signature
-if (strpos($sql_content, 'MySQL dump') === false && 
+if (
+    strpos($sql_content, 'MySQL dump') === false &&
     strpos($sql_content, 'CREATE TABLE') === false &&
-    strpos($sql_content, 'INSERT INTO') === false) {
+    strpos($sql_content, 'INSERT INTO') === false
+) {
     sendError('File does not appear to be a valid SQL backup');
 }
 
@@ -75,7 +91,7 @@ try {
 
     // Create safety backup filename
     $safety_backup = $backup_dir . 'pre_restore_backup_' . date('Y-m-d_H-i-s') . '.sql';
-    
+
     // Create safety backup using PHP method
     $safety_content = "-- Safety Backup Before Restore\n";
     $safety_content .= "-- Generated: " . date('Y-m-d H:i:s') . "\n\n";
@@ -87,7 +103,7 @@ try {
     if (!$result) {
         throw new Exception('Failed to get tables list: ' . $conn->error);
     }
-    
+
     while ($row = $result->fetch_array()) {
         $tables[] = $row[0];
     }
@@ -115,14 +131,14 @@ try {
 
         if ($result->num_rows > 0) {
             $safety_content .= "INSERT INTO `$table` VALUES\n";
-            
+
             $first = true;
             while ($row = $result->fetch_row()) {
                 if (!$first) {
                     $safety_content .= ",\n";
                 }
                 $first = false;
-                
+
                 $safety_content .= "(";
                 for ($i = 0; $i < $numFields; $i++) {
                     if (isset($row[$i]) && $row[$i] !== null) {
@@ -134,7 +150,7 @@ try {
                     } else {
                         $safety_content .= "NULL";
                     }
-                    
+
                     if ($i < ($numFields - 1)) {
                         $safety_content .= ",";
                     }
@@ -156,26 +172,26 @@ try {
     // Split SQL content into individual queries
     $queries = [];
     $current_query = '';
-    
+
     // Split by semicolons, but be careful about semicolons in strings
     $lines = explode("\n", $sql_content);
-    
+
     foreach ($lines as $line) {
         // Skip comments and empty lines
         $trimmed_line = trim($line);
         if (empty($trimmed_line) || strpos($trimmed_line, '--') === 0) {
             continue;
         }
-        
+
         $current_query .= $line . "\n";
-        
+
         // If line ends with semicolon, we have a complete query
         if (substr(trim($line), -1) === ';') {
             $queries[] = trim($current_query);
             $current_query = '';
         }
     }
-    
+
     // Add any remaining query
     if (!empty(trim($current_query))) {
         $queries[] = trim($current_query);
@@ -183,24 +199,24 @@ try {
 
     // Disable foreign key checks for restore
     $conn->query("SET FOREIGN_KEY_CHECKS=0");
-    
+
     // Execute each query individually for better error handling
     $executed_queries = 0;
     $total_queries = count($queries);
-    
+
     foreach ($queries as $query) {
         $query = trim($query);
-        
+
         // Skip empty queries
         if (empty($query)) {
             continue;
         }
-        
+
         // Skip comments
         if (strpos($query, '--') === 0) {
             continue;
         }
-        
+
         // Execute query
         if ($conn->query($query) === false) {
             // If it's a DROP TABLE error and the table doesn't exist, it's okay
@@ -211,13 +227,13 @@ try {
                 throw new Exception('Query failed: ' . $conn->error . ' | Query: ' . substr($query, 0, 100));
             }
         }
-        
+
         $executed_queries++;
     }
-    
+
     // Re-enable foreign key checks
     $conn->query("SET FOREIGN_KEY_CHECKS=1");
-    
+
     $conn->close();
 
     echo json_encode([
@@ -225,18 +241,16 @@ try {
         'message' => "Database restored successfully! Executed $executed_queries queries. Safety backup created: " . basename($safety_backup)
     ]);
     exit;
-
 } catch (Exception $e) {
     // Try to re-enable foreign key checks even on error
     if (isset($conn) && $conn) {
         $conn->query("SET FOREIGN_KEY_CHECKS=1");
         $conn->close();
     }
-    
+
     echo json_encode([
         'success' => false,
         'message' => 'Restore failed: ' . $e->getMessage() . '. Safety backup saved as: ' . basename($safety_backup)
     ]);
     exit;
 }
-?>

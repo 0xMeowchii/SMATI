@@ -1,3 +1,95 @@
+
+// Main DOMContentLoaded function that organizes all functionality
+document.addEventListener('DOMContentLoaded', function () {
+
+    const generatePasswordBtns = document.querySelectorAll('.generate-password');
+    // Initialize password validation for both forms
+    initializePasswordValidation('editPassword', 'editForm', 'editError', true); // true = optional field
+
+    // Real-time search functionality for students table
+    initializeSearchFunctionality();
+
+
+    function generateRandomPassword() {
+        const lowercase = 'abcdefghijklmnopqrstuvwxyz';
+        const uppercase = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        const numbers = '0123456789';
+        const allChars = lowercase + uppercase + numbers;
+
+        let password = '';
+
+        // Add one uppercase and one number first
+        password += uppercase[Math.floor(Math.random() * uppercase.length)];
+        password += numbers[Math.floor(Math.random() * numbers.length)];
+
+        // Add 6 more random characters
+        for (let i = 0; i < 6; i++) {
+            password += allChars[Math.floor(Math.random() * allChars.length)];
+        }
+
+        // Shuffle to mix positions
+        return password.split('').sort(() => Math.random() - 0.5).join('');
+    }
+
+    // Generate password button click handler
+    generatePasswordBtns.forEach(button => {
+        button.addEventListener('click', function () {
+            const newPassword = generateRandomPassword();
+
+            // Find the password input field in the same input-group
+            const inputGroup = this.closest('.input-group');
+            const passwordInput = inputGroup.querySelector('input[type="password"]');
+
+            if (passwordInput) {
+                passwordInput.value = newPassword;
+
+                // Trigger input event to update validation if any
+                passwordInput.dispatchEvent(new Event('input'));
+            }
+        });
+    });
+
+    // Add copy functionality
+    document.querySelectorAll('.copy-password').forEach(button => {
+        button.addEventListener('click', function () {
+            const inputGroup = this.closest('.input-group');
+            const passwordInput = inputGroup.querySelector('input[type="password"], input[type="text"]');
+
+            if (passwordInput && passwordInput.value) {
+                // Temporarily show password for copying
+                const originalType = passwordInput.type;
+                passwordInput.type = 'text';
+
+                // Select and copy
+                passwordInput.select();
+                passwordInput.setSelectionRange(0, 99999);
+
+                try {
+                    navigator.clipboard.writeText(passwordInput.value).then(() => {
+                        // Show success feedback
+                        const originalHTML = this.innerHTML;
+                        this.innerHTML = '<i class="fas fa-check"></i>';
+                        this.style.color = 'green';
+
+                        setTimeout(() => {
+                            this.innerHTML = originalHTML;
+                            this.style.color = '';
+                        }, 2000);
+                    });
+                } catch (err) {
+                    // Fallback for older browsers
+                    document.execCommand('copy');
+                }
+
+                // Revert to original type
+                setTimeout(() => {
+                    passwordInput.type = originalType;
+                }, 1000);
+            }
+        });
+    });
+});
+
 function validatePassword(password) {
     // Check if password is at least 8 characters long
     if (password.length < 8) {
@@ -17,16 +109,6 @@ function validatePassword(password) {
     // All requirements met
     return true;
 }
-
-// Main DOMContentLoaded function that organizes all functionality
-document.addEventListener('DOMContentLoaded', function () {
-    // Initialize password validation for both forms
-    initializePasswordValidation('editPassword', 'editForm', 'editError', true); // true = optional field
-    initializePasswordValidation('password', 'insertForm', 'insertError', false); // false = required field
-
-    // Real-time search functionality for students table
-    initializeSearchFunctionality();
-});
 
 // Function to initialize password validation for any form
 function initializePasswordValidation(passwordInputId, formId, errorMessageDivId, isOptional = false) {

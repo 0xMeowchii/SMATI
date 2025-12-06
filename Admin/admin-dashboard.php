@@ -622,8 +622,9 @@ if ($row = $result->fetch_assoc()) {
                     <label for="filterProgram" class="form-label">Filter by Program</label>
                     <select class="form-select" id="filterProgram">
                         <option value="all">All Programs</option>
-                        <option value="shs">Senior High School</option>
+                        <option value="senior-high">Senior High School</option>
                         <option value="college">College</option>
+                         <option value="short-course">Short Course</option>
                     </select>
                 </div>
                 <div class="col-md-3 mb-3">
@@ -1301,8 +1302,9 @@ if ($row = $result->fetch_assoc()) {
 
                 // Check program filter
                 const programMatch = programFilter === 'all' ||
-                    (programFilter === 'shs' && program.includes('shs')) ||
-                    (programFilter === 'college' && program.includes('college'));
+                    (programFilter === 'college' && program === 'college') ||
+                    (programFilter === 'senior-high' && program === 'senior-high') ||
+                    (programFilter === 'short-course' && program === 'short-course');
 
                 // Check date filter
                 const dateMatch = !dateFilter || regDate.includes(dateFilter);
