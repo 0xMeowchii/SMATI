@@ -242,7 +242,7 @@
         .hero {
             height: 100vh;
             min-height: 600px;
-            background: linear-gradient(135deg, rgba(10, 36, 99, 0.85) 0%, rgba(30, 58, 138, 0.8) 100%), url('https://scontent.fmnl33-5.fna.fbcdn.net/v/t1.15752-9/576213929_1146983487612654_2616590965940677196_n.jpg?stp=dst-jpg_s2048x2048_tt6&_nc_cat=102&ccb=1-7&_nc_sid=9f807c&_nc_eui2=AeG702F_FcoHSy3xnmTHFT3yZRk3iMFIgm9lGTeIwUiCb8FKjdOW6ahIYSktwz1VMajvPX1mCZi9ZAwmQBxsvsZh&_nc_ohc=jBbkrp0w27IQ7kNvwEy9n1-&_nc_oc=AdmIIq8_fUZtj1rgsgHY8WdOA_QBfuDUrx-AD9N3xv7Hg2InGWflkeJa10_1lYL-6RE&_nc_zt=23&_nc_ht=scontent.fmnl33-5.fna&oh=03_Q7cD3wH0phJX6t8arENiLm4tdLUzuH13hDRhauL76BF_Z-NjtA&oe=6936DD58');
+            background: linear-gradient(135deg, rgba(10, 36, 99, 0.85) 0%, rgba(30, 58, 138, 0.8) 100%), url('images/smati-bg.jpg');
             background-size: cover;
             background-position: center;
             background-attachment: fixed;
@@ -445,7 +445,6 @@
 
         .card-icon {
             font-size: 3.5rem;
-            color: var(--primary-gold);
             margin-bottom: 20px;
             transition: all 0.3s ease;
         }
@@ -597,46 +596,11 @@
             box-shadow: 0 10px 25px rgba(10, 36, 99, 0.4);
         }
 
-        /* Zoom Toggle Button */
-        .zoom-toggle {
-            position: fixed;
-            bottom: 100px;
-            right: 30px;
-            width: 52px;
-            height: 52px;
-            background: linear-gradient(135deg, var(--primary-gold), #FFB300);
-            color: var(--primary-blue);
-            border-radius: 50%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-size: 1.2rem;
-            box-shadow: 0 6px 20px rgba(255, 193, 7, 0.3);
-            cursor: pointer;
-            z-index: 999;
-            border: none;
-            transition: all 0.3s ease;
-        }
-
-        .zoom-toggle:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 25px rgba(255, 193, 7, 0.4);
-        }
-
-        .zoom-toggle.active {
-            background: linear-gradient(135deg, var(--primary-blue), var(--secondary-blue));
-            color: white;
-        }
-
         /* Enhanced Hero Section */
         .hero-content {
             position: relative;
             z-index: 1;
         }
-
-
-
-
 
         /* Animation Classes */
         .animate-fade-in {
@@ -1084,9 +1048,6 @@
         }
 
         .course-card .card-icon {
-            background: linear-gradient(135deg, var(--primary-blue), var(--secondary-blue));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
             font-size: 3rem;
         }
 
@@ -1207,6 +1168,12 @@
         .img-hover-zoom:hover img {
             transform: scale(1.05);
         }
+
+        /* Prevent text overflow */
+        .container {
+            overflow-x: hidden;
+        }
+
 
         /* ========== RESPONSIVE STYLES ========== */
 
@@ -1351,16 +1318,11 @@
                 max-height: 300px;
             }
 
-            .back-to-top,
-            .zoom-toggle {
+            .back-to-top {
                 width: 45px;
                 height: 45px;
                 bottom: 20px;
                 right: 20px;
-            }
-
-            .zoom-toggle {
-                bottom: 80px;
             }
 
             .floating-shape {
@@ -1477,11 +1439,10 @@
 
 <body>
     <!-- Navigation -->
-    <nav class="navbar navbar-expand-lg navbar-light fixed-top">
+    <nav class="navbar navbar-expand-lg navbar-light">
         <div class="container">
-            <a class="navbar-brand" href="https://share.google/aGfiiZs7CRLLqCI1E">
-                <img src="https://scontent.fmnl33-1.fna.fbcdn.net/v/t1.15752-9/579588504_683967251442286_4610139414998696119_n.png?_nc_cat=100&ccb=1-7&_nc_sid=9f807c&_nc_eui2=AeHNhcR5AoiuIW-ERKpsgpJ51tMpfoDlPF_W0yl-gOU8X0Xe-zOBz9ELkrJdwTdgGAFw81b1zCnLGplVEaSwIOFc&_nc_ohc=T7eFjrV6puQQ7kNvwHw4FoF&_nc_oc=Adm2cQC0RB5tJDJIyY7hhpwoyY08x9eaNzhosiZ7XwF6rBsMP4SjXiQVquUPD-1v4O4&_nc_zt=23&_nc_ht=scontent.fmnl33-1.fna&oh=03_Q7cD3wGS10lA7xMFD1s8rYNhY_-xu4WktiMWLGqyO6IOPUW2cg&oe=6936E0CB"
-                    alt="St. Michael Logo" class="logo">
+            <a class="navbar-brand" href="https://www.facebook.com/SMATI2021">
+                <img src="images/logo5.png" alt="St. Michael Logo" class="logo">
                 SMATI
             </a>
 
@@ -1598,7 +1559,7 @@
             </div>
 
             <div class="text-center mb-5" data-aos="zoom-in">
-                <img src="https://scontent.fmnl33-4.fna.fbcdn.net/v/t1.15752-9/576815404_1537118197624268_93083077785978456_n.png?_nc_cat=106&ccb=1-7&_nc_sid=9f807c&_nc_eui2=AeH8AfWzicd1-eMZbKOcGdOFzwwuiX1XbaHPDC6JfVdtoWd_RflLscCE87l9aOtnntHEI9vafLzfbhbhAkMYAz1Q&_nc_ohc=9dOZCDn2dq8Q7kNvwGF-SrA&_nc_oc=AdlMgdxWa23s2Inz67uFjeKzqojLgIlQtN_nmHp5iPowKtYJ_xqhpQvhxl3-JELFLWU&_nc_zt=23&_nc_ht=scontent.fmnl33-4.fna&oh=03_Q7cD3wELOFvhDjVP2p37QRFjtua9Y8C3OfDoxLOiBDWdm2jR8g&oe=6936EBAB"
+                <img src="images/logo5.png"
                     alt="SMATI Logo" class="img-fluid" style="max-height: 150px;">
             </div>
 
@@ -2343,11 +2304,7 @@
 
                         <div class="mt-4">
                             <h5>Campus Location</h5>
-                            <iframe
-                                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3858.728419014559!2d120.96042127496683!3d14.66171187630508!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3397b41a2df5bb09%3A0xe0d2e70f616bc542!2sSt.%20Michael%20Archangel%20Technological%20Institute%2C%20Inc.%20(SMATI)!5e0!3m2!1sen!2sph!4v1731088745670!5m2!1sen!2sph"
-                                width="100%" height="250" style="border:0; border-radius: 10px;" allowfullscreen=""
-                                loading="lazy" referrerpolicy="no-referrer-when-downgrade">
-                            </iframe>
+                            <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d964.8640545064262!2d120.95765180782979!3d14.686773466709026!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3397b561736d2551%3A0x77356fa2a5f08590!2sSMATI%20Office!5e0!3m2!1sen!2sph!4v1765121771169!5m2!1sen!2sph" width="100%" height="250" style="border:0; border-radius: 10px;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
                         </div>
                     </div>
                 </div>
@@ -2463,11 +2420,6 @@
     <div class="back-to-top" id="backToTop">
         <i class="fas fa-chevron-up"></i>
     </div>
-
-    <!-- Zoom Toggle Button -->
-    <button class="zoom-toggle" id="zoomToggle" title="Toggle Zoom Effects">
-        <i class="fas fa-expand-alt"></i>
-    </button>
 
     <!-- Certification Modals -->
     <div class="modal fade" id="tesdaModal" tabindex="-1" aria-labelledby="tesdaModalLabel" aria-hidden="true">

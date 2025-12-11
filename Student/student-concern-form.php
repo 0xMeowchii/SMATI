@@ -522,9 +522,8 @@ function getTodaySubmissionsCount($student_id)
                             <div class="mb-4">
                                 <div class="floating-label">
                                     <input type="email" class="form-control floating-input" name="email" placeholder=" " value="<?php echo $email ?>" readonly>
-                                    <label for="email" class="required-field">Email Address</label>
+                                    <label for="email" class="required-field">ID #</label>
                                 </div>
-                                <div class="form-text ms-2">We'll never share your email with anyone else.</div>
                             </div>
 
                             <div class="mb-4">

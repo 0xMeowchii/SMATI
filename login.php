@@ -28,18 +28,6 @@ include 'includes/activity_logger.php';
     require_once 'session.php';
     require_once 'LoginSecurity.php';
 
-    // Check both session types and redirect accordingly
-    if (checkExistingSession('student')) {
-        header("Location: ./Student/student-dashboard.php");
-        exit();
-    }
-
-    if (checkExistingSession('teacher')) {
-        header("Location: ./Teacher/teacher-dashboard.php");
-        exit();
-    }
-
-    // No sessions found, initialize guest session
     initGuestSession();
 
     // Initialize variables
@@ -363,6 +351,7 @@ include 'includes/activity_logger.php';
 
                 <div class="forgot-password">
                     <a href="#" id="showForgotPassword">Forgot Password?</a>
+                    <div class="version">v1.18.17</div>
                 </div>
 
                 <div class="cooldown-timer" id="cooldownTimer">

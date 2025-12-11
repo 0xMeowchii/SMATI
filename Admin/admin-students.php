@@ -220,7 +220,6 @@ include '../includes/activity_logger.php';
         $conn->close();
     }
 
-
     //UPDATE QUERY
     if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnEdit'])) {
         $conn = connectToDB();
@@ -474,11 +473,13 @@ include '../includes/activity_logger.php';
     <main class="main-content">
         <div class="page-header">
             <h4><i class="fas fa-user me-2"></i>Students Management</h4>
+            <?php if($_SESSION['username'] == 'admin'): ?>
             <div class="action-buttons">
                 <button class="btn btn-primary" id="add-student-btn" data-bs-toggle="modal" data-bs-target="#add-students-modal">
                     <i class="fas fa-plus me-1"></i>Add Student
                 </button>
             </div>
+            <?php endif; ?>
         </div>
 
         <!-- Student Table -->
@@ -514,44 +515,53 @@ include '../includes/activity_logger.php';
                         $result = $conn->query($sql);
 
                         if ($result && $result->num_rows > 0) {
-                            // output data of each row
                             while ($row = $result->fetch_assoc()) {
                                 echo "<tr>";
                                 echo "<td>" . $row["email"] . "</td>";
                                 echo "<td>" . $row["lastname"] . ", " . $row["firstname"] . "</td>";
                                 echo "<td>" . $row["course"] . "</td>";
-                                echo "<td>
-                                                <a class='btn btn-sm btn-outline-primary me-1 view-student-btn'
-                                                data-id='" . $row["student_id"] . "'
-                                                data-name='" . $row["lastname"] . ", " . $row["firstname"] . "'
-                                                data-course='" . $row["course"] . "'
-                                                data-email='" . $row["email"] . "'
-                                                data-username='" . $row["username"] . "'
-                                                data-createdAt='" . (new DateTime($row['createdAt']))->format('m-d-Y h:i A') . "'
-                                                data-image='" . $row["image"] . "'
-                                                data-bs-toggle='modal' 
-                                                data-bs-target='#viewStudentModal'>
-                                                    <i class='fas fa-eye'></i>
-                                                </a>
+                                echo "<td>";
+                                echo "<a class='btn btn-sm btn-outline-primary me-1 view-student-btn'
+                                        data-id='" . $row["student_id"] . "'
+                                        data-name='" . $row["lastname"] . ", " . $row["firstname"] . "'
+                                        data-course='" . $row["course"] . "'
+                                        data-email='" . $row["email"] . "'
+                                        data-username='" . $row["username"] . "'
+                                        data-createdAt='" . (new DateTime($row['createdAt']))->format('m-d-Y h:i A') . "'
+                                        data-image='" . $row["image"] . "'
+                                        data-bs-toggle='modal' 
+                                        data-bs-target='#viewStudentModal'>
+                                            <i class='fas fa-eye'></i>
+                                        </a>";
 
-                                                <a class='btn btn-sm btn-outline-secondary me-1 edit-student-btn'
-                                                data-id='" . $row["student_id"] . "'
-                                                data-fname='" . $row["firstname"] . "'
-                                                data-lname='" . $row["lastname"] . "'
-                                                data-course='" . $row["course"] . "'
-                                                data-email='" . $row["email"] . "'
-                                                data-username='" . $row["username"] . "'
-                                                data-image='" . $row["image"] . "'
-                                                data-bs-toggle='modal' 
-                                                data-bs-target='#editStudentModal'>
-                                                    <i class='fas fa-edit'></i>
-                                                </a>
+                                if (isset($_SESSION['username']) && $_SESSION['username'] == 'admin') {
+                                    echo "<a class='btn btn-sm btn-outline-secondary me-1 edit-student-btn'
+                                        data-id='" . $row["student_id"] . "'
+                                        data-fname='" . $row["firstname"] . "'
+                                        data-lname='" . $row["lastname"] . "'
+                                        data-course='" . $row["course"] . "'
+                                        data-email='" . $row["email"] . "'
+                                        data-username='" . $row["username"] . "'
+                                        data-image='" . $row["image"] . "'
+                                        data-bs-toggle='modal' 
+                                        data-bs-target='#editStudentModal'>
+                                            <i class='fas fa-edit'></i>
+                                        </a>";
 
-                                                <a class='btn btn-sm btn-outline-danger me-1 drop-student-btn'
-                                                data-id='" . $row["student_id"] . "'>
-                                                    <i class='fas fa-trash'></i>
-                                                </a>
-                                              </td>";
+                                    echo "<a class='btn btn-sm btn-outline-danger me-1 drop-student-btn'
+                                            data-id='" . $row["student_id"] . "'>
+                                                <i class='fas fa-trash'></i>
+                                            </a>";
+                                } else {
+                                    echo "<a class='btn btn-sm btn-outline-secondary me-1 disabled' >
+                                                <i class='fas fa-edit'></i>
+                                            </a>";
+                                    echo "<a class='btn btn-sm btn-outline-danger me-1 disabled' >
+                                            <i class='fas fa-trash'></i>
+                                        </a>";
+                                }
+
+                                echo "</td>";
                                 echo "</tr>";
                             }
                         } else {

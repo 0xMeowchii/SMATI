@@ -48,11 +48,13 @@ include '../includes/activity_logger.php';
     <main class="main-content">
         <div class="page-header">
             <h4><i class="fas fa-address-book me-2"></i>Registrars Management</h4>
+            <?php if($_SESSION['username'] == 'admin'): ?>
             <div class="action-buttons">
                 <button class="btn btn-primary" id="add-registrar-btn" data-bs-toggle="modal" data-bs-target="#add-registrar-modal">
                     <i class="fas fa-plus me-1"></i>Add Registrar
                 </button>
             </div>
+            <?php endif; ?>
         </div>
 
         <!-- query -->
@@ -328,9 +330,9 @@ include '../includes/activity_logger.php';
                                                 data-bs-toggle='modal' 
                                                 data-bs-target='#viewRegistrarModal'>
                                                     <i class='fas fa-eye'></i>
-                                                </a>
-
-                                                <a class='btn btn-sm btn-outline-secondary me-1 edit-registrar-btn'
+                                                </a>";
+                                if ($_SESSION['username'] == 'admin') {
+                                    echo "<a class='btn btn-sm btn-outline-secondary me-1 edit-registrar-btn'
                                                 data-id='" . $row["registrar_id"] . "'
                                                 data-fname='" . $row["firstname"] . "'
                                                 data-lname='" . $row["lastname"] . "'
@@ -339,13 +341,21 @@ include '../includes/activity_logger.php';
                                                 data-bs-toggle='modal' 
                                                 data-bs-target='#editRegistrarModal'>
                                                     <i class='fas fa-edit'></i>
-                                                </a>
-
-                                                <a class='btn btn-sm btn-outline-danger me-1 drop-registrar-btn'
+                                                </a>";
+                                    echo "<a class='btn btn-sm btn-outline-danger me-1 drop-registrar-btn'
                                                 data-id='" . $row["registrar_id"] . "'>
                                                     <i class='fas fa-trash'></i>
                                                 </a>
-                                              </td>";
+";
+                                } else {
+                                    echo "<a class='btn btn-sm btn-outline-secondary me-1 disabled' >
+                                            <i class='fas fa-edit'></i>
+                                        </a>";
+                                    echo "<a class='btn btn-sm btn-outline-danger me-1 disabled' >
+                                            <i class='fas fa-trash'></i>
+                                        </a>";
+                                }
+                                echo "</td>";
                                 echo "</tr>";
                             }
                         } else {

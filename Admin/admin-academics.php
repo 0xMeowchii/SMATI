@@ -108,7 +108,7 @@ include 'set-grade-deadline.php';
             opacity: 0.3;
             margin-bottom: 15px;
         }
-        
+
         .auth-tabs {
             display: flex;
             width: 100%;
@@ -141,7 +141,14 @@ include 'set-grade-deadline.php';
 
 <body>
     <!-- Sidebar -->
-    <?php include('includes/sidebar.php'); ?>
+    <?php
+
+    include('includes/sidebar.php');
+    
+    if (!($_SESSION['username'] == 'admin')) {
+        exit;
+    }
+    ?>
 
     <main class="main-content">
         <div class="page-header">

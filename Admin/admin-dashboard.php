@@ -356,6 +356,35 @@ if ($row = $result->fetch_assoc()) {
         ];
     }
 
+    //fetch concerns
+    $conn = connectToDB();
+    $sql = "SELECT c.*,
+                CONCAT(t.firstname, ' ', t.lastname) as teacher_name,
+                CONCAT(s.firstname, ' ', s.lastname) as student_name
+            FROM concern c
+            LEFT JOIN teachers t ON c.teacher_id = t.teacher_id
+            LEFT JOIN students s ON c.student_id = s.student_id
+            ORDER BY concern_id DESC";
+    $stmt = $conn->prepare($sql);
+    $stmt->execute();
+    $result = $stmt->get_result();
+
+    $concerns = [];
+    while ($row = $result->fetch_assoc()) {
+        $concerns[] = [
+            'student_name' => $row['student_name'],
+            'section' => $row['section'],
+            'email' => $row['email'],
+            'teacher_name' => $row['teacher_name'],
+            'type' => $row['type'],
+            'details' => $row['details'],
+            'reference_num' => $row['reference_num'],
+            'status' => $row['concern_status'],
+            'concern_date' => new DateTime($row['concern_date']),
+            'approved_date' => !empty($row['approved_date']) ? new DateTime($row['approved_date']) : null,
+        ];
+    }
+
     //Fetch registrations
     $conn = connectToDB();
     $sql = "SELECT * FROM registrations ORDER BY reg_id DESC";
@@ -611,6 +640,123 @@ if ($row = $result->fetch_assoc()) {
             </div>
         </div>
 
+        <!--- Concern Summary -->
+        <div class="mt-5">
+            <div class="card rounded-4">
+                <div class="card-header rounded-top-4 bg-primary fw-bold text-white">
+                    <span>Concern Summary</span>
+                </div>
+                <div class="card-body">
+                    <div class="input-group input-group-md position-relative mb-3">
+                        <span class="input-group-text bg-white border-2 border-end-0 rounded-start-4">
+                            <i class="fas fa-search text-muted"></i>
+                        </span>
+                        <input type="text"
+                            class="form-control rounded-end-4 border-2 border-start-0"
+                            id="searchReferenceNum"
+                            placeholder="Search by reference number, type, teacher, date...">
+                    </div>
+                    <div class="flex-grow-1 overflow-auto concern-container" style="max-height: 500px;">
+                        <?php if (!empty($concerns)) : ?>
+                            <?php foreach ($concerns as $concern) : ?>
+                                <?php
+
+                                $badge_class = '';
+                                $status_icon = '';
+                                $border_class = '';
+
+                                switch ($concern['status']) {
+                                    case 'Pending':
+                                        $badge_class = 'bg-warning text-dark';
+                                        $status_icon = 'fa-clock';
+                                        $border_class = 'border-warning';
+                                        break;
+                                    case 'Approved':
+                                        $badge_class = 'bg-success text-white';
+                                        $status_icon = 'fa-check-circle';
+                                        $border_class = 'border-success';
+                                        break;
+                                    case 'Case Closed':
+                                        $badge_class = 'bg-danger text-white';
+                                        $status_icon = 'fa-archive';
+                                        $border_class = 'border-danger';
+                                        break;
+                                    default:
+                                        $badge_class = 'bg-warning text-dark';
+                                        $status_icon = 'fa-clock';
+                                        $border_class = 'border-warning';
+                                }
+
+                                ?>
+
+                                <div class="card concern-card rounded-4 mb-4">
+                                    <div class="card-body rounded-start-4 border-start border-5 position-relative <?php echo $border_class; ?>">
+                                        <div class="d-flex justify-content-between align-items-start mb-3">
+                                            <div class="pt-3 mb-2">
+                                                <div class="h5 text-primary fw-bold reference_num"><?php echo $concern['reference_num']; ?></div>
+                                                <div class="text-muted small">Submitted on <?php echo $concern['concern_date']->format('m-d-Y h:i A'); ?> • <?= $concern['teacher_name']; ?> </div>
+                                            </div>
+                                            <div class="d-flex align-items-center">
+                                                <span class="badge <?php echo $badge_class; ?> px-3 py-2">
+                                                    <i class="fas <?php echo $status_icon; ?> me-1"></i>
+                                                    <?php echo $concern['status']; ?>
+                                                </span>
+                                            </div>
+                                        </div>
+
+                                        <div class="badge bg-light text-primary px-3 py-2 mb-4">
+                                            <i class="fas fa-tag me-1"></i><?php echo $concern['type']; ?>
+                                        </div>
+
+                                        <div class="d-flex justify-content-between align-items-center pt-3 border-top">
+                                            <div class='position-relative d-inline-flex gap-1'>
+                                                <!-- PDF Download Button - Always visible -->
+                                                <a class='btn btn-sm btn-outline-primary download-pdf-btn'
+                                                    data-num='<?php echo $concern['reference_num']; ?>'
+                                                    data-student='<?php echo $concern['student_name']; ?>'
+                                                    data-section='<?php echo $concern['section']; ?>'
+                                                    data-email='<?php echo $concern['email']; ?>'
+                                                    data-type='<?php echo $concern['type']; ?>'
+                                                    data-status='<?php echo $concern['status']; ?>'
+                                                    data-details='<?php echo $concern['details']; ?>'
+                                                    data-date='<?php echo $concern['concern_date']->format('m-d-Y h:i A'); ?>'
+                                                    data-approve='<?php echo $concern['approved_date'] ? $concern['approved_date']->format('m-d-Y h:i A') : 'Not approved yet'; ?>'>
+                                                    <i class='fas fa-download'></i>
+                                                </a>
+                                            </div>
+                                            <div>
+                                                <button class="btn btn-sm btn-outline-primary view-concern-btn"
+                                                    data-num='<?php echo $concern['reference_num']; ?>'
+                                                    data-student='<?php echo $concern['student_name']; ?>'
+                                                    data-section='<?php echo $concern['section']; ?>'
+                                                    data-email='<?php echo $concern['email']; ?>'
+                                                    data-type='<?php echo $concern['type']; ?>'
+                                                    data-status='<?php echo $concern['status']; ?>'
+                                                    data-details='<?php echo $concern['details']; ?>'
+                                                    data-date='<?php echo $concern['concern_date']->format('m-d-Y h:i A'); ?>'
+                                                    data-approve='<?php echo $concern['approved_date'] ? $concern['approved_date']->format('m-d-Y h:i A') : 'Not approved yet'; ?>'
+                                                    data-bs-toggle='modal'
+                                                    data-bs-target='#viewConcernModal'>
+                                                    <i class="fas fa-eye me-1"></i>View Details
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            <?php endforeach; ?>
+                        <?php else: ?>
+                            <div class="text-center py-5">
+                                <div class="mb-4">
+                                    <i class="fas fa-inbox mb-3" style="font-size: 4rem; color: #6c757d; opacity: 0.5;"></i>
+                                </div>
+                                <h4 class="text-muted mb-3">No Concerns Yet</h4>
+                            </div>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- REG SUMMARY -->
         <div class="filter-section bg-white rounded shadow-sm p-4 mb-4 sticky-top mt-5" style="top: 20px; z-index: 100;">
             <div class="row">
@@ -624,7 +770,7 @@ if ($row = $result->fetch_assoc()) {
                         <option value="all">All Programs</option>
                         <option value="senior-high">Senior High School</option>
                         <option value="college">College</option>
-                         <option value="short-course">Short Course</option>
+                        <option value="short-course">Short Course</option>
                     </select>
                 </div>
                 <div class="col-md-3 mb-3">
@@ -910,6 +1056,87 @@ if ($row = $result->fetch_assoc()) {
             </div>
         </div>
 
+        <!-- View Concern Modal -->
+        <div class="modal fade" id="viewConcernModal" tabindex="-1" aria-labelledby="viewConcernModal" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header bg-primary text-white">
+                        <h4 class="modal-title" id="viewConcernModal">
+                            <i class="fas fa-ticket-alt me-2 text-white"></i>Concern Details
+                        </h4>
+                    </div>
+                    <div class="modal-body">
+                        <div class="container">
+                            <div class="row">
+                                <div class="col">
+                                    <div class="p-4 rounded-3 bg-light mb-4 col">
+                                        <div class="d-flex mb-1 align-items-center" style="font-weight: 600; font-size: 0.9rem;">
+                                            <i class="fas fa-hashtag me-2 fs-6 text-primary" style="font-size: 0.8rem;"></i>Reference Number
+                                        </div>
+                                        <p class="fs-6 fw-bold text-primary mb-0"><span id='modalReferenceNumber'></span></p>
+                                    </div>
+                                    <div class="p-4 rounded-3 bg-light mb-4">
+                                        <div class="d-flex mb-1 align-items-center" style="font-weight: 600; font-size: 0.9rem;">
+                                            <i class="fas fa-user me-2 fs-6 text-primary" style="font-size: 0.8rem;"></i>Name
+                                        </div>
+                                        <p class="fs-6 mb-0"><span id='modalName'></span></p>
+                                    </div>
+                                    <div class="p-4 rounded-3 bg-light mb-4">
+                                        <div class="d-flex mb-1 align-items-center" style="font-weight: 600; font-size: 0.9rem;">
+                                            <i class="fa fa-id-card me-2 fs-6 text-primary" style="font-size: 0.8rem;"></i>ID #
+                                        </div>
+                                        <p class="fs-6 mb-0"><span id='modalEmail'></span></p>
+                                    </div>
+                                    <div class="p-4 rounded-3 bg-light mb-4">
+                                        <div class="d-flex mb-1 align-items-center" style="font-weight: 600; font-size: 0.9rem;">
+                                            <i class="fas fa-info-circle me-2 fs-6 text-primary" style="font-size: 0.8rem;"></i>Status
+                                        </div>
+                                        <p class="fs-6 mb-0"><span id='modalStatus'></span></p>
+                                    </div>
+                                </div>
+                                <div class="col">
+                                    <div class="p-4 rounded-3 bg-light mb-4">
+                                        <div class="d-flex mb-1 align-items-center" style="font-weight: 600; font-size: 0.9rem;">
+                                            <i class="fas fa-calendar-alt me-2 fs-6 text-primary" style="font-size: 0.8rem;"></i>Date Submitted
+                                        </div>
+                                        <p class="fs-6 mb-0"><span id='modalDate'></span></p>
+                                    </div>
+                                    <div class="p-4 rounded-3 bg-light mb-4">
+                                        <div class="d-flex mb-1 align-items-center" style="font-weight: 600; font-size: 0.9rem;">
+                                            <i class="fas fa-users me-2 fs-6 text-primary" style="font-size: 0.8rem;"></i>Section
+                                        </div>
+                                        <p class="fs-6 mb-0"><span id='modalSection'></span></p>
+                                    </div>
+                                    <div class="p-4 rounded-3 bg-light mb-4">
+                                        <div class="d-flex mb-1 align-items-center" style="font-weight: 600; font-size: 0.9rem;">
+                                            <i class="fas fa-tag me-2 fs-6 text-primary" style="font-size: 0.8rem;"></i>Concern Type
+                                        </div>
+                                        <p class="fs-6 mb-0"><span id='modalConcernType'></span></p>
+                                    </div>
+                                    <div class="p-4 rounded-3 bg-light mb-4">
+                                        <div class="d-flex mb-1 align-items-center" style="font-weight: 600; font-size: 0.9rem;">
+                                            <i class="fas fa-check-circle me-2 fs-6 text-primary" style="font-size: 0.8rem;"></i>Approved Date
+                                        </div>
+                                        <p class="fs-6 mb-0"><span id='modalApprovedDate'></span></p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mb-1">
+                                <div class="d-flex align-items-center pb-2 border-bottom border-1 fw-medium">
+                                    <i class="fas fa-align-left me-2 text-primary"></i>Concern Details
+                                </div>
+                                <p class="fs-6 mb-0 mt-3"><span id='modalDetails'></span></p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
     </main>
     <!-- Bootstrap JS Bundle with Popper -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
@@ -917,11 +1144,187 @@ if ($row = $result->fetch_assoc()) {
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="./js/darkmode.js"></script>
     <script>
+        const {
+            jsPDF
+        } = window.jspdf;
+
+        document.querySelectorAll('.view-concern-btn').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                const status = btn.getAttribute('data-status');
+
+                // Set the content
+                document.getElementById('modalReferenceNumber').textContent = btn.getAttribute('data-num');
+                document.getElementById('modalName').textContent = btn.getAttribute('data-student');
+                document.getElementById('modalEmail').textContent = btn.getAttribute('data-email');
+                document.getElementById('modalConcernType').textContent = btn.getAttribute('data-type');
+                document.getElementById('modalDate').textContent = btn.getAttribute('data-date');
+                document.getElementById('modalApprovedDate').textContent = btn.getAttribute('data-approve');
+                document.getElementById('modalSection').textContent = btn.getAttribute('data-section');
+                document.getElementById('modalDetails').textContent = btn.getAttribute('data-details');
+
+
+                // Set status with background color
+                const statusElement = document.getElementById('modalStatus');
+                statusElement.textContent = status;
+
+                // Remove existing classes
+                statusElement.className = 'badge';
+
+                // Add appropriate Bootstrap class based on status
+                switch (status) {
+                    case 'Approved':
+                        statusElement.classList.add('bg-success');
+                        break;
+                    case 'Case Closed':
+                        statusElement.classList.add('bg-danger');
+                        break;
+                    case 'Pending':
+                    default:
+                        statusElement.classList.add('bg-warning', 'text-dark');
+                        break;
+                }
+            });
+        });
+
+        // PDF Download functionality
+        document.querySelectorAll('.download-pdf-btn').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                // Get concern data from data attributes
+                const concernData = {
+                    reference_num: btn.getAttribute('data-num'),
+                    name: btn.getAttribute('data-student'),
+                    section: btn.getAttribute('data-section'),
+                    email: btn.getAttribute('data-email'),
+                    type: btn.getAttribute('data-type'),
+                    status: btn.getAttribute('data-status'),
+                    details: btn.getAttribute('data-details'),
+                    date: btn.getAttribute('data-date')
+                };
+
+                // Show confirmation dialog
+                Swal.fire({
+                    title: 'Download Concern Report',
+                    html: `Do you want to download the PDF report for <strong>${concernData.reference_num}</strong>?`,
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonColor: '#4361ee',
+                    cancelButtonColor: '#6c757d',
+                    confirmButtonText: 'Yes, download',
+                    cancelButtonText: 'Cancel'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        generateConcernPDF(concernData);
+                    }
+                });
+            });
+        });
+
+        function generateConcernPDF(data) {
+            // Create a new jsPDF instance
+            const doc = new jsPDF();
+
+            // Set document properties
+            doc.setProperties({
+                title: `SMATI Concern - ${data.reference_num}`,
+                subject: 'Student Concern Report',
+                author: 'SMATI Concern Portal',
+                keywords: 'concern, student, report',
+                creator: 'SMATI Concern Portal'
+            });
+
+            // Add header with background
+            doc.setFillColor(67, 97, 238);
+            doc.rect(0, 0, 210, 30, 'F');
+
+            // Add title
+            doc.setFontSize(20);
+            doc.setTextColor(255, 255, 255);
+            doc.text("SMATI CONCERN REPORT", 105, 18, {
+                align: 'center'
+            });
+
+            // Add reference number prominently
+            doc.setFontSize(16);
+            doc.setTextColor(67, 97, 238);
+            doc.text(`Reference: ${data.reference_num}`, 20, 50);
+
+            // Add submission date
+            doc.setFontSize(12);
+            doc.setTextColor(100, 100, 100);
+            doc.text(`Submitted on: ${data.date}`, 20, 60);
+
+            // Add status with color coding
+            doc.setFontSize(12);
+            doc.setTextColor(0, 0, 0);
+            doc.text(`Status:`, 20, 70);
+            doc.setFont(undefined, 'bold');
+
+            // Color code based on status
+            if (data.status === 'Approved') {
+                doc.setTextColor(0, 128, 0); // Green
+                doc.text(data.status, 45, 70);
+            } else if (data.status === 'Case Closed') {
+                doc.setTextColor(0, 0, 255); // Blue
+                doc.text(data.status, 45, 70);
+            } else {
+                doc.setTextColor(255, 165, 0); // Orange for pending
+                doc.text(data.status, 45, 70);
+            }
+
+            // Add divider line
+            doc.setDrawColor(200, 200, 200);
+            doc.line(20, 80, 190, 80);
+
+            // Student Information Section
+            doc.setFontSize(14);
+            doc.setTextColor(67, 97, 238);
+            doc.text("STUDENT INFORMATION", 20, 95);
+
+            doc.setFontSize(11);
+            doc.setTextColor(0, 0, 0);
+            doc.setFont(undefined, 'normal');
+
+            // Student details
+            doc.text(`Name: ${data.name}`, 20, 105);
+            doc.text(`Section: ${data.section}`, 20, 115);
+            doc.text(`ID #: ${data.email}`, 20, 125);
+
+            // Concern Details Section
+            doc.setFontSize(14);
+            doc.setTextColor(67, 97, 238);
+            doc.text("CONCERN DETAILS", 20, 145);
+
+            doc.setFontSize(11);
+            doc.setTextColor(0, 0, 0);
+
+            doc.text(`Type: ${data.type}`, 20, 155);
+
+            // Concern details with text wrapping
+            doc.text("Description:", 20, 170);
+            const splitDetails = doc.splitTextToSize(data.details, 170);
+            doc.text(splitDetails, 20, 180);
+
+            // Add footer
+            doc.setFontSize(10);
+            doc.setTextColor(100, 100, 100);
+            doc.text("Generated by SMATI - EduPortal", 105, 280, {
+                align: 'center'
+            });
+            doc.text(new Date().toLocaleDateString(), 105, 285, {
+                align: 'center'
+            });
+
+            // Add page border
+            doc.setDrawColor(200, 200, 200);
+            doc.rect(10, 10, 190, 277);
+
+            // Save the PDF
+            doc.save(`SMATI-Concern-${data.reference_num}.pdf`);
+        }
+
         // Enhanced PDF Download Functions
         function downloadRegistrationPDF(regNumber = null) {
-            const {
-                jsPDF
-            } = window.jspdf;
+
 
             if (regNumber) {
                 // Single registration - detailed format
@@ -933,9 +1336,6 @@ if ($row = $result->fetch_assoc()) {
         }
 
         function downloadSingleRegistrationPDF(regNumber) {
-            const {
-                jsPDF
-            } = window.jspdf;
 
             const centuryGothicNormal = '../fonts/centurygothic.ttf';
             const centuryGothicBold = '../fonts/centurygothic_bold.ttf';
@@ -1823,8 +2223,6 @@ if ($row = $result->fetch_assoc()) {
             }
         }
 
-
-
         // Function to clear activity search
         function clearActivitySearch() {
             const searchInput = document.getElementById('activitylogSearch');
@@ -1832,9 +2230,66 @@ if ($row = $result->fetch_assoc()) {
             searchLogs();
         }
 
+
+        function searchConcern() {
+            const searchInput = document.getElementById('searchReferenceNum');
+            const searchTerm = searchInput.value.toLowerCase().trim();
+            const concernCards = document.querySelectorAll('.concern-card');
+
+            let visibleCount = 0;
+
+            concernCards.forEach(card => {
+                const cardText = card.textContent.toLowerCase();
+                const referenceNum = card.querySelector('.reference_num')?.textContent.toLowerCase() || '';
+
+                // Check if any part of the card matches the search term
+                const matches = cardText.includes(searchTerm) ||
+                    referenceNum.includes(searchTerm);
+
+                if (matches || searchTerm === '') {
+                    card.style.display = 'block';
+                    visibleCount++;
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+
+            // Show/hide no results message
+            showNoConcernResults(visibleCount, searchTerm);
+        }
+
+        function showNoConcernResults(visibleCount, searchTerm) {
+            const concernContainer = document.querySelector('.concern-container');
+            let noResultsMessage = concernContainer.querySelector('.no-concern-results');
+
+            if (visibleCount === 0 && searchTerm !== '') {
+                if (!noResultsMessage) {
+                    noResultsMessage = document.createElement('div');
+                    noResultsMessage.className = 'no-concern-results text-center py-4';
+                    noResultsMessage.innerHTML = `
+                <i class="fas fa-search mb-2" style="font-size: 2em; opacity: 0.5; color: #6c757d;"></i>
+                <br>
+                <span style="color: #6c757d;">No concern found.</span>
+            `;
+                    concernContainer.appendChild(noResultsMessage);
+                }
+                noResultsMessage.style.display = 'block';
+            } else if (noResultsMessage) {
+                noResultsMessage.style.display = 'none';
+            }
+        }
+
+        // Function to clear activity search
+        function clearConcernSearch() {
+            const searchInput = document.getElementById('searchReferenceNum');
+            searchInput.value = '';
+            searchConcern();
+        }
+
         // Add event listener for the search input
         document.addEventListener('DOMContentLoaded', function() {
             const activitySearchInput = document.getElementById('activitylogSearch');
+            const concernSearchInput = document.getElementById('searchReferenceNum');
 
             if (activitySearchInput) {
                 // Search on input
@@ -1844,6 +2299,18 @@ if ($row = $result->fetch_assoc()) {
                 activitySearchInput.addEventListener('keydown', function(e) {
                     if (e.key === 'Escape') {
                         clearActivitySearch();
+                    }
+                });
+            }
+
+            if (concernSearchInput) {
+                // Search on input
+                concernSearchInput.addEventListener('input', searchConcern);
+
+                // Add clear button functionality
+                concernSearchInput.addEventListener('keydown', function(e) {
+                    if (e.key === 'Escape') {
+                        clearConcernSearch();
                     }
                 });
             }

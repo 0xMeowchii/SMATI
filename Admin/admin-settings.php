@@ -1,4 +1,5 @@
 <?php
+
 include('../database.php');
 include '../includes/activity_logger.php';
 ?>
@@ -59,7 +60,15 @@ include '../includes/activity_logger.php';
 
 <body>
     <!-- Sidebar -->
-    <?php include('includes/sidebar.php'); ?>
+    <?php
+    include('includes/sidebar.php');
+
+    if (!($_SESSION['username'] === 'admin')) {
+        exit;
+    }
+
+    ?>
+
 
     <main class="main-content">
         <div class="page-header">
@@ -316,7 +325,7 @@ include '../includes/activity_logger.php';
                                 title="Click for more details" style="cursor: pointer;">
                             <div class="text-muted small my-2">
                                 <i class="bi bi-info-circle"></i>
-                                The system supports automated weekly database backup that will be stored in the system file. Contact the developers for assistance.<br><strong>Next backup:</strong> 11-11-2025
+                                The system supports automated weekly database backup that will be stored in the system file. Contact the developers for assistance.
                             </div>
                             <button class="btn btn-outline-primary w-100" id="request-btn">
                                 <i class="bi bi-exclamation-circle me-2"></i>Request Authenticode/PIN
@@ -337,7 +346,6 @@ include '../includes/activity_logger.php';
                 </div>
                 <div class="card-body p-4">
                     <!-- Nav tabs -->
-
                     <div class="col-12">
                         <ul class="nav nav-tabs mb-4" id="myTab" role="tablist">
                             <li class="nav-item" role="presentation">

@@ -45,11 +45,13 @@ include '../includes/activity_logger.php';
     <main class="main-content">
         <div class="page-header">
             <h4><i class="fas fa-users me-2"></i>Teachers Management</h4>
+            <?php if($_SESSION['username'] == 'admin'): ?>
             <div class="action-buttons">
                 <button class="btn btn-primary" id="add-teachers-btn" data-bs-toggle="modal" data-bs-target="#add-teachers-modal">
                     <i class="fas fa-plus me-1"></i>Add Teacher
                 </button>
             </div>
+            <?php endif; ?>
         </div>
 
 
@@ -331,9 +333,9 @@ include '../includes/activity_logger.php';
                                                 data-bs-toggle='modal' 
                                                 data-bs-target='#viewTeacherModal'>
                                                     <i class='fas fa-eye'></i>
-                                                </a>
-
-                                                <a class='btn btn-sm btn-outline-secondary me-1 edit-teacher-btn'
+                                                </a>";
+                                if ($_SESSION['username'] == 'admin') {
+                                    echo "<a class='btn btn-sm btn-outline-secondary me-1 edit-teacher-btn'
                                                 data-id='" . $row["teacher_id"] . "'
                                                 data-fname='" . $row["firstname"] . "'
                                                 data-lname='" . $row["lastname"] . "'
@@ -343,13 +345,20 @@ include '../includes/activity_logger.php';
                                                 data-bs-toggle='modal' 
                                                 data-bs-target='#editTeacherModal'>
                                                     <i class='fas fa-edit'></i>
-                                                </a>
-
-                                                <a class='btn btn-sm btn-outline-danger me-1 drop-teacher-btn'
+                                                </a>";
+                                    echo "<a class='btn btn-sm btn-outline-danger me-1 drop-teacher-btn'
                                                 data-id='" . $row["teacher_id"] . "'>
                                                     <i class='fas fa-trash'></i>
-                                                </a>
-                                              </td>";
+                                                </a>";
+                                } else {
+                                    echo "<a class='btn btn-sm btn-outline-secondary me-1 disabled' >
+                                                <i class='fas fa-edit'></i>
+                                            </a>";
+                                    echo "<a class='btn btn-sm btn-outline-danger me-1 disabled' >
+                                            <i class='fas fa-trash'></i>
+                                        </a>";
+                                }
+                                echo "</td>";
                                 echo "</tr>";
                             }
                         } else {
@@ -360,6 +369,7 @@ include '../includes/activity_logger.php';
                             echo "</td>";
                         }
                         ?>
+
 
                     </tbody>
                     </thead>

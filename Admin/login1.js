@@ -373,6 +373,7 @@ function showLoginForm(e) {
 function toStep2() {
     const question = $('#securityQuestion').val();
     const answer = $('#securityAnswer').val();
+    const role = $('#registerRole').val();
 
     if (!question) {
         Swal.fire('Error', 'Please select a security question', 'error');
@@ -381,6 +382,11 @@ function toStep2() {
 
     if (!validateInput($('#securityAnswer'))) {
         Swal.fire('Error', 'Please provide an answer to the security question', 'error');
+        return;
+    }
+
+    if (!role) {
+        Swal.fire('Error', 'Please select a Role', 'error');
         return;
     }
 
@@ -417,6 +423,7 @@ function toStep3() {
         return;
     }
 
+    $('#reviewRole').text($('#registerRole option:selected').text());
     $('#reviewEmail').text(email);
     $('#reviewQuestion').text($('#securityQuestion option:selected').text());
 

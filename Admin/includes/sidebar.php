@@ -50,7 +50,7 @@ $current_page = basename($_SERVER['PHP_SELF']);
 <div class="sidebar" id="sidebar">
     <div class="sidebar-brand flex-column text-center">
         <img class="mb-3" src="../images/logo5.png" alt="logo" width="80px" height="80px">
-        <p class="mb-0">Admin</p>
+        <p class="mb-0"><?= $_SESSION['username'] ?></p>
     </div>
 
     <!-- Close button for mobile -->
@@ -79,11 +79,13 @@ $current_page = basename($_SERVER['PHP_SELF']);
                 <i class="fas fa-address-book"></i>Registrar
             </a>
         </li>
+        <?php if($_SESSION['username'] == 'admin'): ?>
         <li class="nav-item">
             <a class="nav-link <?php echo ($current_page == 'admin-academics.php') ? 'active' : ''; ?>" href="admin-academics.php">
                 <i class="fas fa-chart-bar"></i>Academics
             </a>
         </li>
+        <?php endif; ?>
         <li class="nav-item">
             <a class="nav-link <?php echo ($current_page == 'admin-grades.php') ? 'active' : ''; ?>" href="admin-grades.php">
                 <i class="fa fa-file"></i>Grades
@@ -94,11 +96,13 @@ $current_page = basename($_SERVER['PHP_SELF']);
                 <i class="fa fa-calendar"></i>Announcements
             </a>
         </li>
+        <?php if($_SESSION['username'] == 'admin'): ?>
         <li class="nav-item">
             <a class="nav-link <?php echo ($current_page == 'admin-settings.php') ? 'active' : ''; ?>" href="admin-settings.php">
                 <i class="fas fa-cog"></i>Settings
             </a>
         </li>
+        <?php endif; ?>
         <li class="nav-item mt-3">
             <a class="nav-link text-danger" id="logoutBtn">
                 <i class="fas fa-sign-out-alt"></i>Logout

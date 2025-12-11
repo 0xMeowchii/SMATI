@@ -191,10 +191,10 @@ if (isset($_POST['check_reset_limit']) && !empty($_POST['check_email'])) {
     //CREATE ACCOUNT
     if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['form_action']) &&  $_POST['form_action'] === "create_account") {
         $conn = connectToDB();
-        $username = 'admin';
+        $username = $_POST['role'];
         $security_question = $_POST['security_question'];
         $security_answer = $_POST['security_answer'];
-        $email = $_POST['email'];
+        $email = trim($_POST['email']);
         $password = password_hash($_POST['password'], PASSWORD_DEFAULT);
         $authKey = $_POST['authKey'];
         $authPIN = $_POST['authPIN'];
@@ -723,6 +723,7 @@ if (isset($_POST['check_reset_limit']) && !empty($_POST['check_email'])) {
 
                         <input type="hidden" id="form_action" name="form_action" value="">
                         <input type="hidden" id="email" name="email">
+                        <input type="hidden" id="role" name="role">
                         <input type="hidden" id="password" name="password">
                         <input type="hidden" id="question" name="security_question">
                         <input type="hidden" id="answer" name="security_answer">
@@ -877,6 +878,15 @@ if (isset($_POST['check_reset_limit']) && !empty($_POST['check_email'])) {
                         <div class="form-section active" id="registerStep1">
                             <h5 class="mb-4 text-center">Security Verification</h5>
                             <div class="mb-4">
+                                <label for="role" class="form-label fw-bold">Role:</label>
+                                <select class="form-select" id="registerRole" required>
+                                    <option value="" selected disabled>Select a role</option>
+                                    <option value="admin">Admin</option>
+                                    <option value="schoolhead">School Head</option>
+                                    <option value="guidance">Guidance</option>
+                                </select>
+                            </div>
+                            <div class="mb-4">
                                 <label for="securityQuestion" class="form-label fw-bold">Security Question</label>
                                 <select class="form-select" id="securityQuestion" required>
                                     <option value="" selected disabled>Select a security question</option>
@@ -944,6 +954,7 @@ if (isset($_POST['check_reset_limit']) && !empty($_POST['check_email'])) {
                             <h5 class="mb-4 text-center">Review Information</h5>
                             <div class="card mb-4">
                                 <div class="card-body">
+                                    <p><strong>Role:</strong> <span id="reviewRole"></span></p>
                                     <p><strong>Email:</strong> <span id="reviewEmail"></span></p>
                                     <p><strong>Security Question:</strong> <span id="reviewQuestion"></span></p>
                                 </div>
@@ -1027,7 +1038,7 @@ if (isset($_POST['check_reset_limit']) && !empty($_POST['check_email'])) {
             <div class="footer-links">
                 <a href="#" id="contactSupport">Contact Support</a>
                 <p>|</p>
-                <p>v1.0.0</p>
+                <p>v1.19.17</p>
             </div>
         </div>
     </div>
@@ -1041,7 +1052,7 @@ if (isset($_POST['check_reset_limit']) && !empty($_POST['check_email'])) {
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <!-- jsPDF Autotable plugin for better table formatting -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
-    <script src="login.js"></script>
+    <script src="login1.js"></script>
     <script>
         function generatePasswordPDF(email, password) {
             // Create new jsPDF instance
@@ -1196,10 +1207,12 @@ if (isset($_POST['check_reset_limit']) && !empty($_POST['check_email'])) {
                 const securityQuestions = document.getElementById('securityQuestion').value;
                 const securityAnswer = document.getElementById('securityAnswer').value;
                 const registerEmail = document.getElementById('registerEmail').value;
+                const registerRole = document.getElementById('registerRole').value;
                 const registerPassword = document.getElementById('registerPassword').value;
                 const recaptchaResponse = grecaptcha.getResponse();
 
                 document.getElementById('email').value = registerEmail
+                document.getElementById('role').value = registerRole
                 document.getElementById('password').value = registerPassword
                 document.getElementById('question').value = securityQuestions
                 document.getElementById('answer').value = securityAnswer
