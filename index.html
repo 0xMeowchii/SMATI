@@ -493,7 +493,6 @@
             overflow: hidden;
             box-shadow: var(--shadow-light);
             transition: all 0.4s ease;
-            cursor: pointer;
         }
 
         .gallery-item:hover {
@@ -537,30 +536,6 @@
         .gallery-desc {
             font-size: 0.9rem;
             opacity: 0.9;
-        }
-
-        /* Modal for Gallery */
-        .gallery-modal .modal-content {
-            border-radius: 16px;
-            overflow: hidden;
-        }
-
-        .gallery-modal .modal-header {
-            background: var(--gradient-primary);
-            color: white;
-            border-bottom: none;
-        }
-
-        .gallery-modal .modal-body {
-            padding: 30px;
-        }
-
-        .gallery-modal-img {
-            width: 100%;
-            max-height: 400px;
-            object-fit: contain;
-            border-radius: 12px;
-            margin-bottom: 20px;
         }
 
         /* Back to Top */
@@ -1093,8 +1068,8 @@
 
         .campus-carousel .carousel-item img {
             border-radius: 16px;
-            height: 500px;
-            object-fit: cover;
+            height: 700px;
+            object-fit: fill;
             transition: transform 0.6s ease;
         }
 
@@ -1559,8 +1534,7 @@
             </div>
 
             <div class="text-center mb-5" data-aos="zoom-in">
-                <img src="images/logo5.png"
-                    alt="SMATI Logo" class="img-fluid" style="max-height: 150px;">
+                <img src="images/logo5.png" alt="SMATI Logo" class="img-fluid" style="max-height: 150px;">
             </div>
 
             <div class="row mb-5">
@@ -1622,48 +1596,56 @@
                         <button type="button" data-bs-target="#campusCarousel" data-bs-slide-to="1"></button>
                         <button type="button" data-bs-target="#campusCarousel" data-bs-slide-to="2"></button>
                         <button type="button" data-bs-target="#campusCarousel" data-bs-slide-to="3"></button>
+                        <button type="button" data-bs-target="#campusCarousel" data-bs-slide-to="4"></button>
+                        <button type="button" data-bs-target="#campusCarousel" data-bs-slide-to="5"></button>
+                        <button type="button" data-bs-target="#campusCarousel" data-bs-slide-to="6"></button>
+                        <button type="button" data-bs-target="#campusCarousel" data-bs-slide-to="7"></button>
+                        <button type="button" data-bs-target="#campusCarousel" data-bs-slide-to="8"></button>
                     </div>
                     <div class="carousel-inner">
                         <div class="carousel-item active">
                             <div class="img-hover-zoom">
-                                <img src="https://scontent.fmnl33-2.fna.fbcdn.net/v/t39.30808-6/481046540_969096241993784_3350527905609567683_n.jpg?_nc_cat=104&ccb=1-7&_nc_sid=833d8c&_nc_eui2=AeFARAOpH3QoEU4IEwJ_nwZmC2vzDnKRg9ULa_MOcpGD1VsMMNfxhd_boK_3vW7MPYM_l_eUafEPFtEB8pB8RSDT&_nc_ohc=fGBkI7JYU98Q7kNvwEBriH0&_nc_oc=AdnJWJ2C6EniCbC3c8HXcCYJGu8k882SuAv2c83fuwuee7aAwrj-4Bwn_THteaUA_Y0&_nc_zt=23&_nc_ht=scontent.fmnl33-2.fna&_nc_gid=OfO13iZxlbjUbeB1IYaCQw&oh=00_Afj2tsok4pLNaTaxHElag1s4L_PNjodltIC5e3GSg1snlQ&oe=69154A33"
-                                    class="d-block w-100" alt="SMATI Campus">
-                            </div>
-                            <div class="carousel-caption d-none d-md-block">
-                                <h5>Graduation Day</h5>
-                                <p>Senator Imee Marcos , Mayor Jeannie Sandoval and Hon. Ricky Sandoval for attending
-                                    and greetings from our Senator Bong Go and Staff Ms. Piya Cagayunan-Talavera 3rd
-                                    Commencement Exercise.</p>
+                                <img src="images/facilities-and-events/event_1.png" class="d-block w-100" alt="Event 1">
                             </div>
                         </div>
                         <div class="carousel-item">
                             <div class="img-hover-zoom">
-                                <img src="https://scontent.fmnl33-2.fna.fbcdn.net/v/t39.30808-6/549658077_1121470720089668_596249021909281486_n.jpg?_nc_cat=104&ccb=1-7&_nc_sid=833d8c&_nc_eui2=AeGvZESjCgFuITvyaNXGMZ4xhhp9MtQWxwGGGn0y1BbHAbrMT-vLFNIGqwG_TqIr8foDvtdE4nqH7eeoAYoeQ_cv&_nc_ohc=0mOnBEACP9YQ7kNvwEV-wGt&_nc_oc=AdkrmJpjSFkORWWr6GT-NtcsNAtmhhstL5rXPfL5HFRZM_4ODsTASEOx3CsYG38HUWQ&_nc_zt=23&_nc_ht=scontent.fmnl33-2.fna&_nc_gid=Tg3E4l6C-o4Z7RxsrZkBlw&oh=00_AfgkS_CRnDtVjE6PHOkSmMP0uUdl9oNvxIP9o1iqw48cgA&oe=69152353"
-                                    class="d-block w-100" alt="Computer Lab">
-                            </div>
-                            <div class="carousel-caption d-none d-md-block">
-                                <h5>One CAMANAVA TVET</h5>
-                                <p>lOREM IMPUSM LOREM IPSUM</p>
+                                <img src="images/facilities-and-events/event_2.png" class="d-block w-100" alt="Event 2">
                             </div>
                         </div>
                         <div class="carousel-item">
                             <div class="img-hover-zoom">
-                                <img src="https://scontent.fmnl33-2.fna.fbcdn.net/v/t39.30808-6/500058520_1030716582498416_4685097080102627151_n.jpg?_nc_cat=104&ccb=1-7&_nc_sid=833d8c&_nc_eui2=AeHrEPUImZtACYiSSMOTuWSwIh3oRehW5fAiHehF6Fbl8Mo-UrDRHaTRRUFcQ4rB9QfogCAMz6LTTv23TgbU4mFC&_nc_ohc=Chz-1I8Ps_QQ7kNvwHvs8ae&_nc_oc=AdmbidAecWZjlf6GBjpXLv7LSDal9QUlNOoh6WkD1GvNr63z_cHX4JXdHkE28_xl_B0&_nc_zt=23&_nc_ht=scontent.fmnl33-2.fna&_nc_gid=_SyKFT3G-AsEDZrWq6MLRA&oh=00_Afg5eq_1m8iNCgEd2rWyxOw0kzCML5TQ-Lult8la6y_R9Q&oe=69152933"
-                                    class="d-block w-100" alt="Culinary Lab">
-                            </div>
-                            <div class="carousel-caption d-none d-md-block">
-                                <h5>Hotel Restaurant Technology</h5>
-                                <p>lOREM IMPUSM LOREM IPSUM</p>
+                                <img src="images/facilities-and-events/event_3.png" class="d-block w-100" alt="Event 3">
                             </div>
                         </div>
                         <div class="carousel-item">
                             <div class="img-hover-zoom">
-                                <img src="https://scontent.fmnl33-4.fna.fbcdn.net/v/t39.30808-6/571361827_1152714640298609_6346945603115168215_n.jpg?_nc_cat=111&ccb=1-7&_nc_sid=127cfc&_nc_eui2=AeEATMyCyZtg-0GYR8PeOCIBISy1LFp7oCohLLUsWnugKs9gl4WWZiTV1sgNr1T_JIbO6-XHyQEgLnDccTKYPILR&_nc_ohc=J7-it2HIWB4Q7kNvwGnhpq_&_nc_oc=Adl7WduGkvcufUc2gcEYcI1MqFcdK_zJa2mUQyn6ILYyflz8B8fEvBB-f-g3lzsbb1k&_nc_zt=23&_nc_ht=scontent.fmnl33-4.fna&_nc_gid=wJYMms0tKFaOOAm0ODT3SA&oh=00_AfiukcthtXlI7Sma_HQqMhLNDuUjob7RRzc7KYU3i2_49w&oe=691558FC"
-                                    class="d-block w-100" alt="Library">
+                                <img src="images/facilities-and-events/event_4.png" class="d-block w-100" alt="Event 4">
                             </div>
-                            <div class="carousel-caption d-none d-md-block">
-                                <h5>HRT EDUCATIONAL TOUR</h5>
-                                <p>lOREM IMPUSM LOREM IPSUM</p>
+                        </div>
+                        <div class="carousel-item">
+                            <div class="img-hover-zoom">
+                                <img src="images/facilities-and-events/event_5.png" class="d-block w-100" alt="Event 5">
+                            </div>
+                        </div>
+                        <div class="carousel-item">
+                            <div class="img-hover-zoom">
+                                <img src="images/facilities-and-events/event_6.png" class="d-block w-100" alt="Event 6">
+                            </div>
+                        </div>
+                        <div class="carousel-item">
+                            <div class="img-hover-zoom">
+                                <img src="images/facilities-and-events/event_7.png" class="d-block w-100" alt="Event 7">
+                            </div>
+                        </div>
+                        <div class="carousel-item">
+                            <div class="img-hover-zoom">
+                                <img src="images/facilities-and-events/event_8.png" class="d-block w-100" alt="Event 8">
+                            </div>
+                        </div>
+                        <div class="carousel-item">
+                            <div class="img-hover-zoom">
+                                <img src="images/facilities-and-events/event_9.png" class="d-block w-100" alt="Event 9">
                             </div>
                         </div>
                     </div>
@@ -1993,111 +1975,54 @@
 
             <div class="gallery-grid">
                 <!-- Facility 1 -->
-                <div class="gallery-item" data-aos="zoom-in" data-bs-toggle="modal" data-bs-target="#facilityModal1">
-                    <img src="https://images.unsplash.com/photo-1523050854058-8df90110c9f1?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80"
-                        alt="Modern Classrooms" class="gallery-img">
+                <div class="gallery-item" data-aos="zoom-in">
+                    <img src="images/facilities-and-events/classroom.png" alt="Classrooms" class="gallery-img">
                     <div class="gallery-overlay">
-                        <div class="gallery-title">Modern Classrooms</div>
-                        <div class="gallery-desc">Click for more info</div>
+                        <div class="gallery-title">Classroom</div>
                     </div>
                 </div>
 
                 <!-- Facility 2 -->
-                <div class="gallery-item" data-aos="zoom-in" data-aos-delay="100" data-bs-toggle="modal"
-                    data-bs-target="#facilityModal2">
-                    <img src="https://images.unsplash.com/photo-1516321318423-f06f85e504b3?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80"
-                        alt="Computer Laboratory" class="gallery-img">
+                <div class="gallery-item" data-aos="zoom-in" data-aos-delay="100">
+                    <img src="images/facilities-and-events/computer_lab.png" alt="Computer Laboratory"
+                        class="gallery-img">
                     <div class="gallery-overlay">
                         <div class="gallery-title">Computer Laboratory</div>
-                        <div class="gallery-desc">Click for more info</div>
                     </div>
                 </div>
 
                 <!-- Facility 3 -->
-                <div class="gallery-item" data-aos="zoom-in" data-aos-delay="200" data-bs-toggle="modal"
-                    data-bs-target="#facilityModal3">
-                    <img src="https://images.unsplash.com/photo-1556911220-bff31c812dba?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1456&q=80"
-                        alt="Culinary Arts Kitchen" class="gallery-img">
+                <div class="gallery-item" data-aos="zoom-in" data-aos-delay="200">
+                    <img src="images/facilities-and-events/clinic.png" alt="Culinary Arts Kitchen" class="gallery-img">
                     <div class="gallery-overlay">
-                        <div class="gallery-title">Culinary Arts Kitchen</div>
-                        <div class="gallery-desc">Click for more info</div>
+                        <div class="gallery-title">Clinic</div>
                     </div>
                 </div>
 
                 <!-- Facility 4 -->
                 <div class="gallery-item" data-aos="zoom-in" data-aos-delay="300" data-bs-toggle="modal"
                     data-bs-target="#facilityModal4">
-                    <img src="https://images.unsplash.com/photo-1589998059171-988d887df646?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1476&q=80"
-                        alt="Library" class="gallery-img">
+                    <img src="images/facilities-and-events/lab_1.png" alt="Library" class="gallery-img">
                     <div class="gallery-overlay">
-                        <div class="gallery-title">Library</div>
-                        <div class="gallery-desc">Click for more info</div>
+                        <div class="gallery-title">Laboratory 1</div>
                     </div>
                 </div>
 
                 <!-- Facility 5 -->
                 <div class="gallery-item" data-aos="zoom-in" data-aos-delay="400" data-bs-toggle="modal"
                     data-bs-target="#facilityModal5">
-                    <img src="https://images.unsplash.com/photo-1532094349884-543bc11b234d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80"
-                        alt="Science Laboratory" class="gallery-img">
+                    <img src="images/facilities-and-events/lab_2.png" alt="Science Laboratory" class="gallery-img">
                     <div class="gallery-overlay">
-                        <div class="gallery-title">Science Laboratory</div>
-                        <div class="gallery-desc">Click for more info</div>
+                        <div class="gallery-title">Laboratory 2</div>
                     </div>
                 </div>
 
                 <!-- Facility 6 -->
                 <div class="gallery-item" data-aos="zoom-in" data-aos-delay="500" data-bs-toggle="modal"
                     data-bs-target="#facilityModal6">
-                    <img src="https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80"
-                        alt="Gymnasium" class="gallery-img">
+                    <img src="images/facilities-and-events/kitchen.png" alt="Gymnasium" class="gallery-img">
                     <div class="gallery-overlay">
-                        <div class="gallery-title">Gymnasium</div>
-                        <div class="gallery-desc">Click for more info</div>
-                    </div>
-                </div>
-
-                <!-- Facility 7 -->
-                <div class="gallery-item" data-aos="zoom-in" data-aos-delay="600" data-bs-toggle="modal"
-                    data-bs-target="#facilityModal7">
-                    <img src="https://images.unsplash.com/photo-1560472354-b33ff0c44a43?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1526&q=80"
-                        alt="Auditorium" class="gallery-img">
-                    <div class="gallery-overlay">
-                        <div class="gallery-title">Auditorium</div>
-                        <div class="gallery-desc">Click for more info</div>
-                    </div>
-                </div>
-
-                <!-- Facility 8 -->
-                <div class="gallery-item" data-aos="zoom-in" data-aos-delay="700" data-bs-toggle="modal"
-                    data-bs-target="#facilityModal8">
-                    <img src="https://images.unsplash.com/photo-1541336032412-2048a678540d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1374&q=80"
-                        alt="Student Lounge" class="gallery-img">
-                    <div class="gallery-overlay">
-                        <div class="gallery-title">Student Lounge</div>
-                        <div class="gallery-desc">Click for more info</div>
-                    </div>
-                </div>
-
-                <!-- Facility 9 -->
-                <div class="gallery-item" data-aos="zoom-in" data-aos-delay="800" data-bs-toggle="modal"
-                    data-bs-target="#facilityModal9">
-                    <img src="https://images.unsplash.com/photo-1571902943202-507ec2618e8f?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1450&q=80"
-                        alt="Sports Facilities" class="gallery-img">
-                    <div class="gallery-overlay">
-                        <div class="gallery-title">Sports Facilities</div>
-                        <div class="gallery-desc">Click for more info</div>
-                    </div>
-                </div>
-
-                <!-- Facility 10 -->
-                <div class="gallery-item" data-aos="zoom-in" data-aos-delay="900" data-bs-toggle="modal"
-                    data-bs-target="#facilityModal10">
-                    <img src="https://images.unsplash.com/photo-1562774053-701939374585?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1464&q=80"
-                        alt="Cafeteria" class="gallery-img">
-                    <div class="gallery-overlay">
-                        <div class="gallery-title">Cafeteria</div>
-                        <div class="gallery-desc">Click for more info</div>
+                        <div class="gallery-title">Culinary Kitchen</div>
                     </div>
                 </div>
             </div>
@@ -2125,17 +2050,20 @@
                         <div class="row align-items-center">
                             <div class="col-md-6">
                                 <div class="img-hover-zoom">
-                                    <img src="https://scontent.fmnl33-3.fna.fbcdn.net/v/t39.30808-6/483840014_981523274084414_8291070378094776987_n.jpg?stp=cp6_dst-jpg_tt6&_nc_cat=110&ccb=1-7&_nc_sid=833d8c&_nc_eui2=AeHCnGA3t5QEk9urjlTSLfz9SrwTliP-kB5KvBOWI_6QHj9mEdlnY1enbzWiA8f8AvIGFqJoAnLmcPeBN_A3cmhA&_nc_ohc=vFNDIIab3bwQ7kNvwETWLyv&_nc_oc=AdnubR7csEiJTthdUuRqkLhn-90cp3bvexRymByZYTJHgmAmOTflVev4BWGnqjqqX38&_nc_zt=23&_nc_ht=scontent.fmnl33-3.fna&_nc_gid=cC0hPTBm37r4TuqzkyVREQ&oh=00_Afg4rOALRORpMwReK5GKS7s8fqlEiVsd90BDdTeuS_izKA&oe=69153A29"
-                                        class="d-block w-100 rounded" alt="Mr. & Ms. SMATI">
+                                    <img src="images/facilities-and-events/event_1.png" class="d-block w-100 rounded"
+                                        alt="TESDA Partners Appreciation Day">
                                 </div>
                             </div>
                             <div class="col-md-6">
-                                <h3>Mr. & Ms. SMATI</h3>
-                                <p class="text-muted">October 15, 2023</p>
-                                <p>Our annual pageant showcasing talent, intelligence, and character of SMATI students.
-                                    A celebration of beauty with a purpose and academic excellence.</p>
-                                <p><strong>Venue:</strong> SMATI Gymnasium</p>
-                                <p><strong>Time:</strong> 6:00 PM onwards</p>
+                                <h3>TESDA Partners Appreciation Day</h3>
+                                <p class="text-muted">December 05, 2025</p>
+                                <p>A special appreciation to TESDA CAMANAVA and District Director Vergel Soriano for
+                                    its continuous guidance, leadership, and partnership in uplifting the quality of
+                                    technical-vocational education.</p>
+                                <p>Your support empowers us to build champions and produce industry-ready graduates.</p>
+                                <p>Thank you for walking with us in shaping a skilled and future-ready Filipino
+                                    workforce.</p>
+                                <p><strong>TESDA CAMANAVA</strong></p>
                             </div>
                         </div>
                     </div>
@@ -2143,17 +2071,18 @@
                         <div class="row align-items-center">
                             <div class="col-md-6">
                                 <div class="img-hover-zoom">
-                                    <img src="https://scontent.fmnl33-1.fna.fbcdn.net/v/t39.30808-6/540574002_1105156148387792_5866215656177546520_n.jpg?_nc_cat=108&ccb=1-7&_nc_sid=833d8c&_nc_eui2=AeH0p6XlzQYFTvJwYgNOdpHU-2q-48CUE8f7ar7jwJQTx0jIS2D1lG_9sMzcKd5ddKGkN_CCouqAXGpJsgjpJjUK&_nc_ohc=zdjXigOmOAIQ7kNvwEQpf5R&_nc_oc=Adk_elTkZkTC57MItI4ozmKgrk3sAhJL4tBi2z3_6JQS621QuzFp9YO2wci5eSwlPQw&_nc_zt=23&_nc_ht=scontent.fmnl33-1.fna&_nc_gid=MfXnVo1g8mp-FYVgNC40kw&oh=00_AfiyrcmbMWEbwN38gJF1COXGCVYXlW2pRQ1TqLdPQ3DYGA&oe=69154E37"
-                                        class="d-block w-100 rounded" alt="Foundation Week">
+                                    <img src="images/facilities-and-events/event_2.png" class="d-block w-100 rounded"
+                                        alt="SMATI NSTP Students on Water Survival Training">
                                 </div>
                             </div>
                             <div class="col-md-6">
-                                <h3>Foundation Week</h3>
-                                <p class="text-muted">November 20-24, 2023</p>
-                                <p>A week-long celebration of SMATI's founding anniversary with various activities,
-                                    competitions, and community outreach programs.</p>
-                                <p><strong>Highlights:</strong> Alumni Homecoming, Faculty vs. Student Games, Community
-                                    Outreach</p>
+                                <h3>SMATI NSTP Students on Water Survival Training</h3>
+                                <p class="text-muted">December 06, 2025</p>
+                                <p>Our NSTP students successfully underwent Basic Water Survival and Vital Disaster
+                                    Skills Training—equipping them to stay safe, act quickly, and respond confidently
+                                    during emergencies.</p>
+                                <p><strong>#SMATI #NSTP #WaterSurvival #DisasterPreparedness #BuilderOfChampions
+                                        #SMATIPride</strong></p>
                             </div>
                         </div>
                     </div>
@@ -2162,17 +2091,42 @@
                         <div class="row align-items-center">
                             <div class="col-md-6">
                                 <div class="img-hover-zoom">
-                                    <img src="https://scontent.fmnl33-6.fna.fbcdn.net/v/t39.30808-6/481025847_969097218660353_7869704319447977515_n.jpg?_nc_cat=109&ccb=1-7&_nc_sid=833d8c&_nc_eui2=AeFFbW4xB7OBdl4vyqAf-y5v8b296mVqc4Hxvb3qZWpzgYer7xl747d0I5fFfEmcfPtCg8ZopkJXEkssDJpOCJuc&_nc_ohc=bmBauDYraqsQ7kNvwGU2VIw&_nc_oc=AdmcKEfXb3CHcvTpwF4lp8PphtbpNpD-ylmSuQ_hVh3he5xX7UJtz09-Q0Y60YAI0OY&_nc_zt=23&_nc_ht=scontent.fmnl33-6.fna&_nc_gid=GHo7_UTev13jvg1KC54xVQ&oh=00_AfgeJa8QanQP8twVtfig63Sv2V6mPFGE_Nu6vWdg_rn3_A&oe=691531A3"
-                                        class="d-block w-100 rounded" alt="Graduation">
+                                    <img src="images/facilities-and-events/event_9.png" class="d-block w-100 rounded"
+                                        alt="Intramurals2025">
                                 </div>
                             </div>
                             <div class="col-md-6">
-                                <h3>Graduation Ceremony</h3>
-                                <p class="text-muted">March 25, 2024</p>
-                                <p>Celebrating the achievements of our graduates as they embark on their professional
-                                    journeys and become SMATI ambassadors.</p>
-                                <p><strong>Guest Speaker:</strong> To be announced</p>
-                                <p><strong>Venue:</strong> SMATI Grand Auditorium</p>
+                                <h3>Intramurals 2025</h3>
+                                <p class="text-muted">December 1, 2025</p>
+                                <p>In celebration of the 10th Founding Anniversary of St. Michael the Arcangel
+                                    Technological Institute Inc., we proudly OPEN the INTRAMURALS 2025!</p>
+                                <p>A decade of excellence, unity, and growth — now let’s celebrate through
+                                    sportsmanship, teamwork, and friendly competition!</p>
+                                <p><strong>#SMATI #SMATI10Years #Intramurals2025 #DecadeOfExcellence #SMATISpirit
+                                        #TogetherWeGrow #Sportsmanship #Teamwork</strong></p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="carousel-item">
+                        <div class="row align-items-center">
+                            <div class="col-md-6">
+                                <div class="img-hover-zoom">
+                                    <img src="images/facilities-and-events/event_4.png" class="d-block w-100 rounded"
+                                        alt="AHTOMP2025">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <h3>AHTOMP 2025</h3>
+                                <p class="text-muted">November 12, 2025</p>
+                                <p>St. Michael Arcangel Technological Institute, Inc. is proud to have been part of the
+                                    National Leadership Summit & Skills Competition at the Manila Grand Opera Hotel &
+                                    Casino.</p>
+                                <p>A heartfelt thank you to AHTOMP-Alliance of Hospitality and Tourism Movers of the
+                                    Philippines and to Antonell Escober Llegos Albano for your inspiring leadership and
+                                    trust. Together, we continue to build champions and empower the next generation!
+                                </p>
+                                <p><strong>#AHTOMP2025</strong></p>
                             </div>
                         </div>
                     </div>
@@ -2190,7 +2144,7 @@
     </section>
 
     <!-- Testimonials Section -->
-    <section id="testimonials" class="py-5 bg-light">
+    <!-- <section id="testimonials" class="py-5 bg-light">
         <div class="pattern-bg"></div>
         <div class="container">
             <div class="section-title" data-aos="fade-up">
@@ -2248,7 +2202,7 @@
                 </div>
             </div>
         </div>
-    </section>
+    </section> -->
 
     <!-- Accreditation Section -->
     <section id="accreditation" class="py-5">
@@ -2304,7 +2258,10 @@
 
                         <div class="mt-4">
                             <h5>Campus Location</h5>
-                            <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d964.8640545064262!2d120.95765180782979!3d14.686773466709026!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3397b561736d2551%3A0x77356fa2a5f08590!2sSMATI%20Office!5e0!3m2!1sen!2sph!4v1765121771169!5m2!1sen!2sph" width="100%" height="250" style="border:0; border-radius: 10px;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+                            <iframe
+                                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d964.8640545064262!2d120.95765180782979!3d14.686773466709026!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3397b561736d2551%3A0x77356fa2a5f08590!2sSMATI%20Office!5e0!3m2!1sen!2sph!4v1765121771169!5m2!1sen!2sph"
+                                width="100%" height="250" style="border:0; border-radius: 10px;" allowfullscreen=""
+                                loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
                         </div>
                     </div>
                 </div>
@@ -2344,7 +2301,7 @@
             <div class="row">
                 <div class="col-lg-4 mb-4">
                     <h4 class="mb-4">
-                        <img src="https://scontent.fmnl33-4.fna.fbcdn.net/v/t1.15752-9/576815404_1537118197624268_93083077785978456_n.png?_nc_cat=106&ccb=1-7&_nc_sid=9f807c&_nc_eui2=AeH8AfWzicd1-eMZbKOcGdOFzwwuiX1XbaHPDC6JfVdtoWd_RflLscCE87l9aOtnntHEI9vafLzfbhbhAkMYAz1Q&_nc_ohc=9dOZCDn2dq8Q7kNvwGF-SrA&_nc_oc=AdlMgdxWa23s2Inz67uFjeKzqojLgIlQtN_nmHp5iPowKtYJ_xqhpQvhxl3-JELFLWU&_nc_zt=23&_nc_ht=scontent.fmnl33-4.fna&oh=03_Q7cD3wELOFvhDjVP2p37QRFjtua9Y8C3OfDoxLOiBDWdm2jR8g&oe=6936EBAB"
+                        <img src="images/logo5.png"
                             alt="SMATI Logo" class="logo">
                         SMATI
                     </h4>
@@ -2404,11 +2361,11 @@
                 </div>
                 <div class="col-md-6 text-md-end">
                     <div class="accreditation-logos">
-                        <img src="https://www.nagacityguide.com/wordpress/wp-content/uploads/2015/12/tesda.png"
+                        <img src="images/facilities-and-events/tesda.png"
                             alt="TESDA" class="img-fluid" style="height: 40px; max-width: 100%;">
-                        <img src="https://chedcar.com/wp-content/uploads/2020/09/Commission_on_Higher_Education_CHEd.svg_.png"
+                        <img src="images/facilities-and-events/ched.png"
                             alt="CHED" class="img-fluid" style="height: 40px; max-width: 100%;">
-                        <img src="https://upload.wikimedia.org/wikipedia/commons/f/fa/Seal_of_the_Department_of_Education_of_the_Philippines.png"
+                        <img src="images/facilities-and-events/Deped.png"
                             alt="DepEd" class="img-fluid" style="height: 40px; max-width: 100%;">
                     </div>
                 </div>
@@ -2465,296 +2422,6 @@
                 <div class="modal-body">
                     <img src="https://www.smis.edu.ph/uploads/1/4/1/8/141838676/2020-deped-recognition-1-1-page-0003.jpg"
                         alt="DepEd Certificate" class="img-fluid modal-certificate">
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Facilities Gallery Modals -->
-    <!-- Facility 1 Modal -->
-    <div class="modal fade gallery-modal" id="facilityModal1" tabindex="-1" aria-labelledby="facilityModal1Label"
-        aria-hidden="true">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="facilityModal1Label">Modern Classrooms</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <img src="https://images.unsplash.com/photo-1523050854058-8df90110c9f1?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80"
-                        alt="Modern Classrooms" class="gallery-modal-img">
-                    <h4>Modern Classrooms</h4>
-                    <p>Our classrooms are equipped with the latest technology to enhance the learning experience. Each
-                        room features:</p>
-                    <ul>
-                        <li>Interactive smart boards</li>
-                        <li>High-speed internet connectivity</li>
-                        <li>Comfortable ergonomic furniture</li>
-                        <li>Climate control systems</li>
-                        <li>Audio-visual equipment</li>
-                    </ul>
-                    <p>These facilities create an optimal environment for both traditional and digital learning
-                        methodologies.</p>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Facility 2 Modal -->
-    <div class="modal fade gallery-modal" id="facilityModal2" tabindex="-1" aria-labelledby="facilityModal2Label"
-        aria-hidden="true">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="facilityModal2Label">Computer Laboratory</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <img src="https://images.unsplash.com/photo-1516321318423-f06f85e504b3?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80"
-                        alt="Computer Laboratory" class="gallery-modal-img">
-                    <h4>Computer Laboratory</h4>
-                    <p>Our state-of-the-art computer labs provide students with access to the latest hardware and
-                        software for their technical education.</p>
-                    <ul>
-                        <li>High-performance desktop computers</li>
-                        <li>Specialized software for programming, design, and analysis</li>
-                        <li>3D printers and scanning equipment</li>
-                        <li>Dedicated servers for networking practice</li>
-                        <li>24/7 access for project work</li>
-                    </ul>
-                    <p>These facilities support our IT, computer science, and engineering programs with hands-on
-                        learning opportunities.</p>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Facility 3 Modal -->
-    <div class="modal fade gallery-modal" id="facilityModal3" tabindex="-1" aria-labelledby="facilityModal3Label"
-        aria-hidden="true">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="facilityModal3Label">Culinary Arts Kitchen</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <img src="https://images.unsplash.com/photo-1556911220-bff31c812dba?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1456&q=80"
-                        alt="Culinary Arts Kitchen" class="gallery-modal-img">
-                    <h4>Culinary Arts Kitchen</h4>
-                    <p>Our professional-grade kitchen facilities provide students in our Hotel and Restaurant Management
-                        program with real-world culinary experience.</p>
-                    <ul>
-                        <li>Commercial-grade ovens and stoves</li>
-                        <li>Professional baking and pastry stations</li>
-                        <li>Food safety and sanitation equipment</li>
-                        <li>International cuisine preparation areas</li>
-                        <li>Demonstration kitchen with viewing gallery</li>
-                    </ul>
-                    <p>Students learn from experienced chefs and gain practical skills for careers in the food service
-                        industry.</p>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Facility 4 Modal -->
-    <div class="modal fade gallery-modal" id="facilityModal4" tabindex="-1" aria-labelledby="facilityModal4Label"
-        aria-hidden="true">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="facilityModal4Label">Library</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <img src="https://images.unsplash.com/photo-1589998059171-988d887df646?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1476&q=80"
-                        alt="Library" class="gallery-modal-img">
-                    <h4>Library</h4>
-                    <p>Our comprehensive library provides students with access to a vast collection of resources to
-                        support their academic journey.</p>
-                    <ul>
-                        <li>Over 50,000 physical books and journals</li>
-                        <li>Digital access to academic databases</li>
-                        <li>Quiet study areas and group collaboration spaces</li>
-                        <li>Computer stations with research software</li>
-                        <li>Professional librarians for research assistance</li>
-                    </ul>
-                    <p>The library serves as a hub for academic research and independent study, supporting all programs
-                        offered at SMATI.</p>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Facility 5 Modal -->
-    <div class="modal fade gallery-modal" id="facilityModal5" tabindex="-1" aria-labelledby="facilityModal5Label"
-        aria-hidden="true">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="facilityModal5Label">Science Laboratory</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <img src="https://images.unsplash.com/photo-1532094349884-543bc11b234d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80"
-                        alt="Science Laboratory" class="gallery-modal-img">
-                    <h4>Science Laboratory</h4>
-                    <p>Our fully-equipped science laboratories provide students with hands-on experience in various
-                        scientific disciplines.</p>
-                    <ul>
-                        <li>Chemistry lab with fume hoods and safety equipment</li>
-                        <li>Biology lab with microscopes and specimen collections</li>
-                        <li>Physics lab with measurement and experimentation tools</li>
-                        <li>Environmental science testing equipment</li>
-                        <li>Computerized data collection systems</li>
-                    </ul>
-                    <p>These facilities support our STEM programs and provide practical experience that complements
-                        theoretical learning.</p>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Facility 6 Modal -->
-    <div class="modal fade gallery-modal" id="facilityModal6" tabindex="-1" aria-labelledby="facilityModal6Label"
-        aria-hidden="true">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="facilityModal6Label">Gymnasium</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <img src="https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80"
-                        alt="Gymnasium" class="gallery-modal-img">
-                    <h4>Gymnasium</h4>
-                    <p>Our multi-purpose gymnasium serves as a venue for physical education, sports competitions, and
-                        campus events.</p>
-                    <ul>
-                        <li>Full-size basketball and volleyball courts</li>
-                        <li>Indoor track for running and walking</li>
-                        <li>Fitness equipment and weight training area</li>
-                        <li>Locker rooms with shower facilities</li>
-                        <li>Seating capacity for 500 spectators</li>
-                    </ul>
-                    <p>The gymnasium promotes physical wellness and serves as a gathering space for campus community
-                        events.</p>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Facility 7 Modal -->
-    <div class="modal fade gallery-modal" id="facilityModal7" tabindex="-1" aria-labelledby="facilityModal7Label"
-        aria-hidden="true">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="facilityModal7Label">Auditorium</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <img src="https://images.unsplash.com/photo-1560472354-b33ff0c44a43?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1526&q=80"
-                        alt="Auditorium" class="gallery-modal-img">
-                    <h4>Auditorium</h4>
-                    <p>Our state-of-the-art auditorium is designed for academic presentations, performances, and large
-                        gatherings.</p>
-                    <ul>
-                        <li>Seating capacity for 800 people</li>
-                        <li>Professional sound and lighting systems</li>
-                        <li>High-definition projection equipment</li>
-                        <li>Stage with dressing rooms</li>
-                        <li>Recording and broadcasting capabilities</li>
-                    </ul>
-                    <p>The auditorium hosts guest lectures, graduation ceremonies, cultural performances, and other
-                        important campus events.</p>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Facility 8 Modal -->
-    <div class="modal fade gallery-modal" id="facilityModal8" tabindex="-1" aria-labelledby="facilityModal8Label"
-        aria-hidden="true">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="facilityModal8Label">Student Lounge</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <img src="https://images.unsplash.com/photo-1541336032412-2048a678540d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1374&q=80"
-                        alt="Student Lounge" class="gallery-modal-img">
-                    <h4>Student Lounge</h4>
-                    <p>Our comfortable student lounge provides a relaxing environment for students to socialize, study,
-                        and recharge between classes.</p>
-                    <ul>
-                        <li>Comfortable seating areas</li>
-                        <li>Study nooks with charging stations</li>
-                        <li>Refreshment area with vending machines</li>
-                        <li>Board games and recreational activities</li>
-                        <li>Student organization bulletin boards</li>
-                    </ul>
-                    <p>The lounge serves as a central hub for student interaction and provides a welcoming space for the
-                        campus community.</p>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Facility 9 Modal -->
-    <div class="modal fade gallery-modal" id="facilityModal9" tabindex="-1" aria-labelledby="facilityModal9Label"
-        aria-hidden="true">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="facilityModal9Label">Sports Facilities</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <img src="https://images.unsplash.com/photo-1571902943202-507ec2618e8f?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1450&q=80"
-                        alt="Sports Facilities" class="gallery-modal-img">
-                    <h4>Sports Facilities</h4>
-                    <p>Our outdoor sports facilities provide students with opportunities for athletic development and
-                        recreational activities.</p>
-                    <ul>
-                        <li>Olympic-size swimming pool</li>
-                        <li>Outdoor basketball and tennis courts</li>
-                        <li>Soccer field with artificial turf</li>
-                        <li>Track and field facilities</li>
-                        <li>Outdoor fitness stations</li>
-                    </ul>
-                    <p>These facilities support our physical education program and provide recreational opportunities
-                        for the entire campus community.</p>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Facility 10 Modal -->
-    <div class="modal fade gallery-modal" id="facilityModal10" tabindex="-1" aria-labelledby="facilityModal10Label"
-        aria-hidden="true">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="facilityModal10Label">Cafeteria</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <img src="https://images.unsplash.com/photo-1562774053-701939374585?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1464&q=80"
-                        alt="Cafeteria" class="gallery-modal-img">
-                    <h4>Cafeteria</h4>
-                    <p>Our campus cafeteria offers nutritious meals and snacks in a comfortable dining environment.</p>
-                    <ul>
-                        <li>Multiple food stations with diverse menu options</li>
-                        <li>Healthy meal choices and dietary accommodations</li>
-                        <li>Comfortable seating for 300 students</li>
-                        <li>Outdoor patio dining area</li>
-                        <li>Payment options including student meal plans</li>
-                    </ul>
-                    <p>The cafeteria serves as a social hub where students can enjoy meals, study, and connect with
-                        peers in a relaxed setting.</p>
                 </div>
             </div>
         </div>

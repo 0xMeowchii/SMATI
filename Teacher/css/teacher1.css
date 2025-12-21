@@ -107,6 +107,13 @@ body {
   transform: translateX(2px);
 }
 
+#modalDetails,
+#modalRemarks {
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+
 @media (max-width: 992px) {
   .sidebar {
     transform: translateX(-100%);

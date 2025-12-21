@@ -37,6 +37,32 @@ include '../includes/activity_logger.php';
             font-weight: bold;
             padding: 10px 20px;
         }
+
+        .image-preview-container {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            border-radius: 8px;
+            background: #f8f9fa;
+            border: 2px dashed #dee2e6;
+        }
+
+        .preview-image {
+            width: 150px;
+            height: 150px;
+            object-fit: cover;
+        }
+
+        .preview-placeholder {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: #6c757d;
+        }
     </style>
 </head>
 
@@ -220,7 +246,9 @@ include '../includes/activity_logger.php';
         $conn->close();
     }
 
+
     //UPDATE QUERY
+    $updateSuccess = false;
     if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnEdit'])) {
         $conn = connectToDB();
         $student_id = $_POST['editId'];
@@ -243,7 +271,7 @@ include '../includes/activity_logger.php';
         $maxFileSize = 5 * 1024 * 1024;
 
         if ($conn) {
-            // Check for existing email
+            // Check for existing student
             $checkStmt = $conn->prepare("SELECT student_id FROM students WHERE (firstname = ? AND lastname = ?) AND student_id != ?");
             $checkStmt->bind_param("ssi", $firstname, $lastname, $student_id);
             $checkStmt->execute();
@@ -251,15 +279,15 @@ include '../includes/activity_logger.php';
 
             if ($checkStmt->num_rows > 0) {
                 echo "<script>
-                        document.addEventListener('DOMContentLoaded', function() {
-                            Swal.fire({
-                                icon: 'error',
-                                title: 'Error!',
-                                text: 'Student already exists!',
-                                confirmButtonColor: '#d33'
-                            });
+                    document.addEventListener('DOMContentLoaded', function() {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error!',
+                            text: 'Student already exists!',
+                            confirmButtonColor: '#d33'
                         });
-                    </script>";
+                    });
+                </script>";
             } else {
                 // First, get the current image path
                 $currentImageStmt = $conn->prepare("SELECT image FROM students WHERE student_id = ?");
@@ -277,37 +305,64 @@ include '../includes/activity_logger.php';
                     $fileType = mime_content_type($file['tmp_name']);
                     if (!in_array($fileType, $allowedTypes)) {
                         echo "<script>
-                            Swal.fire({
-                                icon: 'error',
-                                title: 'Error!',
-                                text: 'Invalid file type. Please upload JPEG, JPG, or PNG images only.',
-                                confirmButtonColor: '#d33'
-                            });
-                        </script>";
-                    } else if ($file['size'] > $maxFileSize) {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error!',
+                            text: 'Invalid file type. Please upload JPEG, JPG, or PNG images only.',
+                            confirmButtonColor: '#d33'
+                        });
+                    </script>";
+                        $checkStmt->close();
+                        $conn->close();
+                        exit;
+                    }
+
+                    if ($file['size'] > $maxFileSize) {
                         echo "<script>
-                            Swal.fire({
-                                icon: 'error',
-                                title: 'Error!',
-                                text: 'File too large. Maximum size is 5MB.',
-                                confirmButtonColor: '#d33'
-                            });
-                        </script>";
-                    } else {
-                        // Generate unique filename
-                        $fileExtension = pathinfo($file['name'], PATHINFO_EXTENSION);
-                        $newFilename = $firstname . '_' . $lastname . '.' . $fileExtension;
-                        $destination = $uploadDir . $newFilename;
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error!',
+                            text: 'File too large. Maximum size is 5MB.',
+                            confirmButtonColor: '#d33'
+                        });
+                    </script>";
+                        $checkStmt->close();
+                        $conn->close();
+                        exit;
+                    }
 
-                        // Move uploaded file
-                        if (move_uploaded_file($file['tmp_name'], $destination)) {
-                            $student_image = $destination;
+                    // Generate new filename based on student name
+                    $fileExtension = pathinfo($file['name'], PATHINFO_EXTENSION);
+                    $baseFilename = $firstname . '_' . $lastname;
+                    $newFilename = $baseFilename . '.' . $fileExtension;
+                    $destination = $uploadDir . $newFilename;
 
-                            // Delete old image if it exists
-                            if (!empty($currentImagePath) && file_exists($currentImagePath)) {
-                                unlink($currentImagePath);
+                    // Delete old files with the same base name but different extensions
+                    if (!empty($currentImagePath) && file_exists($currentImagePath)) {
+                        // Get the base name without extension from current image
+                        $currentBaseName = pathinfo($currentImagePath, PATHINFO_FILENAME);
+                        $currentDir = pathinfo($currentImagePath, PATHINFO_DIRNAME);
+
+                        // Delete all files with same base name (any extension)
+                        $pattern = $currentDir . '/' . $currentBaseName . '.*';
+                        foreach (glob($pattern) as $oldFile) {
+                            if (file_exists($oldFile)) {
+                                unlink($oldFile);
                             }
                         }
+                    } else {
+                        // If no current image in DB, check for files with the new base name
+                        $pattern = $uploadDir . $baseFilename . '.*';
+                        foreach (glob($pattern) as $oldFile) {
+                            if (file_exists($oldFile)) {
+                                unlink($oldFile);
+                            }
+                        }
+                    }
+
+                    // Move uploaded file to destination
+                    if (move_uploaded_file($file['tmp_name'], $destination)) {
+                        $student_image = $destination;
 
                         // Build query based on whether password is provided
                         if ($hasPassword) {
@@ -334,80 +389,89 @@ include '../includes/activity_logger.php';
                         }
 
                         if ($stmt->execute()) {
-                            logActivity($conn, $_SESSION['id'], $_SESSION['user_type'], 'UPDATE_STUDENT', "Updated student account: Student ID = $student_id");
+                            logActivity($conn, $_SESSION['id'], $_SESSION['user_type'], 'UPDATE_STUDENT', "Updated student account: Student ID = $email");
 
                             echo "<script>
-                                    document.addEventListener('DOMContentLoaded', function() {
-                                        Swal.fire({
-                                            icon: 'success',
-                                            title: 'Success!',
-                                            text: 'Student Updated Successfully!',
-                                            timer: 2000,
-                                            showConfirmButton: false
-                                        });
-                                    });
-                                </script>";
+                            document.addEventListener('DOMContentLoaded', function() {
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Success!',
+                                    text: 'Student Updated Successfully!',
+                                    timer: 2000,
+                                    showConfirmButton: false
+                                });
+                            });
+                        </script>";
                         } else {
                             echo "<script>
-                                    Swal.fire({
-                                        icon: 'error',
-                                        title: 'Error!',
-                                        text: '" . addslashes($stmt->error) . "',
-                                        confirmButtonColor: '#d33'
-                                    });
-                                </script>";
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Error!',
+                                text: '" . addslashes($stmt->error) . "',
+                                confirmButtonColor: '#d33'
+                            });
+                        </script>";
                         }
                         $stmt->close();
-                    }
-                } else {
-                    // Keep the current image if no new file uploaded
-                    $student_image = $currentImagePath;
-
-                    // Build query based on whether password is provided
-                    if ($hasPassword) {
-                        $stmt = $conn->prepare("UPDATE students 
-                        SET firstname=?,
-                            lastname=?,
-                            email=?,
-                            course=?,
-                            username=?,
-                            password=?
-                        WHERE student_id=?");
-                        $stmt->bind_param("ssssssi", $firstname, $lastname, $email, $course, $username, $password, $student_id);
-                    } else {
-                        $stmt = $conn->prepare("UPDATE students 
-                        SET firstname=?,
-                            lastname=?,
-                            email=?,
-                            course=?,
-                            username=?
-                        WHERE student_id=?");
-                        $stmt->bind_param("sssssi", $firstname, $lastname, $email, $course, $username, $student_id);
-                    }
-
-                    if ($stmt->execute()) {
-                        logActivity($conn, $_SESSION['id'], $_SESSION['user_type'], 'UPDATE_STUDENT', "Updated student account: Student ID = $student_id");
-
-                        echo "<script>
-                        document.addEventListener('DOMContentLoaded', function() {
-                            Swal.fire({
-                                icon: 'success',
-                                title: 'Success!',
-                                text: 'Student Updated Successfully!',
-                                timer: 2000,
-                                showConfirmButton: false
-                            });
-                        });
-                    </script>";
                     } else {
                         echo "<script>
                         Swal.fire({
                             icon: 'error',
                             title: 'Error!',
-                            text: '" . addslashes($stmt->error) . "',
+                            text: 'Failed to upload file.',
                             confirmButtonColor: '#d33'
                         });
                     </script>";
+                    }
+                } else {
+                    // No new file uploaded - keep the current image
+                    $student_image = $currentImagePath;
+
+                    // Build query based on whether password is provided
+                    if ($hasPassword) {
+                        $stmt = $conn->prepare("UPDATE students 
+                    SET firstname=?,
+                        lastname=?,
+                        email=?,
+                        course=?,
+                        username=?,
+                        password=?
+                    WHERE student_id=?");
+                        $stmt->bind_param("ssssssi", $firstname, $lastname, $email, $course, $username, $password, $student_id);
+                    } else {
+                        $stmt = $conn->prepare("UPDATE students 
+                    SET firstname=?,
+                        lastname=?,
+                        email=?,
+                        course=?,
+                        username=?
+                    WHERE student_id=?");
+                        $stmt->bind_param("sssssi", $firstname, $lastname, $email, $course, $username, $student_id);
+                    }
+
+                    if ($stmt->execute()) {
+                        logActivity($conn, $_SESSION['id'], $_SESSION['user_type'], 'UPDATE_STUDENT', "Updated student account: Student ID = $email");
+
+                        echo "<script>
+                    document.addEventListener('DOMContentLoaded', function() {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Success!',
+                            text: 'Student Updated Successfully!',
+                            timer: 2000,
+                            showConfirmButton: false
+                        });
+                    });
+                </script>";
+                    } else {
+                        echo "<script>
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error!',
+                        text: '" . addslashes($stmt->error) . "',
+                        confirmButtonColor: '#d33'
+                    });
+                </script>";
                     }
                     $stmt->close();
                 }
@@ -415,15 +479,15 @@ include '../includes/activity_logger.php';
             $checkStmt->close();
         } else {
             echo "<script>
-                    document.addEventListener('DOMContentLoaded', function() {
-                        Swal.fire({
-                            icon: 'error',
-                            title: 'Error!',
-                            text: 'Database connection failed',
-                            confirmButtonColor: '#d33'
-                        });
+                document.addEventListener('DOMContentLoaded', function() {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error!',
+                        text: 'Database connection failed',
+                        confirmButtonColor: '#d33'
                     });
-                </script>";
+                });
+            </script>";
         }
         $conn->close();
     }
@@ -432,6 +496,7 @@ include '../includes/activity_logger.php';
     if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnDrop'])) {
         $conn = connectToDB();
         $student_id = $_POST['studentId'];
+        $email = $_POST['studentEmail'];
 
         if ($conn) {
             $stmt = $conn->prepare("UPDATE students SET status = '0' WHERE student_id=?");
@@ -439,7 +504,7 @@ include '../includes/activity_logger.php';
 
             if ($stmt->execute()) {
 
-                logActivity($conn, $_SESSION['id'], $_SESSION['user_type'], 'DROP_STUDENT', "Drop Student Account: Student ID = $student_id");
+                logActivity($conn, $_SESSION['id'], $_SESSION['user_type'], 'DROP_STUDENT', "Drop Student Account: Student ID = $email");
 
                 echo "<script>
                             document.addEventListener('DOMContentLoaded', function() {
@@ -473,12 +538,12 @@ include '../includes/activity_logger.php';
     <main class="main-content">
         <div class="page-header">
             <h4><i class="fas fa-user me-2"></i>Students Management</h4>
-            <?php if($_SESSION['username'] == 'admin'): ?>
-            <div class="action-buttons">
-                <button class="btn btn-primary" id="add-student-btn" data-bs-toggle="modal" data-bs-target="#add-students-modal">
-                    <i class="fas fa-plus me-1"></i>Add Student
-                </button>
-            </div>
+            <?php if ($_SESSION['username'] == 'admin'): ?>
+                <div class="action-buttons">
+                    <button class="btn btn-primary" id="add-student-btn" data-bs-toggle="modal" data-bs-target="#add-students-modal">
+                        <i class="fas fa-plus me-1"></i>Add Student
+                    </button>
+                </div>
             <?php endif; ?>
         </div>
 
@@ -549,7 +614,8 @@ include '../includes/activity_logger.php';
                                         </a>";
 
                                     echo "<a class='btn btn-sm btn-outline-danger me-1 drop-student-btn'
-                                            data-id='" . $row["student_id"] . "'>
+                                            data-id='" . $row["student_id"] . "'
+                                            data-email='" . $row["email"] . "'>
                                                 <i class='fas fa-trash'></i>
                                             </a>";
                                 } else {
@@ -870,6 +936,7 @@ include '../includes/activity_logger.php';
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">No</button>
                         <form action="<?php htmlspecialchars($_SERVER['PHP_SELF']) ?>" method="post">
                             <input type="hidden" name="studentId" id="studentId">
+                            <input type="hidden" name="studentEmail" id="studentEmail">
                             <button type="submit" class="btn btn-danger" name="btnDrop">Yes</button>
                         </form>
                     </div>
@@ -953,6 +1020,15 @@ include '../includes/activity_logger.php';
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
+        <?php if ($updateSuccess): ?>
+            Swal.fire({
+                icon: 'success',
+                title: 'Success!',
+                text: 'Student Updated Successfully!',
+                timer: 2000,
+                showConfirmButton: false
+            });
+        <?php endif ?>
         // Apply to all inputs except those containing specific words in ID
         document.querySelectorAll('input[type="text"]').forEach(input => {
             const excludePatterns = ['username', 'email', 'editUsername', 'editEmail'];
@@ -990,6 +1066,7 @@ include '../includes/activity_logger.php';
                 }
             });
         });
+        
         document.querySelectorAll('.edit-student-btn').forEach(function(btn) {
             btn.addEventListener('click', function() {
                 document.getElementById('editId').value = btn.getAttribute('data-id');
@@ -1006,7 +1083,7 @@ include '../includes/activity_logger.php';
 
                 // Display current image if exists
                 if (imagePath && imagePath !== '') {
-                    editImagePreview.innerHTML = `<img src="${imagePath}" class="img-fluid h-100" alt="Student Photo">`;
+                    editImagePreview.innerHTML = `<img src="${imagePath}" class="preview-image" alt="Student Photo">`;
                     currentImageInfo.textContent = `Current image: ${imagePath.split('/').pop()}`;
                 } else {
                     editImagePreview.innerHTML = `
@@ -1028,6 +1105,8 @@ include '../includes/activity_logger.php';
             const preview = document.getElementById('editImagePreview');
             const imageNameInput = document.getElementById('editImageName');
 
+            preview.classList.add('image-preview-container');
+
             if (file) {
                 const reader = new FileReader();
 
@@ -1035,7 +1114,7 @@ include '../includes/activity_logger.php';
                     preview.innerHTML = '';
                     const img = document.createElement('img');
                     img.src = reader.result;
-                    img.className = 'img-fluid h-100';
+                    img.className = 'preview-image';
                     preview.appendChild(img);
                 });
 
@@ -1045,7 +1124,7 @@ include '../includes/activity_logger.php';
                 // If no file selected, show current image again
                 const currentImagePath = document.querySelector('.edit-student-btn[data-id="' + document.getElementById('editId').value + '"]').getAttribute('data-image');
                 if (currentImagePath && currentImagePath !== '') {
-                    preview.innerHTML = `<img src="${currentImagePath}" class="img-fluid h-100" alt="Student Photo">`;
+                    preview.innerHTML = `<img src="${currentImagePath}" class="preview-image" alt="Student Photo">`;
                 } else {
                     preview.innerHTML = `
                 <i class="fas fa-user-graduate fa-3x mb-2"></i>
@@ -1059,6 +1138,7 @@ include '../includes/activity_logger.php';
         document.querySelectorAll('.drop-student-btn').forEach(function(btn) {
             btn.addEventListener('click', function() {
                 document.getElementById('studentId').value = btn.getAttribute('data-id');
+                document.getElementById('studentEmail').value = btn.getAttribute('data-email');
             });
         });
 
@@ -1068,6 +1148,8 @@ include '../includes/activity_logger.php';
             const preview = document.getElementById('imagePreview');
             const imageNameInput = document.getElementById('imageName');
 
+            preview.classList.add('image-preview-container');
+
             if (file) {
                 const reader = new FileReader();
 
@@ -1075,7 +1157,7 @@ include '../includes/activity_logger.php';
                     preview.innerHTML = '';
                     const img = document.createElement('img');
                     img.src = reader.result;
-                    img.className = 'img-fluid h-100';
+                    img.className = 'preview-image';
                     preview.appendChild(img);
                 });
 
@@ -1137,8 +1219,8 @@ include '../includes/activity_logger.php';
             const popupContent = document.createElement('div');
             popupContent.style.cssText = `
                 position: relative;
-                max-width: 90%;
-                max-height: 90%;
+                max-width: 450px;
+                max-height: 450px;
                 display: flex;
                 justify-content: center;
                 align-items: center;

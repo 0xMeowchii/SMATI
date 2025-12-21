@@ -98,7 +98,12 @@ include '../database.php';
 
     //Fetch Announcements
     $conn = connectToDB();
-    $sql = "SELECT * FROM announcements WHERE target = 'All' OR target = 'Teacher' ORDER BY announcement_id DESC";
+    $sql = "SELECT * 
+            FROM announcements 
+            WHERE (target = 'All' OR target = 'Teacher') 
+            AND start_date <= NOW() 
+            AND (end_date >= NOW())
+            ORDER BY announcement_id DESC";
     $stmt = $conn->prepare($sql);
     $stmt->execute();
     $result = $stmt->get_result();
@@ -175,6 +180,7 @@ include '../database.php';
             'section' => $row['section'],
             'type' => $row['type'],
             'details' => $row['details'],
+            'remarks' => $row['remarks'],
             'status' => $row['concern_status'],
             'email' => $row['email']
         ];
@@ -192,10 +198,15 @@ include '../database.php';
         if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnApprove'])) {
             $conn = connectToDB();
             $concern_id = $_POST['approveId'];
+            $remarks = $_POST['remarks'];
 
             if ($conn) {
-                $stmt = $conn->prepare("UPDATE concern SET concern_status = 'Approved' , approved_date = NOW() WHERE concern_id=?");
-                $stmt->bind_param("i", $concern_id);
+                $stmt = $conn->prepare("UPDATE concern 
+                                        SET concern_status = 'Approved', 
+                                            approved_date = NOW(),
+                                            remarks = ? 
+                                        WHERE concern_id=?");
+                $stmt->bind_param("si", $remarks, $concern_id);
 
                 if ($stmt->execute()) {
                     echo "<script>
@@ -525,6 +536,7 @@ include '../database.php';
                                         data-type='<?php echo $concern['type']; ?>'
                                         data-status='<?php echo $concern['status']; ?>'
                                         data-details='<?php echo $concern['details']; ?>'
+                                        data-remarks='<?php echo $concern['remarks']; ?>'
                                         data-date='<?php echo $concern['date']->format('m-d-Y h:i A'); ?>'
                                         data-approve='<?php echo $concern['approve_date'] ? $concern['approve_date']->format('m-d-Y h:i A') : 'Not approved yet'; ?>'>
                                         <i class='fas fa-download'></i>
@@ -566,6 +578,7 @@ include '../database.php';
                                         data-type='<?php echo $concern['type']; ?>'
                                         data-status='<?php echo $concern['status']; ?>'
                                         data-details='<?php echo $concern['details']; ?>'
+                                        data-remarks='<?php echo $concern['remarks']; ?>'
                                         data-date='<?php echo $concern['date']->format('m-d-Y h:i A'); ?>'
                                         data-approve='<?php echo $concern['approve_date'] ? $concern['approve_date']->format('m-d-Y h:i A') : 'Not approved yet'; ?>'
                                         data-bs-toggle='modal'
@@ -656,11 +669,19 @@ include '../database.php';
                             </div>
                         </div>
 
-                        <div class="mb-1">
-                            <div class="d-flex align-items-center pb-2 border-bottom border-1 fw-medium">
-                                <i class="fas fa-align-left me-2 text-primary"></i>Concern Details
+                        <div class="row mb-1">
+                            <div class="col-12 col-md-6">
+                                <div class="d-flex align-items-center pb-2 border-bottom border-1 fw-medium">
+                                    <i class="fas fa-align-left me-2 text-primary"></i>Concern Details
+                                </div>
+                                <p class="fs-6 mb-0 mt-3"><span id='modalDetails'></span></p>
                             </div>
-                            <p class="fs-6 mb-0 mt-3"><span id='modalDetails'></span></p>
+                            <div class="col-12 col-md-6">
+                                <div class="d-flex align-items-center pb-2 border-bottom border-1 fw-medium">
+                                    <i class="fas fa-align-left me-2 text-primary"></i>Remarks
+                                </div>
+                                <p class="fs-6 mb-0 mt-3"><span id='modalRemarks'></span></p>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -672,21 +693,21 @@ include '../database.php';
     </div>
 
     <!-- Approve Concern Modal -->
-    <div class="modal fade" id="approveConcernModal" tabindex="-1" role="dialog" aria-labelledby="approveConcernModal" aria-hidden="true">
-        <div class="modal-dialog">
+    <div class="modal fade" id="approveConcernModal" tabindex="-1" aria-labelledby="approveConcernModal" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="approveConcernModal">Approve Concern</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    Do you want to Approve this Concern?
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">No</button>
                     <form action="<?php htmlspecialchars($_SERVER['PHP_SELF']) ?>" method="post">
                         <input type="hidden" name="approveId" id="approveId">
-                        <button type="submit" class="btn btn-success" name="btnApprove">Yes</button>
+                        <p class="text-center">Please provide a remark for student's concern</p>
+                        <textarea class="form-control" placeholder="Leave a comment here..." name="remarks" rows="4" required></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-success" name="btnApprove">Submit</button>
                     </form>
                 </div>
             </div>
@@ -745,6 +766,7 @@ include '../database.php';
                 document.getElementById('modalApprovedDate').textContent = btn.getAttribute('data-approve');
                 document.getElementById('modalSection').textContent = btn.getAttribute('data-section');
                 document.getElementById('modalDetails').textContent = btn.getAttribute('data-details');
+                document.getElementById('modalRemarks').textContent = btn.getAttribute('data-remarks');
 
 
                 // Set status with background color
@@ -794,6 +816,7 @@ include '../database.php';
                     type: btn.getAttribute('data-type'),
                     status: btn.getAttribute('data-status'),
                     details: btn.getAttribute('data-details'),
+                    remarks: btn.getAttribute('data-remarks'),
                     date: btn.getAttribute('data-date')
                 };
 
@@ -899,6 +922,10 @@ include '../database.php';
             doc.text("Description:", 20, 170);
             const splitDetails = doc.splitTextToSize(data.details, 170);
             doc.text(splitDetails, 20, 180);
+
+            doc.text("Remarks:", 20, 190);
+            const splitRemarks = doc.splitTextToSize(data.remarks, 190);
+            doc.text(splitRemarks, 20, 200);
 
             // Add footer
             doc.setFontSize(10);

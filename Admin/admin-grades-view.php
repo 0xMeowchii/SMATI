@@ -169,61 +169,61 @@ if ($conn) {
                     const popupOverlay = document.createElement('div');
                     popupOverlay.className = 'image-popup-overlay';
                     popupOverlay.style.cssText = `
-                position: fixed;
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100%;
-                background: rgba(0, 0, 0, 0.9);
-                display: flex;
-                justify-content: center;
-                align-items: center;
-                z-index: 9999;
-                cursor: zoom-out;
-            `;
+                                position: fixed;
+                                top: 0;
+                                left: 0;
+                                width: 100%;
+                                height: 100%;
+                                background: rgba(0, 0, 0, 0.9);
+                                display: flex;
+                                justify-content: center;
+                                align-items: center;
+                                z-index: 9999;
+                                cursor: zoom-out;
+                            `;
 
                     // Create popup content
                     const popupContent = document.createElement('div');
                     popupContent.style.cssText = `
-                position: relative;
-                max-width: 90%;
-                max-height: 90%;
-                display: flex;
-                justify-content: center;
-                align-items: center;
-            `;
+                            position: relative;
+                            max-width: 500px;
+                            max-height: 500px;
+                            display: flex;
+                            justify-content: center;
+                            align-items: center;
+                        `;
 
                     // Create image element
                     const popupImage = document.createElement('img');
                     popupImage.src = imageSrc;
                     popupImage.style.cssText = `
-                max-width: 100%;
-                max-height: 100%;
-                object-fit: contain;
-                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-                border: 4px solid white;
-            `;
+                                max-width: 100%;
+                                max-height: 100%;
+                                object-fit: contain;
+                                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+                                border: 4px solid white;
+                            `;
 
                     // Create close button
                     const closeButton = document.createElement('button');
                     closeButton.innerHTML = '&times;';
                     closeButton.style.cssText = `
-                position: absolute;
-                top: -40px;
-                right: -40px;
-                background: rgba(255, 255, 255, 0.2);
-                border: none;
-                color: white;
-                font-size: 30px;
-                width: 40px;
-                height: 40px;
-                border-radius: 50%;
-                cursor: pointer;
-                display: flex;
-                justify-content: center;
-                align-items: center;
-                transition: background 0.3s ease;
-            `;
+                            position: absolute;
+                            top: -40px;
+                            right: -40px;
+                            background: rgba(255, 255, 255, 0.2);
+                            border: none;
+                            color: white;
+                            font-size: 30px;
+                            width: 40px;
+                            height: 40px;
+                            border-radius: 50%;
+                            cursor: pointer;
+                            display: flex;
+                            justify-content: center;
+                            align-items: center;
+                            transition: background 0.3s ease;
+                        `;
 
                     // Add hover effect to close button
                     closeButton.addEventListener('mouseenter', function() {

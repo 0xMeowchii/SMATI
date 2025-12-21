@@ -224,8 +224,8 @@ $current_page = basename($_SERVER['PHP_SELF']);
                 const popupContent = document.createElement('div');
                 popupContent.style.cssText = `
                 position: relative;
-                max-width: 90%;
-                max-height: 90%;
+                max-width: 450px;
+                max-height: 450px;
                 display: flex;
                 justify-content: center;
                 align-items: center;

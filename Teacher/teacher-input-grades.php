@@ -242,7 +242,7 @@ if ($result->num_rows > 0) {
                 ?>
             </div>
 
-            <div class="table-responsive">
+            <div class="table-responsive flex-grow-1 overflow-auto" style="max-height: 500px;">
                 <form id="gradesForm" action="<?php echo htmlspecialchars($_SERVER['PHP_SELF'] . '?' . $_SERVER['QUERY_STRING']); ?>" method="post">
                     <input type="hidden" name="subject_id" value="<?php echo htmlspecialchars($subject); ?>">
                     <input type="hidden" name="sy_id" value="<?php echo htmlspecialchars($sy); ?>">
@@ -317,13 +317,13 @@ if ($result->num_rows > 0) {
                             <?php endforeach; ?>
                         </tbody>
                     </table>
-                    <div class="text-end mt-3">
-                        <button type="submit" class="btn btn-primary">
-                            <i class="fas fa-save me-2"></i>Save All Grades
-                        </button>
-                    </div>
-                </form>
             </div>
+            <div class="text-end mt-3">
+                <button type="submit" class="btn btn-primary" id="btnSaveGrades">
+                    <i class="fas fa-save me-2"></i>Save All Grades
+                </button>
+            </div>
+            </form>
         </div>
     </main>
     <!-- Bootstrap JS Bundle with Popper -->
@@ -600,7 +600,7 @@ if ($result->num_rows > 0) {
         <?php if (!$check['can_submit']): ?>
             const gradesForm = document.querySelector('#gradesForm');
             if (gradesForm) {
-                const submitBtn = gradesForm.querySelector('button[type="submit"]');
+                const submitBtn = document.getElementById('btnSaveGrades');
                 if (submitBtn) {
                     submitBtn.disabled = true;
                     submitBtn.classList.add('disabled');

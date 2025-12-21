@@ -79,11 +79,13 @@ include '../includes/activity_logger.php';
             $details = $_POST['details'];
             $type = $_POST['type'];
             $target = $_POST['target'];
+            $start_date = $_POST['start_date'];
+            $end_date = $_POST['end_date'];
 
             if ($conn) {
-                $stmt = $conn->prepare("INSERT INTO announcements (title, details, type, target, createdAt) 
-                                            VALUES (?, ?, ?, ?, NOW())");
-                $stmt->bind_param("ssss", $title, $details, $type, $target);
+                $stmt = $conn->prepare("INSERT INTO announcements (title, details, type, target, start_date, end_date, createdAt) 
+                                            VALUES (?, ?, ?, ?, ?, ?, NOW())");
+                $stmt->bind_param("ssssss", $title, $details, $type, $target, $start_date, $end_date);
 
                 if ($stmt->execute()) {
 
@@ -126,15 +128,19 @@ include '../includes/activity_logger.php';
             $details = $_POST['editDetails'];
             $type = $_POST['editType'];
             $target = $_POST['editTarget'];
+            $start = $_POST['edit_start_date'];
+            $end = $_POST['edit_end_date'];
 
             if ($conn) {
                 $stmt = $conn->prepare("UPDATE announcements 
                                         SET title=?,
                                             details=?,
                                             type=?,
-                                            target=?
+                                            target=?,
+                                            start_date = ?,
+                                            end_date = ?
                                         WHERE announcement_id=?");
-                $stmt->bind_param("ssssi", $title, $details, $type, $target, $announcement_id);
+                $stmt->bind_param("ssssssi", $title, $details, $type, $target, $start, $end, $announcement_id);
 
                 if ($stmt->execute()) {
 
@@ -265,9 +271,13 @@ include '../includes/activity_logger.php';
                             echo '<h5 class="card-title">' . $row["title"] . '</h5>';
                             echo '<span class="badge ' . $badgeClass . ' priority-badge"><i class="' . $iconClass . '"></i>' . $row["type"] . '</span>';
                             echo '</div>';
-                            echo '<p class="card-text details-text flex-grow-1">' . $row["details"] . '</p>';
-                            echo '<p class="card-text details-text"><i class="bi bi-person-fill me-2"></i>' . $row['target'] . '</p>';
-                            echo '<p class="card-text details-text"><i class="bi bi-calendar-event-fill me-2"></i>' . $date->format('m-d-Y h:i A') . '</p>';
+                            echo '<div class="flex-grow-1 overflow-auto mb-3" style="max-height:120px;">';
+                            echo '<p class="card-text details-text">' . $row["details"] . '</p>';
+                            echo '</div>';
+                            echo '<p class="card-tex"><i class="bi bi-person-fill me-2"></i>' . $row['target'] . '</p>';
+                            echo '<p class="card-text"><i class="bi bi-calendar-check me-2"></i>' .  (!empty($row['start_date']) ? date('M d, Y h:i A', strtotime($row['start_date'])) : 'Not set')  . '</p>';
+                            echo '<p class="card-text"><i class="bi bi-calendar-x me-2"></i>' . (!empty($row['end_date']) ? date('M d, Y h:i A', strtotime($row['end_date'])) : 'Not set') . '</p>';
+                            echo '<p class="card-text"><i class="bi bi-calendar-event-fill me-2"></i>' . $date->format('m-d-Y h:i A') . '</p>';
                             echo '<div class="action-buttons1 mt-3">';
                             echo '<a class="btn btn-sm btn-outline-primary me-1 view-announcement-btn"
                             data-id="' . $row["announcement_id"] . '"
@@ -275,6 +285,8 @@ include '../includes/activity_logger.php';
                             data-details="' . $row["details"] . '"
                             data-type="' . $row["type"] . '"
                             data-target="' . $row["target"] . '"
+                            data-start="' . $row["start_date"] . '"
+                            data-end="' . $row["end_date"] . '"
                             data-bs-toggle="modal" 
                             data-bs-target="#view-announcement-modal">
                             <i class="fas fa-eye"></i>
@@ -285,6 +297,8 @@ include '../includes/activity_logger.php';
                             data-details="' . $row["details"] . '"
                             data-type="' . $row["type"] . '"
                             data-target="' . $row["target"] . '"
+                            data-start="' . $row["start_date"] . '"
+                            data-end="' . $row["end_date"] . '"
                             data-bs-toggle="modal" 
                             data-bs-target="#edit-announcement-modal">
                             <i class="fas fa-edit"></i>
@@ -323,6 +337,14 @@ include '../includes/activity_logger.php';
                         <form action="<?php htmlspecialchars($_SERVER['PHP_SELF']) ?>" method="POST">
                             <div class="row g-3">
                                 <h4 class="pb-2 border-bottom">Announcement Details</h4>
+                                <div class="col-12 col-md-6">
+                                    <label for="start-date">Start Date:</label>
+                                    <input type="datetime-local" class="form-control" name="start_date" id="start_date" required>
+                                </div>
+                                <div class="col-12 col-md-6">
+                                    <label for="start-date">End Date:</label>
+                                    <input type="datetime-local" class="form-control" name="end_date" id="end_date" required>
+                                </div>
                                 <div class="col-12 col-md-6">
                                     <div class="form-floating">
                                         <input class="form-control" placeholder="Title" id="floatingTextarea1" name="title" required> </input>
@@ -398,6 +420,14 @@ include '../includes/activity_logger.php';
                             <input type="hidden" name="editId" id="editId">
                             <div class="row g-3">
                                 <h4 class="pb-2 border-bottom">Announcement Details</h4>
+                                <div class="col-12 col-md-6">
+                                    <label for="start-date">Start Date:</label>
+                                    <input type="datetime-local" class="form-control" name="edit_start_date" id="edit_start_date" required>
+                                </div>
+                                <div class="col-12 col-md-6">
+                                    <label for="start-date">End Date:</label>
+                                    <input type="datetime-local" class="form-control" name="edit_end_date" id="edit_end_date" required>
+                                </div>
                                 <div class="col-12 col-md-6">
                                     <div class="form-floating">
                                         <input class="form-control" placeholder="Title" id="editTitle" name="editTitle"></input>
@@ -508,6 +538,8 @@ include '../includes/activity_logger.php';
                     document.getElementById('viewAnnouncementDetails').textContent = btn.getAttribute('data-details');
                     document.getElementById('viewAnnouncementPriority').textContent = btn.getAttribute('data-type');
                     document.getElementById('viewAnnouncementTarget').textContent = btn.getAttribute('data-target');
+                    document.getElementById('viewAnnouncementStart').textContent = btn.getAttribute('data-start');
+                    document.getElementById('viewAnnouncementEnd').textContent = btn.getAttribute('data-end');
                 });
             });
 
@@ -519,6 +551,9 @@ include '../includes/activity_logger.php';
                     document.getElementById('editDetails').value = btn.getAttribute('data-details');
                     document.getElementById('editType').value = btn.getAttribute('data-type');
                     document.getElementById('editTarget').value = btn.getAttribute('data-target');
+                    document.getElementById('edit_start_date').value = btn.getAttribute('data-start');
+                    document.getElementById('edit_end_date').value = btn.getAttribute('data-end');
+
                 });
             });
 

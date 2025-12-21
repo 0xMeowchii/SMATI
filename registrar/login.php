@@ -232,7 +232,7 @@ date_default_timezone_set('Asia/Manila');
 
             <!-- Footer Note -->
             <div class="footer-note">
-                <i class="fas fa-copyright"></i> SMATI Registrar System v1.0.0
+                <i class="fas fa-copyright"></i> <?= $version; ?>
             </div>
         </div>
 

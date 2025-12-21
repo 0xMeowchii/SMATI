@@ -173,7 +173,7 @@ include '../includes/activity_logger.php';
 
                         if ($stmt->execute()) {
 
-                            logActivity($conn, $_SESSION['id'], $_SESSION['user_type'], 'UPDATE_TEACHER', "Updated teacher account: Teacher ID = $teacher_id");
+                            logActivity($conn, $_SESSION['id'], $_SESSION['user_type'], 'UPDATE_TEACHER', "Updated teacher account: Teacher ID = $email");
 
                             echo "<script>
                             document.addEventListener('DOMContentLoaded', function() {
@@ -209,7 +209,7 @@ include '../includes/activity_logger.php';
 
                         if ($stmt->execute()) {
 
-                            logActivity($conn, $_SESSION['id'], $_SESSION['user_type'], 'UPDATE_TEACHER', "Updated teacher account: Teacher ID = $teacher_id");
+                            logActivity($conn, $_SESSION['id'], $_SESSION['user_type'], 'UPDATE_TEACHER', "Updated teacher account: Teacher ID = $email");
 
                             echo "<script>
                                     document.addEventListener('DOMContentLoaded', function() {
@@ -244,6 +244,7 @@ include '../includes/activity_logger.php';
         if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnDrop'])) {
             $conn = connectToDB();
             $teacher_id = $_POST['teacherId'];
+            $email = $_POST['teacherEmail'];
 
             if ($conn) {
                 $stmt = $conn->prepare("UPDATE teachers SET status = '0' WHERE teacher_id=?");
@@ -251,7 +252,7 @@ include '../includes/activity_logger.php';
 
                 if ($stmt->execute()) {
 
-                    logActivity($conn, $_SESSION['id'], $_SESSION['user_type'], 'DROP_TEACHER', "Drop teacher account: Teacher ID = $teacher_id");
+                    logActivity($conn, $_SESSION['id'], $_SESSION['user_type'], 'DROP_TEACHER', "Drop teacher account: Teacher ID = $email");
 
                     echo "<script>
                             document.addEventListener('DOMContentLoaded', function() {
@@ -347,7 +348,8 @@ include '../includes/activity_logger.php';
                                                     <i class='fas fa-edit'></i>
                                                 </a>";
                                     echo "<a class='btn btn-sm btn-outline-danger me-1 drop-teacher-btn'
-                                                data-id='" . $row["teacher_id"] . "'>
+                                                data-id='" . $row["teacher_id"] . "'
+                                                data-email='" . $row["email"] . "'>
                                                     <i class='fas fa-trash'></i>
                                                 </a>";
                                 } else {
@@ -559,6 +561,7 @@ include '../includes/activity_logger.php';
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">No</button>
                         <form action="<?php htmlspecialchars($_SERVER['PHP_SELF']) ?>" method="post">
                             <input type="hidden" name="teacherId" id="teacherId">
+                            <input type="hidden" name="teacherEmail" id="teacherEmail">
                             <button type="submit" class="btn btn-danger" name="btnDrop">Yes</button>
                         </form>
                     </div>
@@ -680,6 +683,7 @@ include '../includes/activity_logger.php';
         document.querySelectorAll('.drop-teacher-btn').forEach(function(btn) {
             btn.addEventListener('click', function() {
                 document.getElementById('teacherId').value = btn.getAttribute('data-id');
+                document.getElementById('teacherEmail').value = btn.getAttribute('data-email');
             });
         });
     </script>

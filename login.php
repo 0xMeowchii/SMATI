@@ -351,7 +351,7 @@ include 'includes/activity_logger.php';
 
                 <div class="forgot-password">
                     <a href="#" id="showForgotPassword">Forgot Password?</a>
-                    <div class="version">v1.18.17</div>
+                    <div class="version"><?= $version; ?></div>
                 </div>
 
                 <div class="cooldown-timer" id="cooldownTimer">

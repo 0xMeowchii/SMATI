@@ -9,15 +9,14 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <!-- SweetAlert2 -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
-<link rel="stylesheet" href="./css/sidebar.css">
-<link rel="stylesheet" href="./css/darkmode-variable.css">
-<link rel="stylesheet" href="./css/admin.css">
+<link rel="stylesheet" href="./css/sidebar2.css">
+<link rel="stylesheet" href="./css/admin1.css">
 <link rel="icon" type="image/png" href="../images/logo5.png">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script src="js/inactivity-timeout1.js"></script>
-<script src="js/script1.js"></script>
+<script src="js/script.js"></script>
 <script>
     // This ensures it runs after page loads
     document.addEventListener('DOMContentLoaded', function() {

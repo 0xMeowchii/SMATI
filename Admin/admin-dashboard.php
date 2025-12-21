@@ -198,7 +198,10 @@ $setB = $result->num_rows;
 
 //TOTAL ANNOUNCEMENT
 $conn = connectToDB();
-$sql = "SELECT * FROM announcements";
+$sql = "SELECT * 
+        FROM announcements
+        WHERE start_date <= NOW() AND end_date >= NOW() 
+        ORDER BY announcement_id DESC";
 $stmt = $conn->prepare($sql);
 $stmt->execute();
 $result = $stmt->get_result();
@@ -341,7 +344,10 @@ if ($row = $result->fetch_assoc()) {
 
     //Fetch announcements
     $conn = connectToDB();
-    $sql = "SELECT * FROM announcements ORDER BY announcement_id DESC";
+    $sql = "SELECT * 
+            FROM announcements
+            WHERE start_date <= NOW() AND end_date >= NOW() 
+            ORDER BY announcement_id DESC";
     $stmt = $conn->prepare($sql);
     $stmt->execute();
     $result = $stmt->get_result();
@@ -378,6 +384,7 @@ if ($row = $result->fetch_assoc()) {
             'teacher_name' => $row['teacher_name'],
             'type' => $row['type'],
             'details' => $row['details'],
+            'remarks' => $row['remarks'],
             'reference_num' => $row['reference_num'],
             'status' => $row['concern_status'],
             'concern_date' => new DateTime($row['concern_date']),
@@ -547,7 +554,7 @@ if ($row = $result->fetch_assoc()) {
         </div>
 
         <!-- Recent Activities -->
-        <div class="row mt-5 g-4">
+        <div class="row my-4 g-4">
             <!-- Activity Logs Card -->
             <div class="col-12 col-lg-4">
                 <div class="card rounded-4 bg-white shadow h-100">
@@ -641,7 +648,7 @@ if ($row = $result->fetch_assoc()) {
         </div>
 
         <!--- Concern Summary -->
-        <div class="mt-5">
+        <div class="my-3">
             <div class="card rounded-4">
                 <div class="card-header rounded-top-4 bg-primary fw-bold text-white">
                     <span>Concern Summary</span>
@@ -719,6 +726,7 @@ if ($row = $result->fetch_assoc()) {
                                                     data-type='<?php echo $concern['type']; ?>'
                                                     data-status='<?php echo $concern['status']; ?>'
                                                     data-details='<?php echo $concern['details']; ?>'
+                                                    data-remarks='<?php echo $concern['remarks']; ?>'
                                                     data-date='<?php echo $concern['concern_date']->format('m-d-Y h:i A'); ?>'
                                                     data-approve='<?php echo $concern['approved_date'] ? $concern['approved_date']->format('m-d-Y h:i A') : 'Not approved yet'; ?>'>
                                                     <i class='fas fa-download'></i>
@@ -733,6 +741,7 @@ if ($row = $result->fetch_assoc()) {
                                                     data-type='<?php echo $concern['type']; ?>'
                                                     data-status='<?php echo $concern['status']; ?>'
                                                     data-details='<?php echo $concern['details']; ?>'
+                                                    data-remarks='<?php echo $concern['remarks']; ?>'
                                                     data-date='<?php echo $concern['concern_date']->format('m-d-Y h:i A'); ?>'
                                                     data-approve='<?php echo $concern['approved_date'] ? $concern['approved_date']->format('m-d-Y h:i A') : 'Not approved yet'; ?>'
                                                     data-bs-toggle='modal'
@@ -758,7 +767,7 @@ if ($row = $result->fetch_assoc()) {
         </div>
 
         <!-- REG SUMMARY -->
-        <div class="filter-section bg-white rounded shadow-sm p-4 mb-4 sticky-top mt-5" style="top: 20px; z-index: 100;">
+        <div class="filter-section bg-white rounded shadow-sm p-4 mb-4 sticky-top mt-3" style="top: 20px; z-index: 100;">
             <div class="row">
                 <div class="col-md-3 mb-3">
                     <label for="searchBar" class="form-label">Search</label>
@@ -880,7 +889,6 @@ if ($row = $result->fetch_assoc()) {
             </div>
         </div>
 
-
         <!-- Activity Logs Modal -->
         <div class="modal modal-lg" id="view-activitylogs-modal">
             <div class="modal-dialog">
@@ -904,7 +912,7 @@ if ($row = $result->fetch_assoc()) {
                                 <input type="text" class="form-control rounded-4 border-2" id="searchQuery" placeholder="Search...">
                             </div>
                             <div class="col-md-3">
-                                <select class="form-control rounded-4 border-2" id="filterDate">
+                                <select class="form-control rounded-4 border-2" id="filterLogsDate">
                                     <option value="">Sort by: Date</option>
                                     <option value="today">Today</option>
                                     <option value="yesterday">Yesterday</option>
@@ -1122,16 +1130,49 @@ if ($row = $result->fetch_assoc()) {
                                 </div>
                             </div>
 
-                            <div class="mb-1">
-                                <div class="d-flex align-items-center pb-2 border-bottom border-1 fw-medium">
-                                    <i class="fas fa-align-left me-2 text-primary"></i>Concern Details
+                            <div class="row mb-1">
+                                <div class="col-12 col-md-6">
+                                    <div class="d-flex align-items-center pb-2 border-bottom border-1 fw-medium">
+                                        <i class="fas fa-align-left me-2 text-primary"></i>Concern Details
+                                    </div>
+                                    <p class="fs-6 mb-0 mt-3"><span id='modalDetails'></span></p>
                                 </div>
-                                <p class="fs-6 mb-0 mt-3"><span id='modalDetails'></span></p>
+                                <div class="col-12 col-md-6">
+                                    <div class="d-flex align-items-center pb-2 border-bottom border-1 fw-medium">
+                                        <i class="fas fa-align-left me-2 text-primary"></i>Remarks
+                                    </div>
+                                    <p class="fs-6 mb-0 mt-3"><span id='modalRemarks'></span></p>
+                                </div>
+
+
                             </div>
                         </div>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Drop Admin Modal -->
+        <div class="modal fade" id="dropAdminModal" tabindex="-1" role="dialog" aria-labelledby="dropAdminModal" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="dropAdminModal">Confirm Drop</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        Are you sure you want to drop this admin?
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">No</button>
+                        <form action="<?php htmlspecialchars($_SERVER['PHP_SELF']) ?>" method="post">
+                            <input type="text" name="adminId" id="adminId">
+                            <input type="text" name="adminEmail" id="adminEmail">
+                            <button type="submit" class="btn btn-danger" name="btnDropAdmin">Yes</button>
+                        </form>
                     </div>
                 </div>
             </div>
@@ -1148,6 +1189,13 @@ if ($row = $result->fetch_assoc()) {
             jsPDF
         } = window.jspdf;
 
+        document.querySelectorAll('.drop-admin-btn').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                document.getElementById('adminId').value = btn.getAttribute('data-id');
+                document.getElementById('adminEmail').value = btn.getAttribute('data-email');
+            });
+        });
+
         document.querySelectorAll('.view-concern-btn').forEach(function(btn) {
             btn.addEventListener('click', function() {
                 const status = btn.getAttribute('data-status');
@@ -1161,7 +1209,7 @@ if ($row = $result->fetch_assoc()) {
                 document.getElementById('modalApprovedDate').textContent = btn.getAttribute('data-approve');
                 document.getElementById('modalSection').textContent = btn.getAttribute('data-section');
                 document.getElementById('modalDetails').textContent = btn.getAttribute('data-details');
-
+                document.getElementById('modalRemarks').textContent = btn.getAttribute('data-remarks');
 
                 // Set status with background color
                 const statusElement = document.getElementById('modalStatus');
@@ -1198,6 +1246,7 @@ if ($row = $result->fetch_assoc()) {
                     type: btn.getAttribute('data-type'),
                     status: btn.getAttribute('data-status'),
                     details: btn.getAttribute('data-details'),
+                    remarks: btn.getAttribute('data-remarks'),
                     date: btn.getAttribute('data-date')
                 };
 
@@ -1303,6 +1352,10 @@ if ($row = $result->fetch_assoc()) {
             doc.text("Description:", 20, 170);
             const splitDetails = doc.splitTextToSize(data.details, 170);
             doc.text(splitDetails, 20, 180);
+
+            doc.text("Remarks:", 20, 190);
+            const splitRemarks = doc.splitTextToSize(data.remarks, 190);
+            doc.text(splitRemarks, 20, 200);
 
             // Add footer
             doc.setFontSize(10);
@@ -1829,7 +1882,7 @@ if ($row = $result->fetch_assoc()) {
         function filterActivityLogs() {
             const userTypeFilter = document.getElementById('filterUserType').value.toLowerCase();
             const searchQuery = document.getElementById('searchQuery').value.toLowerCase();
-            const dateFilter = document.getElementById('filterDate').value;
+            const dateFilter = document.getElementById('filterLogsDate').value;
             const tableRows = document.querySelectorAll('#view-activitylogs-modal tbody tr');
 
             let visibleRows = 0;
@@ -1941,7 +1994,7 @@ if ($row = $result->fetch_assoc()) {
         function clearActivityLogFilters() {
             document.getElementById('filterUserType').value = '';
             document.getElementById('searchQuery').value = '';
-            document.getElementById('filterDate').value = '';
+            document.getElementById('filterLogsDate').value = '';
             filterActivityLogs();
         }
 
@@ -2139,8 +2192,8 @@ if ($row = $result->fetch_assoc()) {
                 searchQuery.addEventListener('input', filterActivityLogs);
             }
 
-            if (filterDate) {
-                filterDate.addEventListener('change', filterActivityLogs);
+            if (filterLogsDate) {
+                filterLogsDate.addEventListener('change', filterActivityLogs);
             }
 
             // Initialize filters when modal is shown

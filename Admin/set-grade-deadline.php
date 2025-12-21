@@ -19,7 +19,7 @@ $sql = "SELECT s.*,
         FROM subjects s
         INNER JOIN schoolyear sy ON s.schoolyear_id = sy.schoolyear_id
         INNER JOIN teachers t ON s.teacher_id = t.teacher_id
-        WHERE sy.status = '1' AND s.status = '1'
+        WHERE s.status = '1'
         ORDER BY sy.schoolyear DESC, s.subject ASC";
 
 $result = $conn->query($sql);
@@ -39,13 +39,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['set_deadline'])) {
     $result = setDueDate($conn, $subject_id, $schoolyear_id, $due_date);
 
     if ($result['success']) {
-        logActivity(
-            $conn,
-            $admin_id,
-            $_SESSION['user_type'],
-            'SET_GRADE_DEADLINE',
-            "Set grade submission deadline for subject ID: $subject_id to $due_date"
-        );
 
         // Store success flag in session to show after page reload
         $_SESSION['deadline_set_success'] = true;

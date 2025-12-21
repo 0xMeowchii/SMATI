@@ -82,6 +82,7 @@ include '../includes/activity_logger.php';
         if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnRestore'])) {
             $conn = connectToDB();
             $student_id = $_POST['studentId'];
+            $email = $_POST['studentEmail'];
 
             if ($conn) {
                 $stmt = $conn->prepare("UPDATE students SET status = '1' WHERE student_id=?");
@@ -89,7 +90,7 @@ include '../includes/activity_logger.php';
 
                 if ($stmt->execute()) {
 
-                    logActivity($conn, $_SESSION['id'], $_SESSION['user_type'], 'RETRIEVE_ACCOUNT', "retrieved student account: Student ID = $student_id");
+                    logActivity($conn, $_SESSION['id'], $_SESSION['user_type'], 'RETRIEVE_ACCOUNT', "retrieved student account: Student ID = $email");
 
                     echo "<script>
                             document.addEventListener('DOMContentLoaded', function() {
@@ -123,6 +124,7 @@ include '../includes/activity_logger.php';
         if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnRestore1'])) {
             $conn = connectToDB();
             $teacher_id = $_POST['teacherId'];
+            $email = $_POST['teacherEmail'];
 
             if ($conn) {
                 $stmt = $conn->prepare("UPDATE teachers SET status = '1' WHERE teacher_id=?");
@@ -130,7 +132,7 @@ include '../includes/activity_logger.php';
 
                 if ($stmt->execute()) {
 
-                    logActivity($conn, $_SESSION['id'], $_SESSION['user_type'], 'RETRIEVE_ACCOUNT', "retrieved teacher account: Teacher ID = $teacher_id");
+                    logActivity($conn, $_SESSION['id'], $_SESSION['user_type'], 'RETRIEVE_ACCOUNT', "retrieved teacher account: Teacher ID = $email");
 
                     echo "<script>
                             document.addEventListener('DOMContentLoaded', function() {
@@ -164,6 +166,8 @@ include '../includes/activity_logger.php';
         if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnRestore2'])) {
             $conn = connectToDB();
             $subject_id = $_POST['subjectId'];
+            $name = $_POST['subjectName'];
+            $sy = $_POST['subjectSy'];
 
             if ($conn) {
                 $stmt = $conn->prepare("UPDATE subjects SET status = '1' WHERE subject_id=?");
@@ -171,7 +175,7 @@ include '../includes/activity_logger.php';
 
                 if ($stmt->execute()) {
 
-                    logActivity($conn, $_SESSION['id'], $_SESSION['user_type'], 'RETRIEVE_SUBJECT', "retrieved subject from the archive.");
+                    logActivity($conn, $_SESSION['id'], $_SESSION['user_type'], 'RETRIEVE_SUBJECT', "retrieved subject $name - $sy.");
 
                     echo "<script>
                             document.addEventListener('DOMContentLoaded', function() {
@@ -205,6 +209,7 @@ include '../includes/activity_logger.php';
         if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnRestore3'])) {
             $conn = connectToDB();
             $registrar_id = $_POST['registrarId'];
+            $email = $_POST['registrarEmail'];
 
             if ($conn) {
                 $stmt = $conn->prepare("UPDATE registrars SET status = '1' WHERE registrar_id=?");
@@ -212,7 +217,7 @@ include '../includes/activity_logger.php';
 
                 if ($stmt->execute()) {
 
-                    logActivity($conn, $_SESSION['id'], $_SESSION['user_type'], 'RETRIEVE_REGISTRAR', "retrieved registrar from the archive.");
+                    logActivity($conn, $_SESSION['id'], $_SESSION['user_type'], 'RETRIEVE_REGISTRAR', "retrieved registrar account. Registrar ID = $email.");
 
                     echo "<script>
                             document.addEventListener('DOMContentLoaded', function() {
@@ -246,6 +251,8 @@ include '../includes/activity_logger.php';
         if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnRestore4'])) {
             $conn = connectToDB();
             $schoolyear_id = $_POST['syId'];
+            $schoolyear = $_POST['syName'];
+            $sem = $_POST['sem'];
 
             if ($conn) {
                 $stmt = $conn->prepare("UPDATE schoolyear SET status = '1' WHERE schoolyear_id=?");
@@ -253,7 +260,7 @@ include '../includes/activity_logger.php';
 
                 if ($stmt->execute()) {
 
-                    logActivity($conn, $_SESSION['id'], $_SESSION['user_type'], 'RETREIVE_SY', "retrieved schoolyear from the archive.");
+                    logActivity($conn, $_SESSION['id'], $_SESSION['user_type'], 'RETREIVE_SY', "retrieved $schoolyear - $sem Semester.");
 
                     echo "<script>
                             document.addEventListener('DOMContentLoaded', function() {
@@ -282,8 +289,51 @@ include '../includes/activity_logger.php';
                 echo "<script>alert('Database connection failed');</script>";
             }
         }
+
+        //RESTORE SY QUERY
+        if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnRestore5'])) {
+            $conn = connectToDB();
+            $admin_id = $_POST['adminId'];
+            $email = $_POST['adminEmail'];
+
+            if ($conn) {
+                $stmt = $conn->prepare("UPDATE admin SET status = '1' WHERE admin_id=?");
+                $stmt->bind_param("i", $admin_id);
+
+                if ($stmt->execute()) {
+
+                    logActivity($conn, $_SESSION['id'], $_SESSION['user_type'], 'RETREIVE_ADMIN', "retrieved Admin: $email");
+
+                    echo "<script>
+                            document.addEventListener('DOMContentLoaded', function() {
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Success!',
+                                    text: 'Admin Restored Successfully!',
+                                    timer: 2000,
+                                    showConfirmButton: false
+                                });
+                            });
+                        </script>";
+                } else {
+                    echo "<script>
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Error!',
+                                text: '" . addslashes($stmt->error) . "',
+                                confirmButtonColor: '#d33'
+                            });
+                        </script>";
+                }
+                $stmt->close();
+                $conn->close();
+            } else {
+                echo "<script>alert('Database connection failed');</script>";
+            }
+        }
         ?>
 
+        <!--- Database Management -->
         <div class="row">
             <div class="col-md-6">
                 <div class="card border-0 custom-card mb-4">
@@ -317,7 +367,7 @@ include '../includes/activity_logger.php';
                     <div class="card-body p-4">
                         <div class="mb-4">
                             <label class="form-label">System Version</label>
-                            <input type="text" class="form-control" value="SMATI - EduPortal v1.0.0" readonly>
+                            <input type="text" class="form-control" value="SMATI - EduPortal <?= $version; ?>" readonly>
                         </div>
                         <div class="mb-4">
                             <label class="form-label">Last Backup</label>
@@ -349,7 +399,12 @@ include '../includes/activity_logger.php';
                     <div class="col-12">
                         <ul class="nav nav-tabs mb-4" id="myTab" role="tablist">
                             <li class="nav-item" role="presentation">
-                                <button class="nav-link active text-black" id="students-tab" data-bs-toggle="tab" data-bs-target="#students" type="button" role="tab" aria-selected="true">
+                                <button class="nav-link active text-black" id="admin-tab" data-bs-toggle="tab" data-bs-target="#admin" type="button" role="tab" aria-selected="true">
+                                    <i class="bi bi-person me-1"></i>Admin
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link text-black" id="students-tab" data-bs-toggle="tab" data-bs-target="#students" type="button" role="tab" aria-selected="true">
                                     <i class="bi bi-person me-1"></i>Students
                                 </button>
                             </li>
@@ -385,16 +440,63 @@ include '../includes/activity_logger.php';
 
                     <div class="tab-content flex-grow-1 overflow-auto" id="myTabContent" style="max-height: 300px;">
 
-                        <!-- Students Tab -->
-                        <div class="tab-pane fade show active" id="students" role="tabpanel" aria-labelledby="students-tab">
+                        <!-- Admin Tab -->
+                        <div class="tab-pane fade show active" id="admin" role="tabpanel" aria-labelledby="admin-tab">
                             <div class="table-responsive">
                                 <table class="table table-hover">
                                     <thead>
                                         <tr>
-                                            <th scope="col">StudentID</th>
+                                            <th scope="col">UserType</th>
+                                            <th scope="col">Email</th>
+                                            <th scope="col">Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <?php
+                                        $conn = connectToDB();
+                                        $sql = "SELECT * 
+                                                FROM admin 
+                                                WHERE status = '0' AND (username = 'guidance' OR username = 'schoolhead')
+                                                ORDER BY admin_id DESC";
+                                        $result = $conn->query($sql);
+
+                                        if ($result && $result->num_rows > 0) {
+                                            // output data of each row
+                                            while ($row = $result->fetch_assoc()) {
+                                                echo "<tr>";
+                                                echo "<td>" . $row["username"] . "</td>";
+                                                echo "<td>" . $row["email"] . "</td>";
+                                                echo "<td>
+                                                <a class='btn btn-sm btn-outline-success me-1 restore-admin-btn'
+                                                data-id='" . $row["admin_id"] . "'
+                                                data-email='" . $row["email"] . "'>
+                                                    <i class='fa fa-refresh'></i>
+                                                </a>
+                                                  </td>";
+                                                echo "</tr>";
+                                            }
+                                        } else {
+                                            echo "<td colspan='5' class='text-center py-4' style='color: #6c757d;'>";
+                                            echo "<i class='fas fa-search mb-2' style='font-size: 2em; opacity: 0.5;'></i>";
+                                            echo "<br>";
+                                            echo "No admin found matching your search";
+                                            echo "</td>";
+                                        }
+                                        ?>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Students Tab -->
+                        <div class="tab-pane fade" id="students" role="tabpanel" aria-labelledby="students-tab">
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th scope="col">ID #</th>
                                             <th scope="col">Name</th>
                                             <th scope="col">Set</th>
-                                            <th scope="col">Email</th>
                                             <th scope="col">Action</th>
                                         </tr>
                                     </thead>
@@ -408,13 +510,13 @@ include '../includes/activity_logger.php';
                                             // output data of each row
                                             while ($row = $result->fetch_assoc()) {
                                                 echo "<tr>";
-                                                echo "<td>" . $row["student_id"] . "</td>";
+                                                echo "<td>" . $row["email"] . "</td>";
                                                 echo "<td>" . $row["lastname"] . ", " . $row["firstname"] . "</td>";
                                                 echo "<td>" . $row["course"] . "</td>";
-                                                echo "<td>" . $row["email"] . "</td>";
                                                 echo "<td>
                                                 <a class='btn btn-sm btn-outline-success me-1 restore-student-btn'
-                                                data-id='" . $row["student_id"] . "'>
+                                                data-id='" . $row["student_id"] . "'
+                                                data-email='" . $row["email"] . "'>
                                                     <i class='fa fa-refresh'></i>
                                                 </a>
                                                   </td>";
@@ -439,10 +541,9 @@ include '../includes/activity_logger.php';
                                 <table class="table table-striped table-hover">
                                     <thead class="table-dark">
                                         <tr>
-                                            <th scope="col">TeacherID</th>
+                                            <th scope="col">ID #</th>
                                             <th scope="col">Name</th>
                                             <th scope="col">Department</th>
-                                            <th scope="col">Email</th>
                                             <th scope="col">Action</th>
                                         </tr>
                                     </thead>
@@ -456,13 +557,13 @@ include '../includes/activity_logger.php';
                                             // output data of each row
                                             while ($row = $result->fetch_assoc()) {
                                                 echo "<tr>";
-                                                echo "<td>" . $row["teacher_id"] . "</td>";
+                                                echo "<td>" . $row["email"] . "</td>";
                                                 echo "<td>" . $row["lastname"] . ", " . $row["firstname"] . "</td>";
                                                 echo "<td>" . $row["department"] . "</td>";
-                                                echo "<td>" . $row["email"] . "</td>";
                                                 echo "<td>
                                                 <a class='btn btn-sm btn-outline-success me-1 restore-teacher-btn'
-                                                data-id='" . $row["teacher_id"] . "'>
+                                                data-id='" . $row["teacher_id"] . "'
+                                                data-email='" . $row["email"] . "'>
                                                     <i class='fa fa-refresh'></i>
                                                 </a>
                                                   </td>";
@@ -509,13 +610,15 @@ include '../includes/activity_logger.php';
                                             // output data of each row
                                             while ($row = $result->fetch_assoc()) {
                                                 echo "<tr>";
-                                                echo "<td>" . $row["subject"] . "</td>";
+                                                echo "<td>" . $row['subject_code'] . ' - ' . $row["subject"] . "</td>";
                                                 echo "<td>" . $row["lastname"] . ", " . $row["firstname"] . "</td>";
                                                 echo "<td>" . $row["yearlevel"] . "</td>";
                                                 echo "<td>" . $row["schoolyear"] . ", " . $row["semester"] . " Semester" . "</td>";
                                                 echo "<td>
                                                 <a class='btn btn-sm btn-outline-success me-1 restore-subject-btn'
-                                                data-id='" . $row["subject_id"] . "'>
+                                                data-id='" . $row["subject_id"] . "'
+                                                data-name='" . $row["subject"] . "'
+                                                data-schoolyear='" . $row["schoolyear"] . ", " . $row['semester'] . " Semester" . "'>
                                                     <i class='fa fa-refresh'></i>
                                                 </a>
                                                   </td>";
@@ -540,7 +643,7 @@ include '../includes/activity_logger.php';
                                 <table class="table table-striped table-hover">
                                     <thead class="table-dark">
                                         <tr>
-                                            <th scope="col">RegistrarID</th>
+                                            <th scope="col">ID #</th>
                                             <th scope="col">Name</th>
                                             <th scope="col">Action</th>
                                         </tr>
@@ -555,11 +658,12 @@ include '../includes/activity_logger.php';
                                             // output data of each row
                                             while ($row = $result->fetch_assoc()) {
                                                 echo "<tr>";
-                                                echo "<td>" . $row["registrar_id"] . "</td>";
+                                                echo "<td>" . $row["email"] . "</td>";
                                                 echo "<td>" . $row["lastname"] . ", " . $row["firstname"] . "</td>";
                                                 echo "<td>
                                                 <a class='btn btn-sm btn-outline-success me-1 restore-registrar-btn'
-                                                data-id='" . $row["registrar_id"] . "'>
+                                                data-id='" . $row["registrar_id"] . "'
+                                                data-email='" . $row["email"] . "'>
                                                     <i class='fa fa-refresh'></i>
                                                 </a>
                                                   </td>";
@@ -603,7 +707,9 @@ include '../includes/activity_logger.php';
                                                 echo "<td>" . $row["semester"] . "</td>";
                                                 echo "<td>
                                                     <a class='btn btn-sm btn-outline-success me-1 restore-sy-btn'
-                                                    data-id='" . $row["schoolyear_id"] . "'>
+                                                    data-id='" . $row["schoolyear_id"] . "'
+                                                    data-sy='" . $row["schoolyear"] . "'
+                                                    data-sem='" . $row["semester"] . "'>
                                                         <i class='fa fa-refresh'></i>
                                                     </a>
                                                   </td>";
@@ -626,6 +732,29 @@ include '../includes/activity_logger.php';
             </div>
         </div>
 
+        <!-- Restore Admin Modal -->
+        <div class="modal fade" id="restoreAdminModal" tabindex="-1" role="dialog" aria-labelledby="restoreAdminModal" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="restoreAdminModal">Confirm Restore</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        Restore this Admin?
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">No</button>
+                        <form action="<?php htmlspecialchars($_SERVER['PHP_SELF']) ?>" method="post">
+                            <input type="hidden" name="adminId" id="adminId">
+                            <input type="hidden" name="adminEmail" id="adminEmail">
+                            <button type="submit" class="btn btn-success" name="btnRestore5">Yes</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Restore Student Modal -->
         <div class="modal fade" id="restoreStudentModal" tabindex="-1" role="dialog" aria-labelledby="restoreStudentModal" aria-hidden="true">
             <div class="modal-dialog">
@@ -641,6 +770,7 @@ include '../includes/activity_logger.php';
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">No</button>
                         <form action="<?php htmlspecialchars($_SERVER['PHP_SELF']) ?>" method="post">
                             <input type="hidden" name="studentId" id="studentId">
+                            <input type="hidden" name="studentEmail" id="studentEmail">
                             <button type="submit" class="btn btn-success" name="btnRestore">Yes</button>
                         </form>
                     </div>
@@ -663,6 +793,7 @@ include '../includes/activity_logger.php';
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">No</button>
                         <form action="<?php htmlspecialchars($_SERVER['PHP_SELF']) ?>" method="post">
                             <input type="hidden" name="teacherId" id="teacherId">
+                            <input type="hidden" name="teacherEmail" id="teacherEmail">
                             <button type="submit" class="btn btn-success" name="btnRestore1">Yes</button>
                         </form>
                     </div>
@@ -685,6 +816,8 @@ include '../includes/activity_logger.php';
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">No</button>
                         <form action="<?php htmlspecialchars($_SERVER['PHP_SELF']) ?>" method="post">
                             <input type="hidden" name="subjectId" id="subjectId">
+                            <input type="hidden" name="subjectName" id="subjectName">
+                            <input type="hidden" name="subjectSy" id="subjectSy">
                             <button type="submit" class="btn btn-success" name="btnRestore2">Yes</button>
                         </form>
                     </div>
@@ -707,6 +840,7 @@ include '../includes/activity_logger.php';
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">No</button>
                         <form action="<?php htmlspecialchars($_SERVER['PHP_SELF']) ?>" method="post">
                             <input type="hidden" name="registrarId" id="registrarId">
+                            <input type="hidden" name="registrarEmail" id="registrarEmail">
                             <button type="submit" class="btn btn-success" name="btnRestore3">Yes</button>
                         </form>
                     </div>
@@ -729,6 +863,8 @@ include '../includes/activity_logger.php';
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">No</button>
                         <form action="<?php htmlspecialchars($_SERVER['PHP_SELF']) ?>" method="post">
                             <input type="hidden" name="syId" id="syId">
+                            <input type="hidden" name="syName" id="syName">
+                            <input type="hidden" name="sem" id="sem">
                             <button type="submit" class="btn btn-success" name="btnRestore4">Yes</button>
                         </form>
                     </div>
@@ -847,40 +983,6 @@ include '../includes/activity_logger.php';
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
-        // Search functionality for archives across all tabs
-        document.addEventListener('DOMContentLoaded', function() {
-            const searchInput = document.getElementById('searchInput');
-
-            if (searchInput) {
-                searchInput.addEventListener('input', function() {
-                    const searchTerm = this.value.toLowerCase().trim();
-
-                    // Get all active tab content
-                    const tabPanes = document.querySelectorAll('.tab-pane');
-
-                    tabPanes.forEach(tabPane => {
-                        if (tabPane.classList.contains('active')) {
-                            searchInTable(tabPane, searchTerm);
-                        }
-                    });
-                });
-
-                // Also search when switching tabs
-                const tabButtons = document.querySelectorAll('[data-bs-toggle="tab"]');
-                tabButtons.forEach(tabButton => {
-                    tabButton.addEventListener('shown.bs.tab', function() {
-                        const searchTerm = searchInput.value.toLowerCase().trim();
-                        const targetId = this.getAttribute('data-bs-target');
-                        const targetPane = document.querySelector(targetId);
-
-                        if (targetPane) {
-                            searchInTable(targetPane, searchTerm);
-                        }
-                    });
-                });
-            }
-        });
-
         function searchInTable(tabPane, searchTerm) {
             const table = tabPane.querySelector('table');
             if (!table) return;
@@ -975,26 +1077,12 @@ include '../includes/activity_logger.php';
             return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
         }
 
-        // Clear search when changing tabs (optional)
-        document.addEventListener('DOMContentLoaded', function() {
-            const tabButtons = document.querySelectorAll('[data-bs-toggle="tab"]');
-            tabButtons.forEach(tabButton => {
-                tabButton.addEventListener('click', function() {
-                    const searchInput = document.getElementById('searchInput');
-                    if (searchInput) {
-                        searchInput.value = '';
-                        // Trigger search to reset all tables
-                        searchInput.dispatchEvent(new Event('input'));
-                    }
-                });
-            });
-        });
-
-        // Add this script to replace the existing restore button event listeners
         document.addEventListener('DOMContentLoaded', function() {
             let currentRestoreData = {
                 type: null,
                 id: null,
+                email: null,
+                sy: null,
                 modalId: null
             };
 
@@ -1004,6 +1092,8 @@ include '../includes/activity_logger.php';
             const backupBtn = document.getElementById('backup-btn');
             const restoreBtn = document.getElementById('restore-btn');
             const requestBtn = document.getElementById('request-btn');
+            const tabButtons = document.querySelectorAll('[data-bs-toggle="tab"]');
+            const searchInput = document.getElementById('searchInput');
 
             // Function to switch authentication methods
             window.switchAuthMethod = function(method) {
@@ -1018,7 +1108,52 @@ include '../includes/activity_logger.php';
                 document.querySelector('input[name="authPIN"]').value = '';
             };
 
-            // Handle all restore button clicks - STUDENTS
+            if (searchInput) {
+                searchInput.addEventListener('input', function() {
+                    const searchTerm = this.value.toLowerCase().trim();
+
+                    // Get all active tab content
+                    const tabPanes = document.querySelectorAll('.tab-pane');
+
+                    tabPanes.forEach(tabPane => {
+                        if (tabPane.classList.contains('active')) {
+                            searchInTable(tabPane, searchTerm);
+                        }
+                    });
+                });
+
+                tabButtons.forEach(tabButton => {
+                    tabButton.addEventListener('shown.bs.tab', function() {
+                        const searchTerm = searchInput.value.toLowerCase().trim();
+                        const targetId = this.getAttribute('data-bs-target');
+                        const targetPane = document.querySelector(targetId);
+
+                        if (targetPane) {
+                            searchInTable(targetPane, searchTerm);
+                        }
+                    });
+                });
+            }
+
+            document.querySelectorAll('.restore-admin-btn').forEach(function(btn) {
+                btn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+
+                    currentRestoreData = {
+                        type: 'admin',
+                        id: btn.getAttribute('data-id'),
+                        email: btn.getAttribute('data-email'),
+                        modalId: 'restoreAdminModal'
+                    };
+
+                    // Show authentication modal
+                    const modal = new bootstrap.Modal(authModal);
+                    modal.show();
+                    switchAuthMethod('password');
+                });
+            });
+
             document.querySelectorAll('.restore-student-btn').forEach(function(btn) {
                 btn.addEventListener('click', function(e) {
                     e.preventDefault();
@@ -1027,6 +1162,7 @@ include '../includes/activity_logger.php';
                     currentRestoreData = {
                         type: 'student',
                         id: btn.getAttribute('data-id'),
+                        email: btn.getAttribute('data-email'),
                         modalId: 'restoreStudentModal'
                     };
 
@@ -1037,7 +1173,6 @@ include '../includes/activity_logger.php';
                 });
             });
 
-            // Handle all restore button clicks - TEACHERS
             document.querySelectorAll('.restore-teacher-btn').forEach(function(btn) {
                 btn.addEventListener('click', function(e) {
                     e.preventDefault();
@@ -1046,6 +1181,7 @@ include '../includes/activity_logger.php';
                     currentRestoreData = {
                         type: 'teacher',
                         id: btn.getAttribute('data-id'),
+                        email: btn.getAttribute('data-email'),
                         modalId: 'restoreTeacherModal'
                     };
 
@@ -1055,7 +1191,6 @@ include '../includes/activity_logger.php';
                 });
             });
 
-            // Handle all restore button clicks - SUBJECTS
             document.querySelectorAll('.restore-subject-btn').forEach(function(btn) {
                 btn.addEventListener('click', function(e) {
                     e.preventDefault();
@@ -1064,6 +1199,8 @@ include '../includes/activity_logger.php';
                     currentRestoreData = {
                         type: 'subject',
                         id: btn.getAttribute('data-id'),
+                        name: btn.getAttribute('data-name'),
+                        sy: btn.getAttribute('data-schoolyear'),
                         modalId: 'restoreSubjectModal'
                     };
 
@@ -1073,7 +1210,6 @@ include '../includes/activity_logger.php';
                 });
             });
 
-            // Handle all restore button clicks - REGISTRARS
             document.querySelectorAll('.restore-registrar-btn').forEach(function(btn) {
                 btn.addEventListener('click', function(e) {
                     e.preventDefault();
@@ -1082,6 +1218,7 @@ include '../includes/activity_logger.php';
                     currentRestoreData = {
                         type: 'registrar',
                         id: btn.getAttribute('data-id'),
+                        email: btn.getAttribute('data-email'),
                         modalId: 'restoreRegistrarModal'
                     };
 
@@ -1091,7 +1228,6 @@ include '../includes/activity_logger.php';
                 });
             });
 
-            // Handle all restore button clicks - SCHOOL YEAR
             document.querySelectorAll('.restore-sy-btn').forEach(function(btn) {
                 btn.addEventListener('click', function(e) {
                     e.preventDefault();
@@ -1100,6 +1236,8 @@ include '../includes/activity_logger.php';
                     currentRestoreData = {
                         type: 'schoolyear',
                         id: btn.getAttribute('data-id'),
+                        name: btn.getAttribute('data-sy'),
+                        sy: btn.getAttribute('data-sem'),
                         modalId: 'restoreSYmodal'
                     };
 
@@ -1213,12 +1351,47 @@ include '../includes/activity_logger.php';
                                     'restoreTeacherModal': 'teacherId',
                                     'restoreSubjectModal': 'subjectId',
                                     'restoreRegistrarModal': 'registrarId',
+                                    'restoreAdminModal': 'adminId',
                                     'restoreSYmodal': 'syId'
+                                };
+
+                                const emailFieldMap = {
+                                    'restoreStudentModal': 'studentEmail',
+                                    'restoreTeacherModal': 'teacherEmail',
+                                    'restoreRegistrarModal': 'registrarEmail',
+                                    'restoreAdminModal': 'adminEmail'
+                                };
+
+                                const nameFieldMap = {
+                                    'restoreSubjectModal': 'subjectName',
+                                    'restoreSYmodal': 'syName'
+
+                                };
+
+                                const syFieldMap = {
+                                    'restoreSubjectModal': 'subjectSy',
+                                    'restoreSYmodal': 'sem'
                                 };
 
                                 const fieldId = idFieldMap[currentRestoreData.modalId];
                                 if (fieldId) {
                                     document.getElementById(fieldId).value = currentRestoreData.id;
+                                }
+
+
+                                const fieldEmail = emailFieldMap[currentRestoreData.modalId];
+                                if (fieldEmail) {
+                                    document.getElementById(fieldEmail).value = currentRestoreData.email;
+                                }
+
+                                const fieldName = nameFieldMap[currentRestoreData.modalId];
+                                if (fieldName) {
+                                    document.getElementById(fieldName).value = currentRestoreData.name;
+                                }
+
+                                const fieldSy = syFieldMap[currentRestoreData.modalId];
+                                if (fieldSy) {
+                                    document.getElementById(fieldSy).value = currentRestoreData.sy;
                                 }
 
                                 // Show the restore confirmation modal
@@ -1455,9 +1628,7 @@ include '../includes/activity_logger.php';
                         btn.innerHTML = '<i class="fas fa-upload me-2"></i>Restore Backup';
                     });
             }
-        });
-        // Load last backup info when page loads
-        document.addEventListener('DOMContentLoaded', function() {
+
             loadLastBackup();
         });
 

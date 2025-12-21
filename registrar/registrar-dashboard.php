@@ -15,7 +15,12 @@ include '../database.php';
 
     //Fetch Announcements
     $conn = connectToDB();
-    $sql = "SELECT * FROM announcements WHERE target = 'All' OR target = 'Registrar' ORDER BY announcement_id DESC";
+    $sql = "SELECT * 
+            FROM announcements 
+            WHERE (target = 'All' OR target = 'Registrar') 
+            AND start_date <= NOW() 
+            AND (end_date >= NOW())
+            ORDER BY announcement_id DESC";
     $stmt = $conn->prepare($sql);
     $stmt->execute();
     $result = $stmt->get_result();
@@ -38,7 +43,7 @@ include '../database.php';
             <div class="card-body py-4">
                 <div class="row align-items-center">
                     <div class="col-12">
-                        <h1 class="card-title h2 mb-2 fw-bold">Welcome back, Registrar!</h1>
+                        <h1 class="card-title h2 mb-2 fw-bold">Welcome, Registrar!</h1>
                         <p class="card-text mb-1 opacity-75 fw-semibold">Education is the most powerful weapon which you can use to change the world.” — Nelson Mandela</p>
                         <p class="card-text mb-0 opacity-50 fst-italic">Good morning! Believe in your goals today — every class, every effort counts toward your dream.</p>
                     </div>

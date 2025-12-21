@@ -15,6 +15,17 @@ while ($row = $result->fetch_assoc()) {
     $students[] = $row;
 }
 
+$conn = connectToDB();
+$sql = "SELECT * FROM schoolyear WHERE status = '1' ORDER BY schoolyear_id";
+$stmt = $conn->prepare($sql);
+$stmt->execute();
+$result = $stmt->get_result();
+
+$schoolyearlist = array();
+while ($row = $result->fetch_assoc()) {
+    $schoolyearlist[] = $row;
+}
+
 if ($conn) {
 
     $stmt = $conn->prepare("SELECT image FROM students WHERE student_id = ?");
@@ -70,30 +81,26 @@ if ($conn) {
         <div class="container">
             <div class="table-header">
                 <div class="row align-items-center">
-                    <div class="col-md-6">
+                    <div class="col-md-8">
                         <h5>All Grades</h5>
                     </div>
-                    <div class="col-md-6 text-end">
-                        <button id="exportPdf" class="btn-export">
-                            <i class="fas fa-file-pdf me-2"></i>Export to PDF
-                        </button>
+                    <div class="d-flex col-md-4 justify-content-end">
+                        <div class="w-100">
+                            <select class="form-control" id="filterGrades">
+                                <option value="All">Filter by: All</option>
+                                <?php foreach ($schoolyearlist as $schoolyear) : ?>
+                                    <option value="<?= $schoolyear['schoolyear_id'] ?>"><?= $schoolyear['schoolyear'] . ', ' . $schoolyear['semester'] . ' Semester'  ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                        <div class="w-100 ms-3">
+                            <button id="exportPdf" class="btn-export">
+                                <i class="fas fa-file-pdf me-2"></i>Export to PDF
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
-
-
-            <?php
-            $conn = connectToDB();
-            $sql = "SELECT * FROM schoolyear WHERE status = '1' ORDER BY schoolyear_id";
-            $stmt = $conn->prepare($sql);
-            $stmt->execute();
-            $result = $stmt->get_result();
-
-            $schoolyearlist = array();
-            while ($row = $result->fetch_assoc()) {
-                $schoolyearlist[] = $row;
-            }
-            ?>
 
             <?php if (!empty($schoolyearlist)): ?>
 
@@ -106,7 +113,7 @@ if ($conn) {
                             </div>
                             <div class="card-body p-4">
                                 <div class="table-responsive">
-                                    <table class="table table-hover">
+                                    <table class="table table-hover" data-id='<?= $schoolyear['schoolyear_id'] ?>'>
                                         <thead>
                                             <th>Subject</th>
                                             <th>Teacher</th>
@@ -227,6 +234,64 @@ if ($conn) {
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
+        // Filter grades by school year
+        document.getElementById('filterGrades').addEventListener('change', function() {
+            const selectedValue = this.value;
+
+            // Get all grade cards (the parent container of each table)
+            const gradeCards = document.querySelectorAll('.col.mt-3.shadow');
+
+            if (selectedValue === 'All') {
+                // Show all cards
+                gradeCards.forEach(card => {
+                    card.style.display = 'block';
+                });
+            } else {
+                // Filter cards based on selected school year
+                gradeCards.forEach(card => {
+                    const table = card.querySelector('table[data-id]');
+
+                    if (table) {
+                        const tableSchoolyearId = table.getAttribute('data-id');
+
+                        if (tableSchoolyearId === selectedValue) {
+                            card.style.display = 'block';
+                        } else {
+                            card.style.display = 'none';
+                        }
+                    }
+                });
+            }
+
+            // Optional: Check if any cards are visible after filtering
+            const visibleCards = Array.from(gradeCards).filter(card => card.style.display !== 'none');
+
+            // You can add a "no results" message if needed
+            const noResultsMsg = document.getElementById('noFilterResults');
+            if (visibleCards.length === 0 && selectedValue !== 'All') {
+                if (!noResultsMsg) {
+                    const container = gradeCards[0]?.parentElement;
+                    if (container) {
+                        const msgDiv = document.createElement('div');
+                        msgDiv.id = 'noFilterResults';
+                        msgDiv.className = 'text-center py-5';
+                        msgDiv.innerHTML = `
+                    <div class="mb-4">
+                        <i class="fas fa-filter mb-3" style="font-size: 4rem; color: #6c757d; opacity: 0.5;"></i>
+                    </div>
+                    <h4 class="text-muted mb-3">No Grades Found</h4>
+                    <p>No grades found for the selected school year.</p>
+                `;
+                        container.appendChild(msgDiv);
+                    }
+                } else {
+                    noResultsMsg.style.display = 'block';
+                }
+            } else if (noResultsMsg) {
+                noResultsMsg.style.display = 'none';
+            }
+        });
+
         document.addEventListener('DOMContentLoaded', function() {
             // Initialize jsPDF
             const {
@@ -265,8 +330,8 @@ if ($conn) {
                     const popupContent = document.createElement('div');
                     popupContent.style.cssText = `
                 position: relative;
-                max-width: 90%;
-                max-height: 90%;
+                max-width: 450px;
+                max-height: 450px;
                 display: flex;
                 justify-content: center;
                 align-items: center;
@@ -401,30 +466,26 @@ if ($conn) {
                     format: 'a4'
                 });
 
-                // Load Century Gothic font (you need to have the font file)
-                // Option 1: If you have the font file locally
+                // Load Century Gothic font
                 const centuryGothicNormal = '../fonts/centurygothic.ttf';
                 const centuryGothicBold = '../fonts/centurygothic_bold.ttf';
 
-                // Add the font to jsPDF (you need to load the font files first)
                 doc.addFont(centuryGothicNormal, 'CenturyGothic', 'normal');
                 doc.addFont(centuryGothicBold, 'CenturyGothic', 'bold');
                 doc.setFont('CenturyGothic');
-
-                // Option 2: Use built-in fonts that are similar to Century Gothic
-                // Since Century Gothic might not be available, use similar fonts:
-                // - "helvetica" is clean and similar
-                // - "arial" is widely available
-                // - "verdana" is also clean and modern
 
                 // Student information
                 const studentName = "<?php foreach ($students as $student) {
                                             echo $student['lastname'] . ', ' . $student['firstname'];
                                         } ?>";
                 const studentId = "<?php foreach ($students as $student) {
-                                        echo $student['student_id'];
+                                        echo $student['email'];
                                     } ?>";
                 const currentDateTime = new Date().toLocaleString();
+
+                // Get the selected filter value
+                const filterValue = document.getElementById('filterGrades').value;
+                const filterText = document.getElementById('filterGrades').selectedOptions[0].text;
 
                 // Set document properties
                 doc.setProperties({
@@ -438,7 +499,6 @@ if ($conn) {
                 // Add logo
                 const logoUrl = '../images/logo5.png';
                 try {
-                    // Add logo to the top left and right
                     doc.addImage(logoUrl, 'PNG', 20, 10, 30, 30);
                 } catch (e) {
                     console.warn('Logo could not be loaded:', e);
@@ -452,7 +512,7 @@ if ($conn) {
                     align: 'center'
                 });
 
-                // Add school information - School name BOLD, address normal
+                // Add school information
                 doc.setFontSize(12);
                 doc.setFont(undefined, 'bold');
                 doc.setTextColor(100, 100, 100);
@@ -466,36 +526,41 @@ if ($conn) {
                     align: 'center'
                 });
 
-                // Add student information - Labels BOLD, values normal
+                // Add student information
                 doc.setFontSize(10);
                 doc.setTextColor(60, 60, 60);
 
-                // Student name with bold label
                 doc.setFont(undefined, 'bold');
                 doc.text('Student:', 20, 50);
                 doc.setFont(undefined, 'normal');
                 doc.text(studentName, 40, 50);
 
-                // Student ID with bold label
                 doc.setFont(undefined, 'bold');
                 doc.text('Student ID:', 20, 56);
                 doc.setFont(undefined, 'normal');
                 doc.text(studentId, 40, 56);
 
-                // Date generated with bold label
                 doc.setFont(undefined, 'bold');
                 doc.text('Date Generated:', 20, 62);
                 doc.setFont(undefined, 'normal');
                 doc.text(currentDateTime, 50, 62);
 
-                // Add signature area if requested
-                if (includeSignature && (signatoryName || signatureImage)) {
-                    let signatureY = 70;
+                // Add filter information if not "All"
+                if (filterValue !== 'All') {
+                    doc.setFont(undefined, 'bold');
+                    doc.text('Filter:', 20, 68);
+                    doc.setFont(undefined, 'normal');
+                    doc.text(filterText.replace('Filter by: ', ''), 35, 68);
+                }
 
+                // Add signature area if requested
+                let currentY = filterValue !== 'All' ? 75 : 70;
+
+                if (includeSignature && (signatoryName || signatureImage)) {
                     if (signatureImage) {
                         try {
-                            doc.addImage(signatureImage, 'PNG', 20, signatureY, 40, 15);
-                            signatureY += 20;
+                            doc.addImage(signatureImage, 'PNG', 20, currentY, 40, 15);
+                            currentY += 20;
                         } catch (e) {
                             console.error('Error adding signature image:', e);
                         }
@@ -506,89 +571,141 @@ if ($conn) {
                         doc.setTextColor(60, 60, 60);
 
                         doc.setFont(undefined, 'bold');
-                        doc.text('Signed by:', 20, signatureY);
+                        doc.text('Signed by:', 20, currentY);
                         doc.setFont(undefined, 'normal');
-                        doc.text(`Registrar - ${signatoryName}`, 45, signatureY);
+                        doc.text(`Registrar - ${signatoryName}`, 45, currentY);
 
-                        signatureY += 10;
+                        currentY += 10;
                     }
                 }
 
-                // Process each school year table
-                let yPosition = includeSignature && (signatoryName || signatureImage) ? 100 : 80;
-                const tables = document.querySelectorAll('.table');
-
-                tables.forEach((table, index) => {
-                    const cardHeader = table.closest('.custom-card').querySelector('.card-header h4');
-                    const schoolYear = cardHeader ? cardHeader.textContent : `Semester ${index + 1}`;
-
-                    if (yPosition > 250) {
-                        doc.addPage();
-                        yPosition = 20;
-                    }
-
-                    doc.setFontSize(14);
-                    doc.setFont(undefined, 'bold');
-                    doc.setTextColor(40, 40, 40);
-                    doc.text(schoolYear, 20, yPosition);
-                    yPosition += 10;
-
-                    // Extract table data
-                    const headers = [];
-                    const rows = [];
-
-                    const headerCells = table.querySelectorAll('thead th');
-                    headerCells.forEach(cell => {
-                        headers.push(cell.textContent.trim());
-                    });
-
-                    const tableRows = table.querySelectorAll('tbody tr');
-                    tableRows.forEach(row => {
-                        const rowData = [];
-                        const cells = row.querySelectorAll('td');
-                        cells.forEach(cell => {
-                            rowData.push(cell.textContent.trim());
-                        });
-                        rows.push(rowData);
-                    });
-
-                    // Create table in PDF with Century Gothic font
-                    doc.autoTable({
-                        head: [headers],
-                        body: rows,
-                        startY: yPosition,
-                        theme: 'grid',
-                        styles: {
-                            fontSize: 8,
-                            cellPadding: 3,
-                            overflow: 'linebreak',
-                            fontStyle: 'normal',
-                            font: 'CenturyGothic' // Set font for table
-                        },
-                        headStyles: {
-                            fillColor: [41, 128, 185],
-                            textColor: 255,
-                            fontStyle: 'bold',
-                            fontSize: 9,
-                            font: 'CenturyGothic' // Set font for table headers
-                        },
-                        alternateRowStyles: {
-                            fillColor: [240, 240, 240]
-                        },
-                        margin: {
-                            top: 10
-                        },
-                        didParseCell: function(data) {
-                            if (data.section === 'body' && data.column.index === 0) {
-                                data.cell.styles.fontStyle = 'bold';
+                // Get only visible tables based on filter
+                let visibleTables;
+                if (filterValue === 'All') {
+                    // Get all tables
+                    visibleTables = document.querySelectorAll('.table');
+                } else {
+                    // Get only visible tables (filtered)
+                    const visibleCards = document.querySelectorAll('.col.mt-3.shadow');
+                    visibleTables = [];
+                    visibleCards.forEach(card => {
+                        if (card.style.display !== 'none') {
+                            const table = card.querySelector('.table');
+                            if (table) {
+                                visibleTables.push(table);
                             }
-                            // Ensure all cells use the same font
-                            data.cell.styles.font = 'CenturyGothic';
                         }
                     });
+                }
 
-                    yPosition = doc.lastAutoTable.finalY + 15;
-                });
+                // Check if there are no visible tables
+                if (visibleTables.length === 0) {
+                    doc.setFontSize(12);
+                    doc.setFont(undefined, 'normal');
+                    doc.setTextColor(100, 100, 100);
+                    doc.text('No grades available for the selected filter.', 105, currentY + 20, {
+                        align: 'center'
+                    });
+                } else {
+                    // Process each visible table
+                    let yPosition = includeSignature && (signatoryName || signatureImage) ? currentY + 15 : currentY + 10;
+
+                    visibleTables.forEach((table, index) => {
+                        const cardHeader = table.closest('.custom-card').querySelector('.card-header h4');
+                        const schoolYear = cardHeader ? cardHeader.textContent : `Semester ${index + 1}`;
+
+                        // Check if we need a new page
+                        if (yPosition > 250) {
+                            doc.addPage();
+                            yPosition = 20;
+                        }
+
+                        // Add school year header
+                        doc.setFontSize(14);
+                        doc.setFont(undefined, 'bold');
+                        doc.setTextColor(40, 40, 40);
+                        doc.text(schoolYear, 20, yPosition);
+                        yPosition += 10;
+
+                        // Extract table data
+                        const headers = [];
+                        const rows = [];
+
+                        const headerCells = table.querySelectorAll('thead th');
+                        headerCells.forEach(cell => {
+                            headers.push(cell.textContent.trim());
+                        });
+
+                        const tableRows = table.querySelectorAll('tbody tr');
+                        let hasData = false;
+
+                        tableRows.forEach(row => {
+                            // Check if this is not the "No grades" message row
+                            if (row.cells.length > 1 || !row.textContent.includes('No submitted Grades yet')) {
+                                hasData = true;
+                                const rowData = [];
+                                const cells = row.querySelectorAll('td');
+                                cells.forEach(cell => {
+                                    // Get text content, removing badge styling
+                                    const badge = cell.querySelector('.badge');
+                                    if (badge) {
+                                        rowData.push(badge.textContent.trim());
+                                    } else {
+                                        rowData.push(cell.textContent.trim());
+                                    }
+                                });
+                                if (rowData.length > 0) {
+                                    rows.push(rowData);
+                                }
+                            }
+                        });
+
+                        // Only add table if it has data
+                        if (hasData && rows.length > 0) {
+                            doc.autoTable({
+                                head: [headers],
+                                body: rows,
+                                startY: yPosition,
+                                theme: 'grid',
+                                styles: {
+                                    fontSize: 8,
+                                    cellPadding: 3,
+                                    overflow: 'linebreak',
+                                    fontStyle: 'normal',
+                                    font: 'CenturyGothic'
+                                },
+                                headStyles: {
+                                    fillColor: [41, 128, 185],
+                                    textColor: 255,
+                                    fontStyle: 'bold',
+                                    fontSize: 9,
+                                    font: 'CenturyGothic'
+                                },
+                                alternateRowStyles: {
+                                    fillColor: [240, 240, 240]
+                                },
+                                margin: {
+                                    top: 10
+                                },
+                                didParseCell: function(data) {
+                                    if (data.section === 'body' && data.column.index === 0) {
+                                        data.cell.styles.fontStyle = 'bold';
+                                    }
+                                    data.cell.styles.font = 'CenturyGothic';
+                                }
+                            });
+
+                            yPosition = doc.lastAutoTable.finalY + 15;
+                        } else {
+                            // Add "No grades" message for this semester
+                            doc.setFontSize(10);
+                            doc.setFont(undefined, 'normal');
+                            doc.setTextColor(150, 150, 150);
+                            doc.text('No submitted grades yet.', 20, yPosition);
+                            yPosition += 15;
+                        }
+                    });
+                }
 
                 // Add footer
                 const pageCount = doc.internal.getNumberOfPages();
@@ -596,7 +713,7 @@ if ($conn) {
                     doc.setPage(i);
                     doc.setFontSize(8);
                     doc.setTextColor(150, 150, 150);
-                    doc.setFont('CenturyGothic'); // Set font for footer
+                    doc.setFont('CenturyGothic');
 
                     doc.text(`Page ${i} of ${pageCount}`, 105, 290, {
                         align: 'center'
@@ -607,14 +724,22 @@ if ($conn) {
                     });
                 }
 
+                // Create filename based on filter
+                let filename = `Grades_${studentName.replace(', ', '_')}`;
+                if (filterValue !== 'All') {
+                    const cleanFilterText = filterText.replace('Filter by: ', '').replace(/[,\s]+/g, '_');
+                    filename += `_${cleanFilterText}`;
+                }
+                filename += `_${currentDateTime.replace(/\//g, '-').replace(/:/g, '-').replace(/,/g, '')}.pdf`;
+
                 // Save the PDF
-                doc.save(`Grades_${studentName.replace(', ', '_')}_${currentDateTime.replace(/\//g, '-')}.pdf`);
+                doc.save(filename);
 
                 // Show success message
                 Swal.fire({
                     icon: 'success',
                     title: 'PDF Generated',
-                    text: 'Student grades have been exported successfully!',
+                    text: visibleTables.length === 0 ? 'PDF generated (no grades for selected filter)' : 'Student grades have been exported successfully!',
                     timer: 2000,
                     showConfirmButton: false
                 });

@@ -71,7 +71,7 @@ include '../database.php';
                     <div class="card-body p-4">
                         <div class="mb-4">
                             <label class="form-label">System Version</label>
-                            <input type="text" class="form-control" value="SMATI - EduPortal v1.0.0" readonly>
+                            <input type="text" class="form-control" value="SMATI - EduPortal <?= $version; ?>" readonly>
                         </div>
                         <div class="mb-4">
                             <label class="form-label">Last Backup</label>

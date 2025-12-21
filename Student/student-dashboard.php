@@ -25,6 +25,13 @@ include('../database.php');
         .overflow-auto::-webkit-scrollbar-thumb:hover {
             background: #a8a8a8;
         }
+
+        #modalDetails,
+        #modalRemarks {
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            word-break: break-word;
+        }
     </style>
 </head>
 
@@ -36,7 +43,12 @@ include('../database.php');
 
     //Fetch Announcements
     $conn = connectToDB();
-    $sql = "SELECT * FROM announcements WHERE target = 'All' OR target = 'Student' ORDER BY announcement_id DESC";
+    $sql = "SELECT * 
+            FROM announcements 
+            WHERE (target = 'All' OR target = 'Students') 
+            AND start_date <= NOW() 
+            AND (end_date >= NOW())
+            ORDER BY announcement_id DESC";
     $stmt = $conn->prepare($sql);
     $stmt->execute();
     $result = $stmt->get_result();
@@ -107,6 +119,7 @@ include('../database.php');
             'approve_date' => !empty($row['approved_date']) ? new DateTime($row['approved_date']) : null,
             'section' => $row['section'],
             'type' => $row['type'],
+            'remarks' => $row['remarks'],
             'details' => $row['details'],
             'status' => $row['concern_status'],
             'email' => $row['email'],
@@ -359,6 +372,7 @@ include('../database.php');
                                                 data-type='<?php echo $concern['type']; ?>'
                                                 data-status='<?php echo $concern['status']; ?>'
                                                 data-details='<?php echo $concern['details']; ?>'
+                                                data-remarks='<?php echo $concern['remarks']; ?>'
                                                 data-date='<?php echo $concern['date']->format('m-d-Y h:i A'); ?>'
                                                 data-approve='<?php echo $concern['approve_date'] ? $concern['approve_date']->format('m-d-Y h:i A') : 'Not approved yet'; ?>'>
                                                 <i class='fas fa-download'></i>
@@ -371,6 +385,7 @@ include('../database.php');
                                                 data-type='<?php echo $concern['type']; ?>'
                                                 data-status='<?php echo $concern['status']; ?>'
                                                 data-details='<?php echo $concern['details']; ?>'
+                                                data-remarks='<?php echo $concern['remarks']; ?>'
                                                 data-date='<?php echo $concern['date']->format('m-d-Y h:i A'); ?>'
                                                 data-approve='<?php echo $concern['approve_date'] ? $concern['approve_date']->format('m-d-Y h:i A') : 'Not approved yet'; ?>'
                                                 data-bs-toggle='modal'
@@ -449,11 +464,19 @@ include('../database.php');
                                 </div>
                             </div>
 
-                            <div class="mb-1">
-                                <div class="d-flex align-items-center pb-2 border-bottom border-1 fw-medium">
-                                    <i class="fas fa-align-left me-2 text-primary"></i>Concern Details
+                            <div class="row mb-1">
+                                <div class="col-12 col-md-6">
+                                    <div class="d-flex align-items-center pb-2 border-bottom border-1 fw-medium">
+                                        <i class="fas fa-align-left me-2 text-primary"></i>Concern Details
+                                    </div>
+                                    <p class="fs-6 mb-0 mt-3"><span id='modalDetails'></span></p>
                                 </div>
-                                <p class="fs-6 mb-0 mt-3"><span id='modalDetails'></span></p>
+                                <div class="col-12 col-md-6">
+                                    <div class="d-flex align-items-center pb-2 border-bottom border-1 fw-medium">
+                                        <i class="fas fa-align-left me-2 text-primary"></i>Remarks
+                                    </div>
+                                    <p class="fs-6 mb-0 mt-3"><span id='modalRemarks'></span></p>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -489,6 +512,7 @@ include('../database.php');
                     type: btn.getAttribute('data-type'),
                     status: btn.getAttribute('data-status'),
                     details: btn.getAttribute('data-details'),
+                    remarks: btn.getAttribute('data-remarks'),
                     approve: btn.getAttribute('data-approve'),
                     date: btn.getAttribute('data-date')
                 };
@@ -587,7 +611,7 @@ include('../database.php');
             // Student details
             doc.text(`Name: ${data.name}`, 20, 110);
             doc.text(`Section: ${data.section}`, 20, 120);
-            doc.text(`Email: ${data.email}`, 20, 130);
+            doc.text(`ID #: ${data.email}`, 20, 130);
 
             // Concern Details Section
             doc.setFontSize(14);
@@ -603,6 +627,10 @@ include('../database.php');
             doc.text("Description:", 20, 170);
             const splitDetails = doc.splitTextToSize(data.details, 180);
             doc.text(splitDetails, 20, 180);
+
+            doc.text("Remarks:", 20, 190);
+            const splitRemarks = doc.splitTextToSize(data.remarks, 200);
+            doc.text(splitDetails, 20, 200);
 
             // Add footer
             doc.setFontSize(10);
@@ -631,6 +659,7 @@ include('../database.php');
                 document.getElementById('modalConcernType').textContent = btn.getAttribute('data-type');
                 document.getElementById('modalDate').textContent = btn.getAttribute('data-date');
                 document.getElementById('modalDetails').textContent = btn.getAttribute('data-details');
+                document.getElementById('modalRemarks').textContent = btn.getAttribute('data-remarks');
                 document.getElementById('modalTeacher').textContent = btn.getAttribute('data-teacher');
                 document.getElementById('modalApprovedDate').textContent = btn.getAttribute('data-approve');
 

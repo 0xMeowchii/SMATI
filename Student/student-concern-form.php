@@ -772,7 +772,7 @@ function getTodaySubmissionsCount($student_id)
             doc.text(data.section, 50, 100);
 
             doc.setFont(undefined, 'bold');
-            doc.text("EMAIL:", 20, 110);
+            doc.text("ID #:", 20, 110);
             doc.setFont(undefined, 'normal');
             doc.text(data.email, 50, 110);
 
@@ -799,7 +799,7 @@ function getTodaySubmissionsCount($student_id)
             doc.text("Thank you for submitting your concern. We will address it shortly.", 105, 270, {
                 align: 'center'
             });
-            doc.text("© 2025 SMATI Concern Portal", 105, 280, {
+            doc.text("© 2025 SMATI EduPortal", 105, 280, {
                 align: 'center'
             });
 

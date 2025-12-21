@@ -124,33 +124,38 @@ if (isset($_POST['check_reset_limit']) && !empty($_POST['check_email'])) {
                         $user = $result->fetch_assoc();
 
                         if ($user) {
-                            if ($user && password_verify($password, $user['password'])) {
-                                // Successful login - clear attempts
-                                $loginSecurity->clearAttempts($email);
 
-                                session_destroy();
-
-
-                                $userType = 'admin';
-                                $userId = $user['admin_id'];
-
-                                startUniqueSession($userType, $userId);
-
-                                $_SESSION['email'] = $user['email'];
-                                $_SESSION['username'] = $user['username'];
-
-                                $date = new DateTime();
-                                $_SESSION['last_login'] = $date->format('m-d-Y h:i A');
-
-                                logActivity($conn, $user['admin_id'], 'admin', 'LOGIN', "logged in to the system.");
-
-                                $showSuccess = true;
+                            if ($user['status'] == '0') {
+                                $errors[] = "Your account has been disabled. Please contact the administrator or developer for assistance.";
                             } else {
-                                // Failed login - record attempt
-                                $loginSecurity->recordFailedAttempt($email);
-                                $lockoutStatus = $loginSecurity->checkLockout($email);
-                                logActivity($conn, $user['admin_id'], 'admin', 'FAILED_LOGIN', "failed logged in attempt to the system. {$lockoutStatus['remaining_attempts']} attempt(s) remaining.");
-                                $errors[] = "Incorrect email or password. {$lockoutStatus['remaining_attempts']} attempt(s) remaining.";
+                                if ($user && password_verify($password, $user['password'])) {
+                                    // Successful login - clear attempts
+                                    $loginSecurity->clearAttempts($email);
+
+                                    session_destroy();
+
+
+                                    $userType = 'admin';
+                                    $userId = $user['admin_id'];
+
+                                    startUniqueSession($userType, $userId);
+
+                                    $_SESSION['email'] = $user['email'];
+                                    $_SESSION['username'] = $user['username'];
+
+                                    $date = new DateTime();
+                                    $_SESSION['last_login'] = $date->format('m-d-Y h:i A');
+
+                                    logActivity($conn, $user['admin_id'], 'admin', 'LOGIN', "logged in to the system.");
+
+                                    $showSuccess = true;
+                                } else {
+                                    // Failed login - record attempt
+                                    $loginSecurity->recordFailedAttempt($email);
+                                    $lockoutStatus = $loginSecurity->checkLockout($email);
+                                    logActivity($conn, $user['admin_id'], 'admin', 'FAILED_LOGIN', "failed logged in attempt to the system. {$lockoutStatus['remaining_attempts']} attempt(s) remaining.");
+                                    $errors[] = "Incorrect email or password. {$lockoutStatus['remaining_attempts']} attempt(s) remaining.";
+                                }
                             }
                         } else {
                             // User not found - record attempt
@@ -1038,7 +1043,7 @@ if (isset($_POST['check_reset_limit']) && !empty($_POST['check_email'])) {
             <div class="footer-links">
                 <a href="#" id="contactSupport">Contact Support</a>
                 <p>|</p>
-                <p>v1.19.17</p>
+                <p><?= $version; ?></p>
             </div>
         </div>
     </div>

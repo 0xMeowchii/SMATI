@@ -144,35 +144,40 @@ include 'set-grade-deadline.php';
     <?php
 
     include('includes/sidebar.php');
-    
+
     if (!($_SESSION['username'] == 'admin')) {
         exit;
     }
+
+    $conn = connectToDB();
+    $sql = "SELECT * FROM schoolyear WHERE status = '1' ORDER BY schoolyear_id DESC";
+    $stmt = $conn->prepare($sql);
+    $stmt->execute();
+    $result = $stmt->get_result();
+
+    $schoolyearlist = array();
+    while ($row = $result->fetch_assoc()) {
+        $schoolyearlist[] = $row;
+    }
     ?>
 
-    <main class="main-content">
-        <div class="page-header">
-            <h4><i class="fas fa-chart-bar me-2"></i>Academics Management</h4>
-        </div>
+    <?php
+    //INSERT SY QUERY
+    if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnAdd'])) {
+        $conn = connectToDB();
+        $schoolyear = $_POST['schoolyear'];
+        $semester = $_POST['semester'];
+        $status = '1';
 
-        <?php
+        if ($conn) {
 
-        //INSERT SY QUERY
-        if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnAdd'])) {
-            $conn = connectToDB();
-            $schoolyear = $_POST['schoolyear'];
-            $semester = $_POST['semester'];
-            $status = '1';
+            $checkStmt = $conn->prepare("SELECT * FROM schoolyear WHERE schoolyear = ? AND semester = ?");
+            $checkStmt->bind_param("ss", $schoolyear, $semester);
+            $checkStmt->execute();
+            $result = $checkStmt->get_result();
 
-            if ($conn) {
-
-                $checkStmt = $conn->prepare("SELECT * FROM schoolyear WHERE schoolyear = ? AND semester = ?");
-                $checkStmt->bind_param("ss", $schoolyear, $semester);
-                $checkStmt->execute();
-                $result = $checkStmt->get_result();
-
-                if ($result->num_rows > 0) {
-                    echo "<script>
+            if ($result->num_rows > 0) {
+                echo "<script>
                             document.addEventListener('DOMContentLoaded', function() {
                                 Swal.fire({
                                     icon: 'error',
@@ -182,16 +187,16 @@ include 'set-grade-deadline.php';
                                 });
                             });
                         </script>";
-                } else {
+            } else {
 
-                    $stmt = $conn->prepare("INSERT INTO schoolyear (schoolyear, semester, status) VALUES (?, ? , ?)");
-                    $stmt->bind_param("sss", $schoolyear, $semester, $status);
+                $stmt = $conn->prepare("INSERT INTO schoolyear (schoolyear, semester, status) VALUES (?, ? , ?)");
+                $stmt->bind_param("sss", $schoolyear, $semester, $status);
 
-                    if ($stmt->execute()) {
+                if ($stmt->execute()) {
 
-                        logActivity($conn, $_SESSION['id'], $_SESSION['user_type'], 'CREATE_SCHOOLYEAR', "created new Schoolyear & Semester: $schoolyear, $semester Semester");
+                    logActivity($conn, $_SESSION['id'], $_SESSION['user_type'], 'CREATE_SCHOOLYEAR', "created new Schoolyear & Semester: $schoolyear, $semester Semester");
 
-                        echo "<script>
+                    echo "<script>
                             document.addEventListener('DOMContentLoaded', function() {
                                 Swal.fire({
                                     icon: 'success',
@@ -202,8 +207,8 @@ include 'set-grade-deadline.php';
                                 });
                             });
                         </script>";
-                    } else {
-                        echo "<script>
+                } else {
+                    echo "<script>
                             Swal.fire({
                                 icon: 'error',
                                 title: 'Error!',
@@ -211,34 +216,34 @@ include 'set-grade-deadline.php';
                                 confirmButtonColor: '#d33'
                             });
                         </script>";
-                    }
-
-                    $stmt->close();
                 }
 
-                $checkStmt->close();
-            } else {
-                echo "<script>alert('Database connection failed');</script>";
+                $stmt->close();
             }
-            $conn->close();
+
+            $checkStmt->close();
+        } else {
+            echo "<script>alert('Database connection failed');</script>";
         }
+        $conn->close();
+    }
 
-        //UPDATE SY QUERY
-        if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnUpdate'])) {
-            $conn = connectToDB();
-            $sy_id = $_POST['editSyId'];
-            $schoolyear = $_POST['editSchoolyear'];
-            $semester = $_POST['editSemester'];
+    //UPDATE SY QUERY
+    if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnUpdate'])) {
+        $conn = connectToDB();
+        $sy_id = $_POST['editSyId'];
+        $schoolyear = $_POST['editSchoolyear'];
+        $semester = $_POST['editSemester'];
 
-            if ($conn) {
+        if ($conn) {
 
-                $checkStmt = $conn->prepare("SELECT * FROM schoolyear WHERE schoolyear = ? AND semester = ?");
-                $checkStmt->bind_param("ss", $schoolyear, $semester);
-                $checkStmt->execute();
-                $result = $checkStmt->get_result();
+            $checkStmt = $conn->prepare("SELECT * FROM schoolyear WHERE schoolyear = ? AND semester = ?");
+            $checkStmt->bind_param("ss", $schoolyear, $semester);
+            $checkStmt->execute();
+            $result = $checkStmt->get_result();
 
-                if ($result->num_rows > 0) {
-                    echo "<script>
+            if ($result->num_rows > 0) {
+                echo "<script>
                             document.addEventListener('DOMContentLoaded', function() {
                                 Swal.fire({
                                     icon: 'error',
@@ -248,18 +253,18 @@ include 'set-grade-deadline.php';
                                 });
                             });
                         </script>";
-                } else {
-                    $stmt = $conn->prepare("UPDATE schoolyear 
+            } else {
+                $stmt = $conn->prepare("UPDATE schoolyear 
                                         SET schoolyear = ?, 
                                             semester = ?
                                         WHERE schoolyear_id = ?");
-                    $stmt->bind_param("ssi", $schoolyear, $semester, $sy_id);
+                $stmt->bind_param("ssi", $schoolyear, $semester, $sy_id);
 
-                    if ($stmt->execute()) {
+                if ($stmt->execute()) {
 
-                        logActivity($conn, $_SESSION['id'], $_SESSION['user_type'], 'UPDATE_SCHOOLYEAR', "Updated Schoolyear Details: $schoolyear, $semester Semester");
+                    logActivity($conn, $_SESSION['id'], $_SESSION['user_type'], 'UPDATE_SCHOOLYEAR', "Updated Schoolyear Details: $schoolyear, $semester Semester");
 
-                        echo "<script>
+                    echo "<script>
                             document.addEventListener('DOMContentLoaded', function() {
                                 Swal.fire({
                                     icon: 'success',
@@ -270,8 +275,8 @@ include 'set-grade-deadline.php';
                                 });
                             });
                         </script>";
-                    } else {
-                        echo "<script>
+                } else {
+                    echo "<script>
                             Swal.fire({
                                 icon: 'error',
                                 title: 'Error!',
@@ -279,31 +284,75 @@ include 'set-grade-deadline.php';
                                 confirmButtonColor: '#d33'
                             });
                         </script>";
-                    }
-                    $stmt->close();
                 }
-
-                $checkStmt->close();
-            } else {
-                echo "<script>alert('Database connection failed');</script>";
+                $stmt->close();
             }
-            $conn->close();
+
+            $checkStmt->close();
+        } else {
+            echo "<script>alert('Database connection failed');</script>";
         }
+        $conn->close();
+    }
 
-        //DELETE SY QUERY
-        if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnDelete'])) {
-            $conn = connectToDB();
-            $schoolyear_id = $_POST['id'];
+    //SET DEADLINE QUERY
+    if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnSetDeadline'])) {
+        $conn = connectToDB();
+        $schoolyearsem = $_POST['syList'];
+        $deadline = $_POST['deadline'];
 
-            if ($conn) {
-                $stmt = $conn->prepare("UPDATE schoolyear SET status = '0' WHERE schoolyear_id=?");
-                $stmt->bind_param("i", $schoolyear_id);
+        if ($conn) {
+            $stmt = $conn->prepare("UPDATE subjects 
+                                    SET submission_due_date = ?
+                                    WHERE schoolyear_id = ?");
+            $stmt->bind_param("si", $deadline, $schoolyearsem);
 
-                if ($stmt->execute()) {
+            if ($stmt->execute()) {
 
-                    logActivity($conn, $_SESSION['id'], $_SESSION['user_type'], 'DROP_SCHOOLYEAR', "drop a schoolyear & semester.");
+                echo "<script>
+                            document.addEventListener('DOMContentLoaded', function() {
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Success!',
+                                    text: 'Submission Deadline Updated Successfully!',
+                                    timer: 2000,
+                                    showConfirmButton: false
+                                });
+                            });
+                        </script>";
+            } else {
+                echo "<script>
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Error!',
+                                text: '" . addslashes($stmt->error) . "',
+                                confirmButtonColor: '#d33'
+                            });
+                        </script>";
+            }
+            $stmt->close();
+        } else {
+            echo "<script>alert('Database connection failed');</script>";
+        }
+        $conn->close();
+    }
 
-                    echo "<script>
+    //DROP SY QUERY
+    if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnDelete'])) {
+        $conn = connectToDB();
+        $schoolyear_id = $_POST['id'];
+        $schoolyear = $_POST['syName'];
+        $sem = $_POST['sem'];
+
+        if ($conn) {
+            $stmt = $conn->prepare("UPDATE schoolyear SET status = '0' WHERE schoolyear_id=?");
+            $stmt->bind_param("i", $schoolyear_id);
+
+            if ($stmt->execute()) {
+
+                logActivity($conn, $_SESSION['id'], $_SESSION['user_type'], 'DROP_SCHOOLYEAR', "drop $schoolyear - $sem Semester.");
+
+                echo "<script>
                             document.addEventListener('DOMContentLoaded', function() {
                                 Swal.fire({
                                     icon: 'success',
@@ -314,8 +363,8 @@ include 'set-grade-deadline.php';
                                 });
                             });
                         </script>";
-                } else {
-                    echo "<script>
+            } else {
+                echo "<script>
                             Swal.fire({
                                 icon: 'error',
                                 title: 'Error!',
@@ -323,39 +372,37 @@ include 'set-grade-deadline.php';
                                 confirmButtonColor: '#d33'
                             });
                         </script>";
-                }
-
-                $stmt->close();
-                $conn->close();
-            } else {
-                echo "<script>alert('Database connection failed');</script>";
             }
+
+            $stmt->close();
+            $conn->close();
+        } else {
+            echo "<script>alert('Database connection failed');</script>";
         }
+    }
 
-        //UPDATE QUERY
-        if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnEdit'])) {
-            $conn = connectToDB();
-            $subject_id = $_POST['editId'];
-            $subjectname = $_POST['editName'];
-            $subjectcode = $_POST['editCode'];
-            $yearlevel = $_POST['editYearlevel'];
-            $schoolyear_id = $_POST['editSchoolyear'];
+    //UPDATE QUERY
+    if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnEdit'])) {
+        $conn = connectToDB();
+        $subject_id = $_POST['editId'];
+        $subjectname = $_POST['editName'];
+        $subjectcode = $_POST['editCode'];
+        $yearlevel = $_POST['editYearlevel'];
 
-            if ($conn) {
-                $stmt = $conn->prepare("UPDATE subjects 
+        if ($conn) {
+            $stmt = $conn->prepare("UPDATE subjects 
                                         SET subject_code=?, 
                                             subject=?,
                                             course=?,
-                                            yearlevel=?,
-                                            schoolyear_id=?
+                                            yearlevel=?
                                         WHERE subject_id=?");
-                $stmt->bind_param("ssssii", $subjectcode, $subjectname, $course, $yearlevel, $schoolyear_id, $subject_id);
+            $stmt->bind_param("ssssi", $subjectcode, $subjectname, $course, $yearlevel, $subject_id);
 
-                if ($stmt->execute()) {
+            if ($stmt->execute()) {
 
-                    logActivity($conn, $_SESSION['id'], $_SESSION['user_type'], 'UPDATE_SUBJECT', "Updated Subject Details: $subjectname");
+                logActivity($conn, $_SESSION['id'], $_SESSION['user_type'], 'UPDATE_SUBJECT', "Updated Subject Details: $subjectname");
 
-                    echo "<script>
+                echo "<script>
                             document.addEventListener('DOMContentLoaded', function() {
                                 Swal.fire({
                                     icon: 'success',
@@ -366,8 +413,8 @@ include 'set-grade-deadline.php';
                                 });
                             });
                         </script>";
-                } else {
-                    echo "<script>
+            } else {
+                echo "<script>
                             Swal.fire({
                                 icon: 'error',
                                 title: 'Error!',
@@ -375,28 +422,28 @@ include 'set-grade-deadline.php';
                                 confirmButtonColor: '#d33'
                             });
                         </script>";
-                }
-                $stmt->close();
-                $conn->close();
             }
+            $stmt->close();
+            $conn->close();
         }
+    }
 
-        //DROP QUERY
-        if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnDrop'])) {
-            $conn = connectToDB();
-            $subject_id = $_POST['subjectId'];
-            $subjectname = $_POST['dropSubjectname'];
-            $schoolyear = $_POST['dropSchoolyear'];
+    //DROP QUERY
+    if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnDrop'])) {
+        $conn = connectToDB();
+        $subject_id = $_POST['subjectId'];
+        $subjectname = $_POST['dropSubjectname'];
+        $schoolyear = $_POST['dropSchoolyear'];
 
-            if ($conn) {
-                $stmt = $conn->prepare("UPDATE subjects SET status = '0' WHERE subject_id=?");
-                $stmt->bind_param("i", $subject_id);
+        if ($conn) {
+            $stmt = $conn->prepare("UPDATE subjects SET status = '0' WHERE subject_id=?");
+            $stmt->bind_param("i", $subject_id);
 
-                if ($stmt->execute()) {
+            if ($stmt->execute()) {
 
-                    logActivity($conn, $_SESSION['id'], $_SESSION['user_type'], 'DROP_SUBJECT', "Drop Subject: $subjectname, $schoolyear");
+                logActivity($conn, $_SESSION['id'], $_SESSION['user_type'], 'DROP_SUBJECT', "Drop Subject: $subjectname, $schoolyear");
 
-                    echo "<script>
+                echo "<script>
                             document.addEventListener('DOMContentLoaded', function() {
                                 Swal.fire({
                                     icon: 'success',
@@ -407,8 +454,8 @@ include 'set-grade-deadline.php';
                                 });
                             });
                         </script>";
-                } else {
-                    echo "<script>
+            } else {
+                echo "<script>
                             Swal.fire({
                                 icon: 'error',
                                 title: 'Error!',
@@ -416,14 +463,24 @@ include 'set-grade-deadline.php';
                                 confirmButtonColor: '#d33'
                             });
                         </script>";
-                }
-                $stmt->close();
-                $conn->close();
-            } else {
-                echo "<script>alert('Database connection failed');</script>";
             }
+            $stmt->close();
+            $conn->close();
+        } else {
+            echo "<script>alert('Database connection failed');</script>";
         }
-        ?>
+    }
+    ?>
+
+    <main class="main-content">
+        <div class="page-header">
+            <h4><i class="fas fa-chart-bar me-2"></i>Academics Management</h4>
+            <div class="action-buttons">
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#set-deadline-modal">
+                    <i class="fas fa-calendar-plus me-2"></i>Set Deadline By S.Y. & Sem
+                </button>
+            </div>
+        </div>
 
         <!-- Academics Table -->
         <div class="container">
@@ -451,7 +508,7 @@ include 'set-grade-deadline.php';
                             <th>School Year & Semester</th>
                             <th>Action</th>
                         </tr>
-                    <tbody>
+                    <tbody id="tblSubjects">
                         <?php
                         $conn = connectToDB();
                         $sql = "SELECT * 
@@ -791,7 +848,9 @@ include 'set-grade-deadline.php';
                                                 </a>
 
                                                 <a class='btn btn-sm btn-outline-danger me-1 delete-schoolyear-btn'
-                                                data-id='" . $row["schoolyear_id"] . "'>
+                                                data-id='" . $row["schoolyear_id"] . "'
+                                                data-sy='" . $row["schoolyear"] . "'
+                                                data-sem='" . $row["semester"] . "'>
                                                     <i class='fa fa-trash'></i>
                                                 </a>
 
@@ -892,7 +951,7 @@ include 'set-grade-deadline.php';
             </div>
         </div>
 
-        <!-- Delete Schoolyear Modal -->
+        <!-- Drop schoolyear Modal -->
         <div class="modal fade" id="deleteSchoolyearModal" tabindex="-1" role="dialog" aria-labelledby="deleteSchoolyearModal" aria-hidden="true">
             <div class="modal-dialog">
                 <div class="modal-content">
@@ -901,12 +960,14 @@ include 'set-grade-deadline.php';
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
-                        Are you sure you want to delete this SchoolYear?
+                        Are you sure you want to drop this SchoolYear?
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">No</button>
                         <form action="<?php htmlspecialchars($_SERVER['PHP_SELF']) ?>" method="post">
                             <input type="hidden" name="id" id="id">
+                            <input type="hidden" name="syName" id="syName">
+                            <input type="hidden" name="sem" id="sem">
                             <button type="submit" class="btn btn-danger" name="btnDelete">Yes</button>
                         </form>
                     </div>
@@ -934,39 +995,14 @@ include 'set-grade-deadline.php';
                                     <label class="form-label">Subject Name</label>
                                     <input type="text" class="form-control" id="editName" name="editName" required>
                                 </div>
-                                <div>
+                                <div class="mb-3">
                                     <label class="form-label">Year Level</label>
                                     <div class="d-flex gap-3">
                                         <input type="radio" class="btn-check" name="editYearlevel" id="edit1st-outlined" value="1st">
                                         <label class="btn btn-outline-success" for="edit1st-outlined">1st Year</label>
                                         <input type="radio" class="btn-check" name="editYearlevel" id="edit2nd-outlined" value="2nd">
                                         <label class="btn btn-outline-success" for="edit2nd-outlined">2nd Year</label>
-                                        <input type="radio" class="btn-check" name="editYearlevel" id="edit3rd-outlined" value="3rd">
-                                        <label class="btn btn-outline-success" for="edit3rd-outlined">3rd Year</label>
-                                        <input type="radio" class="btn-check" name="editYearlevel" id="edit4th-outlined" value="4th">
-                                        <label class="btn btn-outline-success" for="edit4th-outlined">4th Year</label>
                                     </div>
-                                </div>
-                                <div>
-                                    <label for="student-course" class="form-label">School Year & Semester</label>
-                                    <select class="form-select" id="editSchoolyear" name="editSchoolyear" required>
-                                        <option value="">Select School Year & Semester</option>
-                                        <?php
-                                        $conn = connectToDB();
-                                        $sql = "SELECT * FROM schoolyear WHERE status = '1' ORDER BY schoolyear_id DESC";
-                                        $result = $conn->query($sql);
-
-                                        if ($result && $result->num_rows > 0) {
-                                            // output data of each row
-                                            while ($row = $result->fetch_assoc()) {
-                                                $schoolyear = $row['schoolyear'] . ", " . $row['semester'] . ' Semester';
-                                                echo "<option value='" . $row['schoolyear_id'] . "'>" . $schoolyear . "</option>";
-                                            }
-                                        } else {
-                                            echo "0 results";
-                                        }
-                                        ?>
-                                    </select>
                                 </div>
                             </div>
                             <div class="modal-footer">
@@ -1020,6 +1056,36 @@ include 'set-grade-deadline.php';
                             <input type="hidden" name="dropSubjectname" id="dropSubjectname">
                             <input type="hidden" name="dropSchoolyear" id="dropSchoolyear">
                             <button type="submit" class="btn btn-danger" name="btnDrop">Yes</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Set Deadline Modal -->
+        <div class="modal fade" id="set-deadline-modal" tabindex="-1" aria-labelledby="set-deadline-modal" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="set-deadline-modal">Set a Deadline</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form action="<?php htmlspecialchars($_SERVER['PHP_SELF']) ?>" method="post">
+                            <p class="text-center"><strong>Set submission deadline for:</strong></p>
+                            <select class="form-control" name="syList" required>
+                                <option value="">Select schoolyear and semester</option>
+                                <?php foreach ($schoolyearlist as $schoolyear): ?>
+                                    <option value="<?= $schoolyear['schoolyear_id'] ?>"><?= $schoolyear['schoolyear'] . ', ' . $schoolyear['semester'] . ' Semester' ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                            <div class="mt-3 text-center">
+                                <label for="deadline" class="fw-bold">Select Date and Time</label>
+                                <input type="datetime-local" class="form-control mt-1" name="deadline" id="deadline">
+                            </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="submit" class="btn btn-success" name="btnSetDeadline">Submit</button>
                         </form>
                     </div>
                 </div>
@@ -1206,7 +1272,7 @@ include 'set-grade-deadline.php';
                 Swal.fire({
                     title: 'Reject Request?',
                     html: `Deny <strong>${teacherName}</strong>'s request for additional submissions?<br><br>
-                           <small class="text-muted">The teacher will remain locked at 2 submissions.</small>`,
+                           <small class="text-muted">The teacher will remain locked at 3 submissions.</small>`,
                     icon: 'warning',
                     showCancelButton: true,
                     confirmButtonText: 'Yes, Reject',
@@ -1359,6 +1425,8 @@ include 'set-grade-deadline.php';
         document.querySelectorAll('.delete-schoolyear-btn').forEach(function(btn) {
             btn.addEventListener('click', function() {
                 document.getElementById('id').value = btn.getAttribute('data-id');
+                document.getElementById('syName').value = btn.getAttribute('data-sy');
+                document.getElementById('sem').value = btn.getAttribute('data-sem');
             });
         });
 
@@ -1366,11 +1434,15 @@ include 'set-grade-deadline.php';
         document.addEventListener('DOMContentLoaded', function() {
             // ===== SUBJECTS SEARCH =====
             const searchInput = document.getElementById('searchInput');
-            const subjectsTableBody = document.querySelector('.table-responsive table tbody');
+            const subjectsTableBody = document.getElementById('tblSubjects');
             const subjectsTableRows = Array.from(subjectsTableBody.querySelectorAll('tr'));
+            const searchSubmission = document.getElementById('searchSubmission');
+            const searchDeadlines = document.getElementById('searchDeadlines');
+            const deadlinesTableBody = document.getElementById('tblDeadline');
+            const deadlinesTableRows = Array.from(deadlinesTableBody.querySelectorAll('tr'));
 
-            function performSubjectsSearch(searchTerm) {
-                const query = searchTerm.toLowerCase().trim();
+            function performSubjectsSearch(searchSubjects) {
+                const query = searchSubjects.toLowerCase().trim();
                 let visibleRows = 0;
 
                 subjectsTableRows.forEach(function(row) {
@@ -1388,8 +1460,6 @@ include 'set-grade-deadline.php';
                         row.style.display = 'none';
                     }
                 });
-
-                showNoResultsMessage(visibleRows === 0 && query !== '', 'subjects');
             }
 
             function showNoResultsMessage(show, type) {
@@ -1439,10 +1509,9 @@ include 'set-grade-deadline.php';
             }
 
             // ===== GRADE SUBMISSION APPROVALS SEARCH =====
-            const searchSubmission = document.getElementById('searchSubmission');
 
-            function performSubmissionSearch(searchTerm) {
-                const query = searchTerm.toLowerCase().trim();
+            function performSubmissionSearch(searchSubmission) {
+                const query = searchSubmission.toLowerCase().trim();
 
                 // Search in Pending Requests tab
                 const pendingCards = document.querySelectorAll('#pending .request-card');
@@ -1512,12 +1581,9 @@ include 'set-grade-deadline.php';
             }
 
             // ===== DEADLINES SEARCH =====
-            const searchDeadlines = document.getElementById('searchDeadlines');
-            const deadlinesTableBody = document.getElementById('tblDeadline');
-            const deadlinesTableRows = deadlinesTableBody ? Array.from(deadlinesTableBody.querySelectorAll('tr')) : [];
 
-            function performDeadlinesSearch(searchTerm) {
-                const query = searchTerm.toLowerCase().trim();
+            function performDeadlinesSearch(searchDeadline) {
+                const query = searchDeadline.toLowerCase().trim();
                 let visibleRows = 0;
 
                 deadlinesTableRows.forEach(function(row) {

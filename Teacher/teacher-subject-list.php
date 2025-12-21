@@ -287,10 +287,6 @@ include '../includes/activity_logger.php';
                                         <label class="btn btn-outline-success" for="1st-outlined">1st Year</label>
                                         <input type="radio" class="btn-check" name="yearlevel" id="2nd-outlined" value="2nd">
                                         <label class="btn btn-outline-success" for="2nd-outlined">2nd Year</label>
-                                        <input type="radio" class="btn-check" name="yearlevel" id="3rd-outlined" value="3rd">
-                                        <label class="btn btn-outline-success" for="3rd-outlined">3rd Year</label>
-                                        <input type="radio" class="btn-check" name="yearlevel" id="4th-outlined" value="4th">
-                                        <label class="btn btn-outline-success" for="4th-outlined">4th Year</label>
                                     </div>
                                 </div>
                             </div>
@@ -332,10 +328,6 @@ include '../includes/activity_logger.php';
                                         <label class="btn btn-outline-success" for="edit1st-outlined">1st Year</label>
                                         <input type="radio" class="btn-check" name="editYearlevel" id="edit2nd-outlined" value="2nd">
                                         <label class="btn btn-outline-success" for="edit2nd-outlined">2nd Year</label>
-                                        <input type="radio" class="btn-check" name="editYearlevel" id="edit3rd-outlined" value="3rd">
-                                        <label class="btn btn-outline-success" for="edit3rd-outlined">3rd Year</label>
-                                        <input type="radio" class="btn-check" name="editYearlevel" id="edit4th-outlined" value="4th">
-                                        <label class="btn btn-outline-success" for="edit4th-outlined">4th Year</label>
                                     </div>
                                 </div>
                             </div>

@@ -145,7 +145,7 @@ include '../database.php';
                     <thead>
                         <tr>
                             <th>StudentID</th>
-                            <th>ID #</th>
+                            <th>Username</th>
                             <th>Action</th>
                         </tr>
                     </thead>
@@ -159,8 +159,8 @@ include '../database.php';
                             // output data of each row
                             while ($row = $result->fetch_assoc()) {
                                 echo "<tr>";
-                                echo "<td>" . $row["student_id"] . "</td>";
                                 echo "<td>" . $row["email"] . "</td>";
+                                echo "<td>" . $row["username"] . "</td>";
                                 echo "<td>
                                     <a class='btn btn-sm btn-outline-primary me-1 edit-student-btn'
                                     data-id='" . $row["student_id"] . "'

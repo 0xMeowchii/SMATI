@@ -36,6 +36,20 @@ if (!validateSession($_SESSION['user_type'], $_SESSION['id'])) {
 }
 
 $current_page = basename($_SERVER['PHP_SELF']);
+
+// Determine if current page belongs to People Management dropdown
+$is_people_management = in_array($current_page, [
+    'admin-students.php',
+    'admin-teachers.php',
+    'admin-registrar.php',
+    'admin-users.php'
+]);
+
+// Determine active dropdown
+$active_dropdown = '';
+if ($is_people_management) {
+    $active_dropdown = 'people-management';
+}
 ?>
 
 <!-- Mobile Menu Toggle Button -->
@@ -64,45 +78,59 @@ $current_page = basename($_SERVER['PHP_SELF']);
                 <i class="fas fa-tachometer-alt"></i>Dashboard
             </a>
         </li>
-        <li class="nav-item">
-            <a class="nav-link <?php echo ($current_page == 'admin-students.php') ? 'active' : ''; ?>" href="admin-students.php">
-                <i class="fas fa-user"></i>Students
+
+        <!-- People Management Dropdown -->
+        <li class="nav-item sidebar-dropdown <?php echo ($active_dropdown == 'people-management') ? 'active' : ''; ?>">
+            <a class="nav-link <?php echo ($is_people_management ? 'active' : ''); ?>" id="peopleManagementToggle">
+                <i class="fas fa-users"></i>User Management
+                <span class="dropdown-indicator"></span>
             </a>
+            <div class="sidebar-dropdown-content">
+                <?php if ($_SESSION['username'] == 'admin'): ?>
+                <a class="nav-link <?php echo ($current_page == 'admin-users.php') ? 'active' : ''; ?>" href="admin-users.php">
+                    <i class="fas fa-user"></i>Admin
+                </a>
+             <?php endif; ?>
+                <a class="nav-link <?php echo ($current_page == 'admin-students.php') ? 'active' : ''; ?>" href="admin-students.php">
+                    <i class="fas fa-user-graduate"></i>Students
+                </a>
+                <a class="nav-link <?php echo ($current_page == 'admin-teachers.php') ? 'active' : ''; ?>" href="admin-teachers.php">
+                    <i class="fas fa-chalkboard-teacher"></i>Teachers
+                </a>
+                <a class="nav-link <?php echo ($current_page == 'admin-registrar.php') ? 'active' : ''; ?>" href="admin-registrar.php">
+                    <i class="fas fa-address-book"></i>Registrar
+                </a>
+            </div>
         </li>
-        <li class="nav-item">
-            <a class="nav-link <?php echo ($current_page == 'admin-teachers.php') ? 'active' : ''; ?>" href="admin-teachers.php">
-                <i class="fas fa-users"></i>Teachers
-            </a>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link <?php echo ($current_page == 'admin-registrar.php') ? 'active' : ''; ?>" href="admin-registrar.php">
-                <i class="fas fa-address-book"></i>Registrar
-            </a>
-        </li>
-        <?php if($_SESSION['username'] == 'admin'): ?>
-        <li class="nav-item">
-            <a class="nav-link <?php echo ($current_page == 'admin-academics.php') ? 'active' : ''; ?>" href="admin-academics.php">
-                <i class="fas fa-chart-bar"></i>Academics
-            </a>
-        </li>
+
+        <?php if ($_SESSION['username'] == 'admin'): ?>
+            <li class="nav-item">
+                <a class="nav-link <?php echo ($current_page == 'admin-academics.php') ? 'active' : ''; ?>" href="admin-academics.php">
+                    <i class="fas fa-chart-bar"></i>Academics
+                </a>
+            </li>
         <?php endif; ?>
+
         <li class="nav-item">
             <a class="nav-link <?php echo ($current_page == 'admin-grades.php') ? 'active' : ''; ?>" href="admin-grades.php">
                 <i class="fa fa-file"></i>Grades
             </a>
         </li>
+
         <li class="nav-item">
             <a class="nav-link <?php echo ($current_page == 'admin-announcements.php') ? 'active' : ''; ?>" href="admin-announcements.php">
                 <i class="fa fa-calendar"></i>Announcements
             </a>
         </li>
-        <?php if($_SESSION['username'] == 'admin'): ?>
-        <li class="nav-item">
-            <a class="nav-link <?php echo ($current_page == 'admin-settings.php') ? 'active' : ''; ?>" href="admin-settings.php">
-                <i class="fas fa-cog"></i>Settings
-            </a>
-        </li>
+
+        <?php if ($_SESSION['username'] == 'admin'): ?>
+            <li class="nav-item">
+                <a class="nav-link <?php echo ($current_page == 'admin-settings.php') ? 'active' : ''; ?>" href="admin-settings.php">
+                    <i class="fas fa-cog"></i>Settings
+                </a>
+            </li>
         <?php endif; ?>
+
         <li class="nav-item mt-3">
             <a class="nav-link text-danger" id="logoutBtn">
                 <i class="fas fa-sign-out-alt"></i>Logout
@@ -125,17 +153,17 @@ $current_page = basename($_SERVER['PHP_SELF']);
         function openSidebar() {
             sidebar.classList.add('active');
             sidebarOverlay.classList.add('active');
-            document.body.style.overflow = 'hidden'; // Prevent body scroll when menu is open
+            document.body.style.overflow = 'hidden';
         }
 
         // Function to close sidebar
         function closeSidebar() {
             sidebar.classList.remove('active');
             sidebarOverlay.classList.remove('active');
-            document.body.style.overflow = ''; // Restore body scroll
+            document.body.style.overflow = '';
         }
 
-        // Event listeners
+        // Event listeners for mobile menu
         if (mobileMenuToggle) {
             mobileMenuToggle.addEventListener('click', openSidebar);
         }
@@ -148,8 +176,39 @@ $current_page = basename($_SERVER['PHP_SELF']);
             sidebarOverlay.addEventListener('click', closeSidebar);
         }
 
-        // Close sidebar when clicking on nav links (mobile only)
-        const navLinks = document.querySelectorAll('.sidebar .nav-link');
+        // Collapsible dropdown functionality
+        const peopleManagementToggle = document.getElementById('peopleManagementToggle');
+        const peopleManagementDropdown = peopleManagementToggle?.closest('.sidebar-dropdown');
+
+        if (peopleManagementToggle) {
+            peopleManagementToggle.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+
+                // Toggle active class on the dropdown
+                if (peopleManagementDropdown) {
+                    peopleManagementDropdown.classList.toggle('active');
+
+                    // If closing dropdown on mobile, don't close sidebar
+                    if (window.innerWidth <= 992 && !peopleManagementDropdown.classList.contains('active')) {
+                        e.stopPropagation();
+                    }
+                }
+            });
+        }
+
+        // Close sidebar when clicking on dropdown links (mobile only)
+        const dropdownLinks = document.querySelectorAll('.sidebar-dropdown-content .nav-link');
+        dropdownLinks.forEach(link => {
+            link.addEventListener('click', function() {
+                if (window.innerWidth <= 992) {
+                    closeSidebar();
+                }
+            });
+        });
+
+        // Close sidebar when clicking on regular nav links (mobile only)
+        const navLinks = document.querySelectorAll('.sidebar .nav-link:not(.sidebar-dropdown > .nav-link)');
         navLinks.forEach(link => {
             link.addEventListener('click', function() {
                 if (window.innerWidth <= 992) {
@@ -157,6 +216,11 @@ $current_page = basename($_SERVER['PHP_SELF']);
                 }
             });
         });
+
+        // Auto-expand dropdown if current page is inside it
+        if (<?php echo $is_people_management ? 'true' : 'false'; ?> && peopleManagementDropdown) {
+            peopleManagementDropdown.classList.add('active');
+        }
 
         // Logout functionality
         const logoutBtn = document.getElementById('logoutBtn');

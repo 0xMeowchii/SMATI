@@ -146,7 +146,7 @@ include '../includes/activity_logger.php';
                     <thead>
                         <tr>
                             <th>RegistrarID</th>
-                            <th>ID #</th>
+                            <th>Username</th>
                             <th>Action</th>
                         </tr>
                     </thead>
@@ -160,8 +160,8 @@ include '../includes/activity_logger.php';
                             // output data of each row
                             while ($row = $result->fetch_assoc()) {
                                 echo "<tr>";
-                                echo "<td>" . $row["registrar_id"] . "</td>";
                                 echo "<td>" . $row["email"] . "</td>";
+                                echo "<td>" . $row["username"] . "</td>";
                                 echo "<td>
 
                                                 <a class='btn btn-sm btn-outline-primary me-1 edit-registrar-btn'

@@ -48,12 +48,12 @@ include '../includes/activity_logger.php';
     <main class="main-content">
         <div class="page-header">
             <h4><i class="fas fa-address-book me-2"></i>Registrars Management</h4>
-            <?php if($_SESSION['username'] == 'admin'): ?>
-            <div class="action-buttons">
-                <button class="btn btn-primary" id="add-registrar-btn" data-bs-toggle="modal" data-bs-target="#add-registrar-modal">
-                    <i class="fas fa-plus me-1"></i>Add Registrar
-                </button>
-            </div>
+            <?php if ($_SESSION['username'] == 'admin'): ?>
+                <div class="action-buttons">
+                    <button class="btn btn-primary" id="add-registrar-btn" data-bs-toggle="modal" data-bs-target="#add-registrar-modal">
+                        <i class="fas fa-plus me-1"></i>Add Registrar
+                    </button>
+                </div>
             <?php endif; ?>
         </div>
 
@@ -174,7 +174,7 @@ include '../includes/activity_logger.php';
 
                         if ($stmt->execute()) {
 
-                            logActivity($conn, $_SESSION['id'], $_SESSION['user_type'], 'UPDATE_REGISTRAR', "Updated registrar account: Registrar ID = $registrar_id");
+                            logActivity($conn, $_SESSION['id'], $_SESSION['user_type'], 'UPDATE_REGISTRAR', "Updated registrar account: Registrar ID = $email");
 
                             echo "<script>
                             document.addEventListener('DOMContentLoaded', function() {
@@ -209,7 +209,7 @@ include '../includes/activity_logger.php';
 
                         if ($stmt->execute()) {
 
-                            logActivity($conn, $_SESSION['id'], $_SESSION['user_type'], 'UPDATE_REGISTRAR', "Updated registrar account: Registrar ID = $registrar_id");
+                            logActivity($conn, $_SESSION['id'], $_SESSION['user_type'], 'UPDATE_REGISTRAR', "Updated registrar account: Registrar ID = $email");
 
                             echo "<script>
                             document.addEventListener('DOMContentLoaded', function() {
@@ -244,6 +244,7 @@ include '../includes/activity_logger.php';
         if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnDrop'])) {
             $conn = connectToDB();
             $registrar_id = $_POST['registrarId'];
+            $email = $_POST['registrarEmail'];
 
             if ($conn) {
                 $stmt = $conn->prepare("UPDATE registrars SET status = '0' WHERE registrar_id=?");
@@ -251,7 +252,7 @@ include '../includes/activity_logger.php';
 
                 if ($stmt->execute()) {
 
-                    logActivity($conn, $_SESSION['id'], $_SESSION['user_type'], 'DROP_REGISTRAR', "Drop registrar Account: Registrar ID = $registrar_id");
+                    logActivity($conn, $_SESSION['id'], $_SESSION['user_type'], 'DROP_REGISTRAR', "Drop registrar Account: Registrar ID = $email");
 
                     echo "<script>
                             document.addEventListener('DOMContentLoaded', function() {
@@ -343,7 +344,8 @@ include '../includes/activity_logger.php';
                                                     <i class='fas fa-edit'></i>
                                                 </a>";
                                     echo "<a class='btn btn-sm btn-outline-danger me-1 drop-registrar-btn'
-                                                data-id='" . $row["registrar_id"] . "'>
+                                                data-id='" . $row["registrar_id"] . "'
+                                                data-email='" . $row["email"] . "'>
                                                     <i class='fas fa-trash'></i>
                                                 </a>
 ";
@@ -538,6 +540,7 @@ include '../includes/activity_logger.php';
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">No</button>
                         <form action="<?php htmlspecialchars($_SERVER['PHP_SELF']) ?>" method="post">
                             <input type="hidden" name="registrarId" id="registrarId">
+                            <input type="hidden" name="registrarEmail" id="registrarEmail">
                             <button type="submit" class="btn btn-danger" name="btnDrop">Yes</button>
                         </form>
                     </div>
@@ -655,6 +658,7 @@ include '../includes/activity_logger.php';
         document.querySelectorAll('.drop-registrar-btn').forEach(function(btn) {
             btn.addEventListener('click', function() {
                 document.getElementById('registrarId').value = btn.getAttribute('data-id');
+                document.getElementById('registrarEmail').value = btn.getAttribute('data-email');
             });
         });
     </script>

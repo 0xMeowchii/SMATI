@@ -11,7 +11,7 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<link rel="stylesheet" href="./css/teacher.css">
+<link rel="stylesheet" href="./css/teacher1.css">
 <link rel="stylesheet" href="./css/sidebar.css">
 <link rel="icon" type="image/png" href="../images/logo5.png">
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>

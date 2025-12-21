@@ -1,4 +1,7 @@
 <?php
+
+$version = "v1.20.19";
+
 date_default_timezone_set('Asia/Manila');
 
 function connectToDB() {
