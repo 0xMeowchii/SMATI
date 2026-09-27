@@ -119,7 +119,7 @@ This system replaces that workflow with a **centralized, secure, web-based platf
 
 | | | |
 |:---:|:---:|:---:|
-| ![Teacher Grade Entry](images/showcase/teacher-grade-entry.png) | ![Teacher Dashboard](images/showcase/teacher-concerns.png) | ![Teacher Grade Change Request](images/showcase/teacher-grade-change.png) |
+| ![Teacher Grade Entry](images/showcase/teacher-grade-entry.png) | ![Teacher Dashboard](images/showcase/teacher-dashboard.png) | ![Teacher Grade Change Request](images/showcase/teacher-grade-change.png) |
 | *Teacher Grade Entry — encode and manage student grades* | *Teacher Concern Dashboard — respond to student concerns* | *Teacher Grade Change Request — submit for admin review* |
 
 ### Student Portal
