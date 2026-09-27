@@ -13,6 +13,7 @@ A web-based academic records platform developed for **St. Michael Archangel Tech
 - [Features](#features)
 - [Tech Stack](#tech-stack)
 - [User Roles](#user-roles)
+- [Screenshots](#screenshots)
 - [Project Scope](#project-scope)
 
 ---
@@ -102,6 +103,38 @@ This system replaces that workflow with a **centralized, secure, web-based platf
 | **Teacher** | Grade entry and management, concern resolution, submission deadline tracking |
 | **Student** | Grade viewing, concern submission, announcement access |
 | **Registrar** | Grade viewing, PDF report generation with e-signature |
+
+---
+
+## Screenshots
+
+### Admin Panel
+
+| | | |
+|:---:|:---:|:---:|
+| ![Admin Dashboard](images/showcase/admin-dashboard.png) | ![Admin User Management](images/showcase/admin-user-management.png) | ![Admin Announcements](images/showcase/admin-announcements.png) |
+| *Admin Dashboard — system overview and controls* | *Admin User Management — manage teacher & student accounts* | *Admin Announcements — post institutional updates* |
+
+### Teacher Dashboard
+
+| | | |
+|:---:|:---:|:---:|
+| ![Teacher Grade Entry](images/showcase/teacher-grade-entry.png) | ![Teacher Dashboard](images/showcase/teacher-concerns.png) | ![Teacher Grade Change Request](images/showcase/teacher-grade-change.png) |
+| *Teacher Grade Entry — encode and manage student grades* | *Teacher Concern Dashboard — respond to student concerns* | *Teacher Grade Change Request — submit for admin review* |
+
+### Student Portal
+
+| | | |
+|:---:|:---:|:---:|
+| ![Student Grades](images/showcase/student-grades.png) | ![Student Concern Form](images/showcase/student-concern-form.png) | ![Student Announcements](images/showcase/student-announcements.png) |
+| *Student Grade Viewing — Prelim, Midterm, and Final grades* | *Student Concern Form — submit grade-related concerns* | *Student Announcement Bulletin — view institutional updates* |
+
+### Registrar Module
+
+| | | |
+|:---:|:---:|:---:|
+| ![Registrar Grades](images/showcase/registrar-grades.png) | ![Registrar PDF Report](images/showcase/registrar-pdf-report.png) | ![Registrar E-Signature](images/showcase/registrar-esignature.png) |
+| *Registrar Grade Viewing — individual student grades across subjects* | *Registrar PDF Report — downloadable official documentation* | *Registrar E-Signature — embedded e-signature on reports* |
 
 ---
 
